@@ -9,6 +9,8 @@ export type GameState = {
   tankCapacity: number;
   upgrades: Record<string, number>;
   lifetimeRevenue: number;
+  stats: { hatched: number; sold: number; upgradesBought: number };
+  claimedMissions: Record<string, boolean>;
   lastUpdatedAt: number;
 };
 
@@ -21,6 +23,8 @@ export const initialState: GameState = {
   tankCapacity: 20,
   upgrades: {},
   lifetimeRevenue: 0,
+  stats: { hatched: 0, sold: 0, upgradesBought: 0 },
+  claimedMissions: {},
   lastUpdatedAt: Date.now(),
 };
 
@@ -39,6 +43,7 @@ export function hatch(state: GameState): GameState {
     ...state,
     shrimp: { ...state.shrimp, [state.selectedSpecies]: (state.shrimp[state.selectedSpecies] ?? 0) + Math.min(amount, room) },
     xp: state.xp + Math.min(amount, room),
+    stats: { ...state.stats, hatched: state.stats.hatched + Math.min(amount, room) },
   };
 }
 
@@ -60,6 +65,7 @@ export function sell(state: GameState, speciesId: string, amount = 1): GameState
     xp,
     level,
     lifetimeRevenue: state.lifetimeRevenue + proceeds,
+    stats: { ...state.stats, sold: state.stats.sold + amount },
     lastUpdatedAt: Date.now(),
   };
 }
@@ -85,6 +91,7 @@ export function accrueProduction(state: GameState, now = Date.now()): { state: G
       ...state,
       shrimp: { ...state.shrimp, [state.selectedSpecies]: (state.shrimp[state.selectedSpecies] ?? 0) + hatched },
       xp: state.xp + hatched,
+      stats: { ...state.stats, hatched: state.stats.hatched + hatched },
       lastUpdatedAt: state.lastUpdatedAt + cycles * cycleMilliseconds,
     },
   };

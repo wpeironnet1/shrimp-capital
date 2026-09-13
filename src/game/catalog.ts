@@ -21,3 +21,10 @@ export const upgrades = [
   { id: 'heater', name: 'Wall Street Heater', detail: '+15% hatch speed', icon: 'thermometer', baseCost: 90 },
   { id: 'algae', name: 'Artisanal Algae', detail: '+25% sale value', icon: 'leaf', baseCost: 160 },
 ] as const;
+
+export type MissionMetric = 'hatched' | 'sold' | 'upgradesBought';
+export const missions = [
+  { id: 'first-brood', title: 'Seed the portfolio', detail: 'Hatch 10 shrimp', metric: 'hatched', target: 10, reward: 30 },
+  { id: 'liquidity-event', title: 'Create a liquidity event', detail: 'Sell 8 shrimp', metric: 'sold', target: 8, reward: 45 },
+  { id: 'capex-cycle', title: 'Invest in infrastructure', detail: 'Buy 2 upgrades', metric: 'upgradesBought', target: 2, reward: 80 },
+] satisfies Array<{ id: string; title: string; detail: string; metric: MissionMetric; target: number; reward: number }>;

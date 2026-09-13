@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { upgrades } from './catalog';
+import { missions, upgrades } from './catalog';
 import { accrueProduction, GameState, hatch, initialState, sell, upgradeCost } from './engine';
 
 const SAVE_KEY = '@shrimp-capital/save-v1';
@@ -15,6 +15,7 @@ type GameContextValue = {
   selectSpecies: (id: string) => void;
   buyUpgrade: (id: string) => void;
   expandTank: () => void;
+  claimMission: (id: string) => void;
 };
 const GameContext = createContext<GameContextValue | null>(null);
 
@@ -26,7 +27,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     AsyncStorage.getItem(SAVE_KEY).then((raw) => {
       if (!raw) return;
-      const saved = { ...initialState, ...JSON.parse(raw) } as GameState;
+      const parsed = JSON.parse(raw) as Partial<GameState>;
+      const saved = {
+        ...initialState,
+        ...parsed,
+        shrimp: { ...initialState.shrimp, ...parsed.shrimp },
+        upgrades: { ...initialState.upgrades, ...parsed.upgrades },
+        stats: { ...initialState.stats, ...parsed.stats },
+        claimedMissions: { ...initialState.claimedMissions, ...parsed.claimedMissions },
+      } as GameState;
       const production = accrueProduction(saved);
       setOfflineHatches(production.hatched);
       setState({ ...production.state, lastUpdatedAt: Date.now() });
@@ -56,12 +65,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       if (!item) return current;
       const cost = upgradeCost(item.baseCost, current.upgrades[id] ?? 0);
       if (current.cash < cost) return current;
-      return { ...current, cash: current.cash - cost, upgrades: { ...current.upgrades, [id]: (current.upgrades[id] ?? 0) + 1 } };
+      return { ...current, cash: current.cash - cost, upgrades: { ...current.upgrades, [id]: (current.upgrades[id] ?? 0) + 1 }, stats: { ...current.stats, upgradesBought: current.stats.upgradesBought + 1 } };
     }),
     expandTank: () => setState((current) => {
       const cost = Math.round(75 * Math.pow(1.45, Math.max(0, (current.tankCapacity - 20) / 10)));
       if (current.cash < cost) return current;
       return { ...current, cash: current.cash - cost, tankCapacity: current.tankCapacity + 10 };
+    }),
+    claimMission: (id) => setState((current) => {
+      const mission = missions.find((entry) => entry.id === id);
+      if (!mission || current.claimedMissions[id] || current.stats[mission.metric] < mission.target) return current;
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      return { ...current, cash: current.cash + mission.reward, claimedMissions: { ...current.claimedMissions, [id]: true } };
     }),
   }), [state, loaded, offlineHatches]);
 

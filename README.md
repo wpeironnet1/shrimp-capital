@@ -14,6 +14,7 @@
 - Haptic interactions
 - Automatic timed hatching with a live production countdown
 - Offline-return report showing shrimp produced while away
+- Starter mission chain with tracked progress and cash rewards
 
 ## Run locally
 

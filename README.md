@@ -15,6 +15,7 @@
 - Automatic timed hatching with a live production countdown
 - Offline-return report showing shrimp produced while away
 - Starter mission chain with tracked progress and cash rewards
+- Code-native pixel shrimp sprites, aquarium plants, and animated swimming
 
 ## Run locally
 

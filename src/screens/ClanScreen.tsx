@@ -1,0 +1,7 @@
+import { LinearGradient } from 'expo-linear-gradient';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
+import { PixelText } from '../components/PixelText';
+import { colors } from '../theme/colors';
+export function ClanScreen() { return <LinearGradient colors={[colors.ink, colors.deep]} style={styles.page}><View style={styles.lockup}><PixelText style={styles.emoji}>🦐🦐🦐</PixelText><PixelText style={styles.eyebrow}>SOCIAL EXPANSION</PixelText><PixelText style={styles.title}>Shrimp Clans</PixelText><PixelText style={styles.body}>Pool production with friends, compete in weekly harvests, and climb the Shell Street leaderboard.</PixelText><View style={styles.badge}><PixelText style={styles.badgeText}>UNLOCKING IN A FUTURE SEASON</PixelText></View></View></LinearGradient>; }
+const styles = StyleSheet.create({ page: { flex: 1, justifyContent: 'center', padding: 30 }, lockup: { alignItems: 'center', backgroundColor: colors.panel, borderRadius: 24, padding: 28, borderWidth: 2, borderColor: '#2A5D68' }, emoji: { fontSize: 43 }, eyebrow: { color: colors.coral, fontSize: 9, letterSpacing: 2, marginTop: 20 }, title: { fontSize: 30, marginTop: 6 }, body: { color: colors.muted, textAlign: 'center', fontSize: 12, lineHeight: 19, marginTop: 13 }, badge: { backgroundColor: colors.deep, borderRadius: 10, padding: 11, marginTop: 22 }, badgeText: { color: colors.gold, fontSize: 8, letterSpacing: 1 } });

@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "Shrimp Capital",
+    "slug": "shrimp-capital",
+    "scheme": "shrimpcapital",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "ios": { "supportsTablet": true, "bundleIdentifier": "com.shrimpcapital.game" },
+    "android": { "package": "com.shrimpcapital.game" },
+    "plugins": ["expo-router"],
+    "experiments": { "typedRoutes": true }
+  }
+}

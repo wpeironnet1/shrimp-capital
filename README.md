@@ -41,3 +41,7 @@ The game will remain free at its core. Future monetization is designed around op
 ## Stack
 
 Expo, React Native, TypeScript, Expo Router, AsyncStorage.
+
+## Vercel preview
+
+Vercel is configured to run the Expo web export and serve the generated `dist` directory. Every push to `main` creates a fresh production preview.

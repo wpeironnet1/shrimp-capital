@@ -2,12 +2,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { upgrades } from './catalog';
-import { calculateOfflineHatches, GameState, hatch, initialState, sell, totalShrimp, upgradeCost } from './engine';
+import { accrueProduction, GameState, hatch, initialState, sell, upgradeCost } from './engine';
 
 const SAVE_KEY = '@shrimp-capital/save-v1';
 type GameContextValue = {
   state: GameState;
   loaded: boolean;
+  offlineHatches: number;
+  dismissOfflineReport: () => void;
   hatchNow: () => void;
   sellOne: (id: string) => void;
   selectSpecies: (id: string) => void;
@@ -19,13 +21,15 @@ const GameContext = createContext<GameContextValue | null>(null);
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState(initialState);
   const [loaded, setLoaded] = useState(false);
+  const [offlineHatches, setOfflineHatches] = useState(0);
 
   useEffect(() => {
     AsyncStorage.getItem(SAVE_KEY).then((raw) => {
       if (!raw) return;
       const saved = { ...initialState, ...JSON.parse(raw) } as GameState;
-      const offline = calculateOfflineHatches(saved);
-      setState({ ...saved, shrimp: { ...saved.shrimp, [saved.selectedSpecies]: (saved.shrimp[saved.selectedSpecies] ?? 0) + offline }, lastUpdatedAt: Date.now() });
+      const production = accrueProduction(saved);
+      setOfflineHatches(production.hatched);
+      setState({ ...production.state, lastUpdatedAt: Date.now() });
     }).finally(() => setLoaded(true));
   }, []);
 
@@ -33,9 +37,17 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (loaded) AsyncStorage.setItem(SAVE_KEY, JSON.stringify(state));
   }, [state, loaded]);
 
+  useEffect(() => {
+    if (!loaded) return;
+    const timer = setInterval(() => setState((current) => accrueProduction(current).state), 1000);
+    return () => clearInterval(timer);
+  }, [loaded]);
+
   const value = useMemo<GameContextValue>(() => ({
     state,
     loaded,
+    offlineHatches,
+    dismissOfflineReport: () => setOfflineHatches(0),
     hatchNow: () => { setState(hatch); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); },
     sellOne: (id) => { setState((current) => sell(current, id)); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); },
     selectSpecies: (id) => setState((current) => ({ ...current, selectedSpecies: id, lastUpdatedAt: Date.now() })),
@@ -51,7 +63,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       if (current.cash < cost) return current;
       return { ...current, cash: current.cash - cost, tankCapacity: current.tankCapacity + 10 };
     }),
-  }), [state, loaded]);
+  }), [state, loaded, offlineHatches]);
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 }

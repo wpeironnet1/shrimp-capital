@@ -39,7 +39,6 @@ export function hatch(state: GameState): GameState {
     ...state,
     shrimp: { ...state.shrimp, [state.selectedSpecies]: (state.shrimp[state.selectedSpecies] ?? 0) + Math.min(amount, room) },
     xp: state.xp + Math.min(amount, room),
-    lastUpdatedAt: Date.now(),
   };
 }
 
@@ -70,4 +69,31 @@ export function calculateOfflineHatches(state: GameState, now = Date.now()) {
   const elapsedSeconds = Math.max(0, (now - state.lastUpdatedAt) / 1000);
   const cycle = item.hatchSeconds / speedMultiplier(state);
   return Math.min(state.tankCapacity - totalShrimp(state), Math.floor(elapsedSeconds / cycle));
+}
+
+export function accrueProduction(state: GameState, now = Date.now()): { state: GameState; hatched: number } {
+  const item = species.find((entry) => entry.id === state.selectedSpecies) ?? species[0];
+  const cycleMilliseconds = item.hatchSeconds / speedMultiplier(state) * 1000;
+  const cycles = Math.floor(Math.max(0, now - state.lastUpdatedAt) / cycleMilliseconds);
+  const room = Math.max(0, state.tankCapacity - totalShrimp(state));
+  const hatched = Math.min(room, cycles * Math.max(1, Math.floor(productionMultiplier(state))));
+
+  if (cycles < 1) return { state, hatched: 0 };
+  return {
+    hatched,
+    state: {
+      ...state,
+      shrimp: { ...state.shrimp, [state.selectedSpecies]: (state.shrimp[state.selectedSpecies] ?? 0) + hatched },
+      xp: state.xp + hatched,
+      lastUpdatedAt: state.lastUpdatedAt + cycles * cycleMilliseconds,
+    },
+  };
+}
+
+export function secondsUntilNextHatch(state: GameState, now = Date.now()) {
+  if (totalShrimp(state) >= state.tankCapacity) return 0;
+  const item = species.find((entry) => entry.id === state.selectedSpecies) ?? species[0];
+  const cycleMilliseconds = item.hatchSeconds / speedMultiplier(state) * 1000;
+  const elapsed = Math.max(0, now - state.lastUpdatedAt) % cycleMilliseconds;
+  return Math.max(0, Math.ceil((cycleMilliseconds - elapsed) / 1000));
 }

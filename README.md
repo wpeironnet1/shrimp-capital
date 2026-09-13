@@ -12,6 +12,8 @@
 - Farm, market, and future clans screens
 - Mobile-first dark pixel-inspired visual system
 - Haptic interactions
+- Automatic timed hatching with a live production countdown
+- Offline-return report showing shrimp produced while away
 
 ## Run locally
 

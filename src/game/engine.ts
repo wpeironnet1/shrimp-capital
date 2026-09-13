@@ -11,6 +11,8 @@ export type GameState = {
   lifetimeRevenue: number;
   stats: { hatched: number; sold: number; upgradesBought: number };
   claimedMissions: Record<string, boolean>;
+  lastDailyClaim: string | null;
+  dailyStreak: number;
   lastUpdatedAt: number;
 };
 
@@ -25,6 +27,8 @@ export const initialState: GameState = {
   lifetimeRevenue: 0,
   stats: { hatched: 0, sold: 0, upgradesBought: 0 },
   claimedMissions: {},
+  lastDailyClaim: null,
+  dailyStreak: 0,
   lastUpdatedAt: Date.now(),
 };
 
@@ -34,6 +38,18 @@ export const upgradeCost = (base: number, owned: number) => Math.round(base * Ma
 export const productionMultiplier = (state: GameState) => 1 + (state.upgrades.filter ?? 0) * 0.2;
 export const speedMultiplier = (state: GameState) => 1 + (state.upgrades.heater ?? 0) * 0.15;
 export const valueMultiplier = (state: GameState) => 1 + (state.upgrades.algae ?? 0) * 0.25;
+export const dayKey = (date = new Date()) => date.toISOString().slice(0, 10);
+export const dailyRewardAmount = (streak: number) => Math.min(60, 20 + Math.max(0, streak - 1) * 5);
+
+export function nextDailyStreak(state: GameState, today = new Date()) {
+  if (!state.lastDailyClaim) return 1;
+  const previous = new Date(`${state.lastDailyClaim}T00:00:00.000Z`);
+  const current = new Date(`${dayKey(today)}T00:00:00.000Z`);
+  const elapsedDays = Math.round((current.getTime() - previous.getTime()) / 86_400_000);
+  return elapsedDays === 1 ? state.dailyStreak + 1 : 1;
+}
+
+export const canClaimDailyReward = (state: GameState, today = new Date()) => state.lastDailyClaim !== dayKey(today);
 
 export function hatch(state: GameState): GameState {
   if (totalShrimp(state) >= state.tankCapacity) return state;

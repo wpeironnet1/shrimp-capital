@@ -16,6 +16,7 @@
 - Offline-return report showing shrimp produced while away
 - Starter mission chain with tracked progress and cash rewards
 - Code-native pixel shrimp sprites, aquarium plants, and animated swimming
+- Daily Market Open rewards with persistent streak progression
 
 ## Run locally
 

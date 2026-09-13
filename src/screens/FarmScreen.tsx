@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { PixelText } from '../components/PixelText';
 import { OfflineReport } from '../components/OfflineReport';
 import { MissionPanel } from '../components/MissionPanel';
+import { DailyRewardCard } from '../components/DailyRewardCard';
 import { PixelShrimp } from '../components/PixelShrimp';
 import { Tank } from '../components/Tank';
 import { species } from '../game/catalog';
@@ -13,7 +14,7 @@ import { secondsUntilNextHatch, totalShrimp, xpForNextLevel } from '../game/engi
 import { colors } from '../theme/colors';
 
 export function FarmScreen() {
-  const { state, hatchNow, sellOne, selectSpecies, offlineHatches, dismissOfflineReport, claimMission } = useGame();
+  const { state, hatchNow, sellOne, selectSpecies, offlineHatches, dismissOfflineReport, claimMission, claimDailyReward } = useGame();
   const unlocked = species.filter((item) => item.unlockLevel <= state.level);
   const current = species.find((item) => item.id === state.selectedSpecies) ?? species[0];
   const tankFull = totalShrimp(state) >= state.tankCapacity;
@@ -32,6 +33,7 @@ export function FarmScreen() {
           <PixelText style={styles.xp}>{state.xp} XP</PixelText>
         </View>
         <MissionPanel state={state} onClaim={claimMission} />
+        <DailyRewardCard state={state} onClaim={claimDailyReward} />
         <Tank count={totalShrimp(state)} capacity={state.tankCapacity} color={current.color} onPress={hatchNow} />
         <View style={styles.productionBar} accessibilityLabel={tankFull ? 'Tank full' : `Next shrimp in ${nextHatch} seconds`}>
           <View style={styles.liveDot} />

@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { missions, upgrades } from './catalog';
-import { accrueProduction, GameState, hatch, initialState, sell, upgradeCost } from './engine';
+import { accrueProduction, canClaimDailyReward, dailyRewardAmount, dayKey, GameState, hatch, initialState, nextDailyStreak, sell, upgradeCost } from './engine';
 
 const SAVE_KEY = '@shrimp-capital/save-v1';
 type GameContextValue = {
@@ -16,6 +16,7 @@ type GameContextValue = {
   buyUpgrade: (id: string) => void;
   expandTank: () => void;
   claimMission: (id: string) => void;
+  claimDailyReward: () => void;
 };
 const GameContext = createContext<GameContextValue | null>(null);
 
@@ -77,6 +78,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       if (!mission || current.claimedMissions[id] || current.stats[mission.metric] < mission.target) return current;
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       return { ...current, cash: current.cash + mission.reward, claimedMissions: { ...current.claimedMissions, [id]: true } };
+    }),
+    claimDailyReward: () => setState((current) => {
+      if (!canClaimDailyReward(current)) return current;
+      const streak = nextDailyStreak(current);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      return { ...current, cash: current.cash + dailyRewardAmount(streak), dailyStreak: streak, lastDailyClaim: dayKey() };
     }),
   }), [state, loaded, offlineHatches]);
 

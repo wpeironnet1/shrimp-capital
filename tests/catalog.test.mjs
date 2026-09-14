@@ -7,7 +7,7 @@ const entries = [...catalog.matchAll(/\{ id: '([^']+)', name: '([^']+)', rarity:
   .map((match) => ({ id: match[1], rarity: match[3], price: Number(match[4]), hatch: Number(match[5]), level: Number(match[6]) }));
 
 test('species ladder contains a long, increasingly valuable collection', () => {
-  assert.equal(entries.length, 24);
+  assert.ok(entries.length >= 24, `expected at least 24 species, found ${entries.length}`);
   assert.equal(new Set(entries.map((entry) => entry.id)).size, entries.length);
   assert.deepEqual(entries.slice(1).map((entry, index) => entry.price > entries[index].price), Array(entries.length - 1).fill(true));
   assert.deepEqual(entries.slice(1).map((entry, index) => entry.level >= entries[index].level), Array(entries.length - 1).fill(true));

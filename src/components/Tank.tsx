@@ -10,7 +10,7 @@ import { TankOfficeDecor } from './TankOfficeDecor';
 
 const VISUAL_POPULATION_LIMIT = 24;
 const raritySize: Record<ShrimpSpecies['rarity'], number> = { Common: 0, Uncommon: 1, Rare: 2, Epic: 4, Legendary: 7, Mythic: 10, Exotic: 13 };
-type Counts = { chain: number; crown: number; visor: number };
+type Counts = { chain: number; crown: number; visor: number; suit: number };
 type TankShrimp = { key: string; item: ShrimpSpecies; accessory?: ShrimpAccessory };
 
 function visiblePopulation(population: Record<string, number>, accessories: Record<string, Counts>) {
@@ -19,8 +19,14 @@ function visiblePopulation(population: Record<string, number>, accessories: Reco
   while (result.length < VISUAL_POPULATION_LIMIT && stocked.some((entry) => entry.used < entry.count)) {
     for (const entry of stocked) {
       if (entry.used >= entry.count || result.length >= VISUAL_POPULATION_LIMIT) continue;
-      const a = accessories[entry.item.id] ?? { chain: 0, crown: 0, visor: 0 };
-      const accessory: ShrimpAccessory | undefined = entry.used < a.crown ? 'crown' : entry.used < a.crown + a.visor ? 'visor' : entry.used < a.crown + a.visor + a.chain ? 'chain' : undefined;
+      const a = accessories[entry.item.id] ?? { chain: 0, crown: 0, visor: 0, suit: 0 };
+      const accessory: ShrimpAccessory | undefined = entry.used < a.suit
+        ? 'suit'
+        : entry.used < a.suit + a.crown
+          ? 'crown'
+          : entry.used < a.suit + a.crown + a.visor
+            ? 'visor'
+            : entry.used < a.suit + a.crown + a.visor + a.chain ? 'chain' : undefined;
       result.push({ key: `${entry.item.id}-${entry.used}`, item: entry.item, accessory });
       entry.used += 1;
     }
@@ -73,7 +79,8 @@ function ShrimpActor({ shrimp, index, jumpToken }: { shrimp: TankShrimp; index: 
   const reactionY=reaction.interpolate({inputRange:[0,.5,1],outputRange:[0,reactionType===1?-9:-3,0]});
   const jumpX=jump.interpolate({inputRange:[0,.11,.42,.72,1],outputRange:[0,-4*jumpDirection,28*jumpDirection,45*jumpDirection,52*jumpDirection]});
   const jumpY=jump.interpolate({inputRange:[0,.06,.11,.28,.48,.67,.82,1],outputRange:[0,2,-3,-top-70,-top-100,-top-72,-14,0]});
-  const jumpRotate=jump.interpolate({inputRange:[0,.08,.11,.4,.68,1],outputRange:['0deg','-7deg','7deg',`${shrimp.accessory==='crown'||shrimp.accessory==='visor'?120:205*jumpDirection}deg`,`${shrimp.accessory==='crown'||shrimp.accessory==='visor'?210:355*jumpDirection}deg`,'0deg']});
+  const formalAccessory = shrimp.accessory === 'crown' || shrimp.accessory === 'visor' || shrimp.accessory === 'suit';
+  const jumpRotate=jump.interpolate({inputRange:[0,.08,.11,.4,.68,1],outputRange:['0deg','-7deg','7deg',`${formalAccessory?120:205*jumpDirection}deg`,`${formalAccessory?210:355*jumpDirection}deg`,'0deg']});
   const wiggle=jump.interpolate({inputRange:[0,.025,.05,.075,.1,.11,1],outputRange:['0deg','-7deg','7deg','-7deg','7deg','0deg','0deg']});
   return <View style={[styles.actor,{left:`${left}%` as `${number}%`,top}]}>
     <JumpEffects animation={jump} direction={jumpDirection} label={jumpLabel}/>

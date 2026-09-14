@@ -6,73 +6,23 @@ import { colors } from '../theme/colors';
 import { PixelShrimp, ShrimpAccessory } from './PixelShrimp';
 import { PixelText } from './PixelText';
 
-type Filter = 'ALL' | 'OWNED' | 'LEGENDS';
-type Sort = 'LEVEL' | 'VALUE' | 'QUANTITY' | 'RARITY';
-const legendIds = new Set(['jumbo','lehman-bro','craymer','shellfort','big-shrimp']);
-const rarityRank: Record<ShrimpSpecies['rarity'], number> = { Common: 0, Uncommon: 1, Rare: 2, Epic: 3, Legendary: 4, Mythic: 5, Exotic: 6 };
+type Filter='OWNED'|'UNLOCKED'|'LEGENDS';
+type Sort='LEVEL'|'VALUE'|'QUANTITY'|'RARITY';
+const legendIds=new Set(['jumbo','lehman-bro','craymer','shellfort','big-shrimp']);
+const rarityRank:Record<ShrimpSpecies['rarity'],number>={Common:0,Uncommon:1,Rare:2,Epic:3,Legendary:4,Mythic:5,Exotic:6};
+const rarityColor:Record<ShrimpSpecies['rarity'],string>={Common:'#90B9B8',Uncommon:'#72D694',Rare:'#5CA6E6',Epic:'#A67AE0',Legendary:'#E2B64F',Mythic:'#E477A9',Exotic:'#F08B4D'};
 
-function accessoryFor(state: GameState, id: string): ShrimpAccessory | undefined {
-  const acc = state.shrimpAccessories[id] ?? { chain: 0, crown: 0, visor: 0, suit: 0 };
-  return acc.suit > 0 ? 'suit' : acc.visor > 0 ? 'visor' : acc.crown > 0 ? 'crown' : acc.chain > 0 ? 'chain' : undefined;
-}
+function accessoryFor(state:GameState,id:string):ShrimpAccessory|undefined{const acc=state.shrimpAccessories[id]??{chain:0,crown:0,visor:0,suit:0};return acc.suit>0?'suit':acc.visor>0?'visor':acc.crown>0?'crown':acc.chain>0?'chain':undefined;}
 
-export function StockBrowser({ state, selectedId, onSelect, onInspect }: { state: GameState; selectedId: string; onSelect: (id: string) => void; onInspect: (id: string) => void }) {
-  const { width } = useWindowDimensions();
-  const desktop = width >= 960;
-  const [filter, setFilter] = useState<Filter>('ALL');
-  const [sort, setSort] = useState<Sort>('LEVEL');
-
-  const unlockedSpecies = useMemo(() => species.filter((item) => item.unlockLevel <= state.level), [state.level]);
-  const hiddenCount = species.length - unlockedSpecies.length;
-
-  const items = useMemo(() => {
-    const filtered = unlockedSpecies.filter((item) => {
-      if (filter === 'OWNED') return (state.shrimp[item.id] ?? 0) > 0;
-      if (filter === 'LEGENDS') return legendIds.has(item.id);
-      return true;
-    });
-    return [...filtered].sort((a, b) => {
-      if (sort === 'VALUE') return b.basePrice - a.basePrice;
-      if (sort === 'QUANTITY') return (state.shrimp[b.id] ?? 0) - (state.shrimp[a.id] ?? 0);
-      if (sort === 'RARITY') return rarityRank[b.rarity] - rarityRank[a.rarity] || a.unlockLevel - b.unlockLevel;
-      return a.unlockLevel - b.unlockLevel;
-    });
-  }, [filter, sort, state.shrimp, unlockedSpecies]);
-
-  const card = (item: ShrimpSpecies) => {
-    const selected = item.id === selectedId;
-    const owned = state.shrimp[item.id] ?? 0;
-    const accessory = accessoryFor(state, item.id);
-    const lineage = state.lineage[item.id] ?? 0;
-    const baseSize = 38 + (item.rarity === 'Exotic' ? 8 : item.rarity === 'Mythic' ? 6 : item.rarity === 'Legendary' ? 4 : 0);
-    const cardSize = Math.min(67, Math.round(baseSize * (item.displayScale ?? 1)));
-    return <Pressable key={item.id} onPress={() => onSelect(item.id)} onLongPress={() => onInspect(item.id)} delayLongPress={300} style={({ pressed }) => [styles.card, desktop && styles.cardDesktop, selected && styles.selected, pressed && styles.pressed]}>
-      <View style={styles.cardTop}>
-        <View style={styles.spriteStage}><PixelShrimp color={item.color} accentColor={item.accentColor} pattern={item.pattern} trait={item.trait} accessory={accessory} size={cardSize} /></View>
-        <View style={styles.quantityPill}><PixelText style={styles.quantityText}>{owned}×</PixelText></View>
-      </View>
-      <PixelText numberOfLines={2} style={styles.name}>{item.name}</PixelText>
-      <View style={styles.metaRow}><PixelText style={styles.rarity}>{item.rarity.toUpperCase()}</PixelText><PixelText style={styles.level}>LV {item.unlockLevel}</PixelText></View>
-      <PixelText style={styles.value}>${Math.round(item.basePrice * valueMultiplier(state, item.id)).toLocaleString()} ea.</PixelText>
-      {lineage > 0 && <PixelText style={styles.lineage}>LINE {lineage} · +{Math.round((lineageMultiplier(state,item.id)-1)*100)}%</PixelText>}
-      {accessory && <PixelText style={styles.accessory}>{accessory === 'visor' ? 'GREEN VISOR' : accessory === 'suit' ? 'SUIT & TIE' : accessory.toUpperCase()}</PixelText>}
-    </Pressable>;
+export function StockBrowser({state,selectedId,onSelect,onInspect}:{state:GameState;selectedId:string;onSelect:(id:string)=>void;onInspect:(id:string)=>void}){
+  const {width}=useWindowDimensions();const desktop=width>=960;const [filter,setFilter]=useState<Filter>('UNLOCKED');const [sort,setSort]=useState<Sort>('LEVEL');
+  const unlockedSpecies=useMemo(()=>species.filter(item=>item.unlockLevel<=state.level),[state.level]);
+  const items=useMemo(()=>{const filtered=unlockedSpecies.filter(item=>filter==='OWNED'?(state.shrimp[item.id]??0)>0:filter==='LEGENDS'?legendIds.has(item.id):true);return [...filtered].sort((a,b)=>sort==='VALUE'?b.basePrice-a.basePrice:sort==='QUANTITY'?(state.shrimp[b.id]??0)-(state.shrimp[a.id]??0):sort==='RARITY'?rarityRank[b.rarity]-rarityRank[a.rarity]||a.unlockLevel-b.unlockLevel:a.unlockLevel-b.unlockLevel);},[filter,sort,state.shrimp,unlockedSpecies]);
+  const hiddenCount=Math.max(0,species.length-unlockedSpecies.length);
+  const card=(item:ShrimpSpecies)=>{const selected=item.id===selectedId;const owned=state.shrimp[item.id]??0;const accessory=accessoryFor(state,item.id);const lineage=state.lineage[item.id]??0;const baseSize=39+(item.rarity==='Exotic'?9:item.rarity==='Mythic'?7:item.rarity==='Legendary'?5:0);const cardSize=Math.min(72,Math.round(baseSize*(item.displayScale??1)));
+    return <Pressable key={item.id} onPress={()=>onSelect(item.id)} onLongPress={()=>onInspect(item.id)} delayLongPress={280} style={({pressed})=>[styles.card,desktop&&styles.cardDesktop,selected&&styles.selected,pressed&&styles.pressed]}><View style={styles.cardInner}><View style={[styles.rarityRail,{backgroundColor:rarityColor[item.rarity]}]}/><View style={styles.cardTop}><View style={styles.spriteFrame}><View style={styles.spriteWater}/><PixelShrimp color={item.color} accentColor={item.accentColor} pattern={item.pattern} trait={item.trait} accessory={accessory} size={cardSize}/></View><View style={styles.quantityPill}><PixelText style={styles.quantityText}>{owned}×</PixelText></View></View><PixelText numberOfLines={2} style={styles.name}>{item.name.toUpperCase()}</PixelText><View style={styles.metaRow}><PixelText style={[styles.rarity,{color:rarityColor[item.rarity]}]}>{item.rarity.toUpperCase()}</PixelText><PixelText style={styles.level}>LV {item.unlockLevel}</PixelText></View><View style={styles.valueRow}><PixelText style={styles.value}>${Math.round(item.basePrice*valueMultiplier(state,item.id)).toLocaleString()}</PixelText><PixelText style={styles.per}>EA.</PixelText></View>{lineage>0&&<PixelText style={styles.lineage}>LINE {lineage} · +{Math.round((lineageMultiplier(state,item.id)-1)*100)}%</PixelText>}{accessory&&<PixelText style={styles.accessory}>{accessory==='visor'?'GREEN VISOR':accessory==='suit'?'SUIT & TIE':accessory.toUpperCase()}</PixelText>}</View></Pressable>;
   };
-
-  return <View style={styles.wrap}>
-    <View style={styles.headerRow}>
-      <View><PixelText style={styles.title}>CURRENT STOCK</PixelText><PixelText style={styles.sub}>TAP TO SELECT · HOLD TO INSPECT · FUTURE CLASSES STAY HIDDEN</PixelText></View>
-      <View style={styles.countStack}><PixelText style={styles.count}>{items.length} SHOWN</PixelText>{hiddenCount > 0 && <PixelText style={styles.hiddenCount}>{hiddenCount} CLASSIFIED</PixelText>}</View>
-    </View>
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>
-      {(['ALL','OWNED','LEGENDS'] as Filter[]).map((value) => <Pressable key={value} onPress={() => setFilter(value)} style={[styles.filter, filter === value && styles.filterActive]}><PixelText style={[styles.filterText, filter === value && styles.filterTextActive]}>{value}</PixelText></Pressable>)}
-      <View style={styles.filterDivider}/>
-      {(['LEVEL','VALUE','QUANTITY','RARITY'] as Sort[]).map((value) => <Pressable key={value} onPress={() => setSort(value)} style={[styles.sort, sort === value && styles.sortActive]}><PixelText style={styles.sortText}>{value}</PixelText></Pressable>)}
-    </ScrollView>
-    {desktop ? <View style={styles.grid}>{items.map(card)}</View> : <View><ScrollView horizontal nestedScrollEnabled showsHorizontalScrollIndicator contentContainerStyle={styles.row}>{items.map(card)}<View style={styles.endSpacer}/></ScrollView>{items.length > 2 && <View pointerEvents="none" style={styles.scrollCue}><PixelText style={styles.scrollCueText}>MORE →</PixelText></View>}</View>}
-  </View>;
+  return <View style={styles.shell}><View style={styles.headerBand}><View><PixelText style={styles.eyebrow}>PORTFOLIO DESK</PixelText><PixelText style={styles.title}>CURRENT STOCK</PixelText><PixelText style={styles.sub}>TAP TO SELECT · HOLD TO INSPECT</PixelText></View><View style={styles.discovery}><PixelText style={styles.discoveryValue}>{unlockedSpecies.length}/{species.length}</PixelText><PixelText style={styles.discoveryLabel}>DISCOVERED</PixelText></View></View><ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters}>{(['OWNED','UNLOCKED','LEGENDS'] as Filter[]).map(value=><Pressable key={value} onPress={()=>setFilter(value)} style={[styles.filter,filter===value&&styles.filterActive]}><PixelText style={[styles.filterText,filter===value&&styles.filterTextActive]}>{value}</PixelText></Pressable>)}<View style={styles.filterDivider}/>{(['LEVEL','VALUE','QUANTITY','RARITY'] as Sort[]).map(value=><Pressable key={value} onPress={()=>setSort(value)} style={[styles.sort,sort===value&&styles.sortActive]}><PixelText style={styles.sortText}>{value}</PixelText></Pressable>)}{hiddenCount>0&&<View style={styles.classified}><PixelText style={styles.classifiedText}>{hiddenCount} CLASSIFIED</PixelText></View>}</ScrollView><View style={styles.contentArea}>{desktop?<View style={styles.grid}>{items.map(card)}</View>:<View><ScrollView horizontal nestedScrollEnabled showsHorizontalScrollIndicator contentContainerStyle={styles.row}>{items.map(card)}<View style={styles.endSpacer}/></ScrollView><View pointerEvents="none" style={styles.scrollCue}><PixelText style={styles.scrollCueText}>MORE ►</PixelText></View></View>}</View></View>;
 }
 
-const styles = StyleSheet.create({
-  wrap:{gap:12},headerRow:{flexDirection:'row',alignItems:'flex-end',justifyContent:'space-between',gap:10},title:{fontSize:16,letterSpacing:1.6},sub:{color:colors.muted,fontSize:6,marginTop:4},countStack:{alignItems:'flex-end'},count:{fontSize:7,color:colors.aqua},hiddenCount:{fontSize:5,color:'#6F8C91',marginTop:3},filters:{gap:6,paddingRight:18},filter:{paddingVertical:8,paddingHorizontal:11,borderRadius:8,backgroundColor:'#0B2D36',borderWidth:1,borderColor:'#24515C'},filterActive:{backgroundColor:'#214D58',borderColor:colors.aqua},filterText:{fontSize:6,color:colors.muted},filterTextActive:{color:colors.cream},filterDivider:{width:1,backgroundColor:'#2B5560',marginHorizontal:3},sort:{paddingVertical:8,paddingHorizontal:9,borderRadius:8,backgroundColor:'#112E36'},sortActive:{backgroundColor:'#453B27',borderWidth:1,borderColor:colors.gold},sortText:{fontSize:6,color:'#D9CFB5'},grid:{flexDirection:'row',flexWrap:'wrap',gap:11},row:{gap:10,paddingRight:70},card:{width:148,minHeight:158,padding:12,borderRadius:15,backgroundColor:'#123B47',borderWidth:2,borderBottomWidth:5,borderColor:'#285F6B',borderBottomColor:'#071F27',shadowColor:'#000',shadowOpacity:.18,shadowRadius:8,shadowOffset:{width:0,height:4}},cardDesktop:{width:'23.5%',minWidth:170,maxWidth:250},selected:{borderColor:colors.coral,backgroundColor:'#174B57'},pressed:{transform:[{translateY:2}],borderBottomWidth:2},cardTop:{height:56,flexDirection:'row',justifyContent:'space-between',alignItems:'flex-start'},spriteStage:{height:55,minWidth:78,justifyContent:'center'},quantityPill:{backgroundColor:'#092B35',borderRadius:9,paddingHorizontal:7,paddingVertical:4,borderWidth:1,borderColor:'#315E68'},quantityText:{fontSize:6,color:colors.aqua},name:{fontSize:9,lineHeight:13,minHeight:25,marginTop:6},metaRow:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginTop:4},rarity:{fontSize:6,color:colors.aqua},level:{fontSize:5,color:colors.muted},value:{fontSize:7,color:colors.gold,marginTop:6},lineage:{fontSize:5,color:'#8CE5A6',marginTop:5},accessory:{fontSize:5,color:'#B9EDC7',marginTop:4},endSpacer:{width:12},scrollCue:{position:'absolute',right:0,top:0,bottom:0,width:54,justifyContent:'center',alignItems:'center',backgroundColor:'#08242BDD',borderLeftWidth:1,borderLeftColor:'#1D4A54'},scrollCueText:{fontSize:5,color:colors.aqua,transform:[{rotate:'90deg'}]},
-});
+const styles=StyleSheet.create({shell:{backgroundColor:'#071B23',borderWidth:2,borderColor:colors.brass,padding:4,shadowColor:'#000',shadowOpacity:.4,shadowRadius:0,shadowOffset:{width:3,height:4}},headerBand:{backgroundColor:'#0B2A34',borderWidth:1,borderColor:'#315965',borderBottomWidth:2,borderBottomColor:colors.brass,padding:11,flexDirection:'row',alignItems:'flex-end',justifyContent:'space-between'},eyebrow:{fontSize:5,color:colors.aqua,letterSpacing:1.8},title:{fontSize:14,letterSpacing:1.5,marginTop:3,color:colors.cream},sub:{fontSize:5,color:colors.muted,marginTop:4},discovery:{alignItems:'flex-end'},discoveryValue:{fontSize:13,color:colors.goldLight},discoveryLabel:{fontSize:5,color:colors.muted,marginTop:2},filters:{gap:5,padding:8,paddingRight:20,backgroundColor:'#081F28'},filter:{paddingVertical:7,paddingHorizontal:10,backgroundColor:'#0D313B',borderWidth:2,borderColor:'#2B5460'},filterActive:{backgroundColor:'#1A5560',borderColor:colors.gold},filterText:{fontSize:5,color:colors.muted},filterTextActive:{color:colors.goldLight},filterDivider:{width:2,backgroundColor:colors.brass,marginHorizontal:3},sort:{paddingVertical:7,paddingHorizontal:9,backgroundColor:'#102B34',borderWidth:1,borderColor:'#29454C'},sortActive:{backgroundColor:'#3A3120',borderWidth:2,borderColor:colors.gold},sortText:{fontSize:5,color:'#D9CFB5'},classified:{paddingVertical:7,paddingHorizontal:9,backgroundColor:'#171C25',borderWidth:1,borderColor:'#414553'},classifiedText:{fontSize:5,color:'#7D8490'},contentArea:{backgroundColor:'#0A2630',padding:8,borderTopWidth:2,borderTopColor:'#173E48'},grid:{flexDirection:'row',flexWrap:'wrap',gap:9},row:{gap:9,paddingRight:62},card:{width:154,minHeight:184,backgroundColor:'#0D3541',borderWidth:2,borderColor:'#315D68',borderBottomWidth:5,borderBottomColor:'#041319',padding:3},cardDesktop:{width:'23.8%',minWidth:170,maxWidth:245},selected:{borderColor:colors.goldLight,backgroundColor:'#123F49'},pressed:{transform:[{translateY:2}],borderBottomWidth:3},cardInner:{flex:1,borderWidth:1,borderColor:'#173F49',padding:8,position:'relative'},rarityRail:{position:'absolute',left:0,top:0,bottom:0,width:3},cardTop:{height:66,flexDirection:'row',justifyContent:'space-between',alignItems:'flex-start'},spriteFrame:{width:92,height:62,backgroundColor:'#08242D',borderWidth:2,borderColor:'#2E6671',justifyContent:'center',alignItems:'center',overflow:'hidden'},spriteWater:{position:'absolute',left:0,right:0,bottom:0,height:17,backgroundColor:'#0C425166',borderTopWidth:1,borderTopColor:'#4FABB7'},quantityPill:{backgroundColor:'#061A22',borderWidth:1,borderColor:colors.brass,paddingHorizontal:6,paddingVertical:4},quantityText:{fontSize:6,color:colors.aqua},name:{fontSize:8,lineHeight:12,minHeight:24,marginTop:7,color:colors.cream},metaRow:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginTop:4},rarity:{fontSize:5},level:{fontSize:5,color:colors.muted},valueRow:{flexDirection:'row',alignItems:'baseline',gap:4,marginTop:7},value:{fontSize:10,color:colors.goldLight},per:{fontSize:5,color:colors.muted},lineage:{fontSize:5,color:'#8FE0A6',marginTop:5},accessory:{fontSize:5,color:'#C4E9CA',marginTop:4},endSpacer:{width:14},scrollCue:{position:'absolute',right:0,top:0,bottom:0,width:52,justifyContent:'center',alignItems:'center',backgroundColor:'#061B23EE',borderLeftWidth:2,borderLeftColor:colors.brass},scrollCueText:{fontSize:5,color:colors.goldLight,transform:[{rotate:'90deg'}]}});

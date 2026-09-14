@@ -1,7 +1,7 @@
 import { MissionMetric, species } from './catalog';
 
 export type TankConditions = { waterQuality: number; temperature: number; oxygen: number; feeding: number };
-export type AccessoryCounts = { chain: number; crown: number; visor: number };
+export type AccessoryCounts = { chain: number; crown: number; visor: number; suit: number };
 export type MarketEvent = { id: string; name: string; detail: string; multiplier: number; expiresAt: number } | null;
 export type BiomeId = 'starter-office' | 'trading-floor' | 'executive-reef' | 'offshore-fund';
 export type BreedResult = { speciesId: string; amount: number; mutated: boolean; lineageGained: number; xpGained: number; at: number } | null;
@@ -59,7 +59,7 @@ export const initialState: GameState = {
 };
 
 const clamp = (value: number, min = 0, max = 100) => Math.max(min, Math.min(max, value));
-const accessoryDefault = (): AccessoryCounts => ({ chain: 0, crown: 0, visor: 0 });
+const accessoryDefault = (): AccessoryCounts => ({ chain: 0, crown: 0, visor: 0, suit: 0 });
 export const totalShrimp = (state: GameState) => Object.values(state.shrimp).reduce((a, b) => a + b, 0);
 export const xpForNextLevel = (level: number) => 30 + level * 25;
 export function applyXp(level: number, xp: number, gained: number) {
@@ -169,29 +169,30 @@ export function missionProgress(state: GameState, metric: MissionMetric) {
   if (metric === 'lifetimeRevenue') return state.lifetimeRevenue;
   if (metric === 'tankCapacity') return state.tankCapacity;
   if (metric === 'level') return state.level;
-  if (metric === 'accessories') return Object.values(state.shrimpAccessories).reduce((total, entry) => total + entry.chain + entry.crown + (entry.visor ?? 0), 0);
+  if (metric === 'accessories') return Object.values(state.shrimpAccessories).reduce((total, entry) => total + entry.chain + entry.crown + (entry.visor ?? 0) + (entry.suit ?? 0), 0);
   return state.stats[metric as keyof GameState['stats']] ?? 0;
 }
 
 function rollAccessoryDrops(seed: number, amount: number, odds: number) {
-  let random = seed >>> 0, chain = 0, crown = 0, visor = 0;
+  let random = seed >>> 0, chain = 0, crown = 0, visor = 0, suit = 0;
   for (let i = 0; i < amount; i += 1) {
     random = (Math.imul(random, 1664525) + 1013904223) >>> 0;
     if (random / 0x100000000 >= 1 / odds) continue;
     random = (Math.imul(random, 1664525) + 1013904223) >>> 0;
-    const type = random % 3;
-    if (type === 0) chain += 1;
-    else if (type === 1) crown += 1;
-    else visor += 1;
+    const roll = random / 0x100000000;
+    if (roll < 0.32) chain += 1;
+    else if (roll < 0.60) crown += 1;
+    else if (roll < 0.88) visor += 1;
+    else suit += 1;
   }
-  return { chain, crown, visor };
+  return { chain, crown, visor, suit };
 }
 function addAccessoryDrops(state: GameState, speciesId: string, amount: number, seed: number) {
   const showcase = state.upgrades.showcase ?? 0;
   const odds = Math.max(140, Math.round(ACCESSORY_ODDS / (1 + showcase * 0.18)));
   const drops = rollAccessoryDrops(seed, amount, odds);
   const owned = state.shrimpAccessories[speciesId] ?? accessoryDefault();
-  return { ...state.shrimpAccessories, [speciesId]: { chain: owned.chain + drops.chain, crown: owned.crown + drops.crown, visor: (owned.visor ?? 0) + drops.visor } };
+  return { ...state.shrimpAccessories, [speciesId]: { chain: owned.chain + drops.chain, crown: owned.crown + drops.crown, visor: (owned.visor ?? 0) + drops.visor, suit: (owned.suit ?? 0) + drops.suit } };
 }
 
 export function nextDailyStreak(state: GameState, today = new Date()) {
@@ -286,18 +287,20 @@ export function sell(input: GameState, speciesId: string, amount = 1): GameState
   if (!item || owned < amount) return state;
   const proceeds = Math.round(item.basePrice * amount * valueMultiplier(state, speciesId));
   const accessories = state.shrimpAccessories[speciesId] ?? accessoryDefault();
-  let accessoriesToSell = Math.max(0, amount - Math.max(0, owned - accessories.chain - accessories.crown - (accessories.visor ?? 0)));
+  let accessoriesToSell = Math.max(0, amount - Math.max(0, owned - accessories.chain - accessories.crown - (accessories.visor ?? 0) - (accessories.suit ?? 0)));
   const chainSold = Math.min(accessories.chain, accessoriesToSell);
   accessoriesToSell -= chainSold;
   const crownSold = Math.min(accessories.crown, accessoriesToSell);
   accessoriesToSell -= crownSold;
   const visorSold = Math.min(accessories.visor ?? 0, accessoriesToSell);
+  accessoriesToSell -= visorSold;
+  const suitSold = Math.min(accessories.suit ?? 0, accessoriesToSell);
   const progression = applyXp(state.level, state.xp, saleXpFor(speciesId, amount));
   return {
     ...state,
     cash: state.cash + proceeds,
     shrimp: { ...state.shrimp, [speciesId]: owned - amount },
-    shrimpAccessories: { ...state.shrimpAccessories, [speciesId]: { chain: accessories.chain - chainSold, crown: accessories.crown - crownSold, visor: (accessories.visor ?? 0) - visorSold } },
+    shrimpAccessories: { ...state.shrimpAccessories, [speciesId]: { chain: accessories.chain - chainSold, crown: accessories.crown - crownSold, visor: (accessories.visor ?? 0) - visorSold, suit: (accessories.suit ?? 0) - suitSold } },
     discoveredSpecies: { ...state.discoveredSpecies, [speciesId]: true },
     ...progression,
     lifetimeRevenue: state.lifetimeRevenue + proceeds,

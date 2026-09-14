@@ -9,7 +9,9 @@ export type ShrimpSpecies = {
   color: string;
   accentColor: string;
   pattern: 'solid' | 'banded' | 'striped' | 'spotted';
-  trait?: 'long-whiskers' | 'fan-tail' | 'claws' | 'crown';
+  trait?: 'long-whiskers' | 'fan-tail' | 'claws' | 'crown' | 'red-tie' | 'pinstripe' | 'glasses' | 'briefcase';
+  displayScale?: number;
+  legend?: string;
 };
 
 export const species: ShrimpSpecies[] = [
@@ -26,15 +28,20 @@ export const species: ShrimpSpecies[] = [
   { id: 'black-king-kong', name: 'Black King Kong', rarity: 'Epic', emoji: '🦐', basePrice: 380, hatchSeconds: 165, unlockLevel: 18, color: '#16191E', accentColor: '#F2E8D3', pattern: 'banded', trait: 'claws' },
   { id: 'fancy-tiger', name: 'Red Fancy Tiger', rarity: 'Epic', emoji: '🦐', basePrice: 610, hatchSeconds: 215, unlockLevel: 21, color: '#EF4D4D', accentColor: '#2B1619', pattern: 'striped' },
   { id: 'shadow-panda', name: 'Shadow Panda', rarity: 'Epic', emoji: '🦐', basePrice: 980, hatchSeconds: 280, unlockLevel: 24, color: '#27334A', accentColor: '#D6EDFF', pattern: 'banded' },
+  { id: 'jumbo', name: 'Jumbo Executive Prawn', rarity: 'Epic', emoji: '🦐', basePrice: 1350, hatchSeconds: 330, unlockLevel: 26, color: '#C77C4B', accentColor: '#FFE1A8', pattern: 'striped', trait: 'briefcase', displayScale: 1.8, legend: 'An absurdly large rainmaker who occupies two seats at every earnings call.' },
   { id: 'galaxy-fishbone', name: 'Galaxy Fishbone', rarity: 'Epic', emoji: '🦐', basePrice: 1550, hatchSeconds: 360, unlockLevel: 27, color: '#5A2A82', accentColor: '#E4C5FF', pattern: 'striped', trait: 'long-whiskers' },
   { id: 'metallic-purple', name: 'Metallic Purple', rarity: 'Legendary', emoji: '🦐', basePrice: 2500, hatchSeconds: 460, unlockLevel: 31, color: '#9A63D7', accentColor: '#F0D4FF', pattern: 'solid', trait: 'fan-tail' },
   { id: 'red-galaxy-boa', name: 'Red Galaxy Boa', rarity: 'Legendary', emoji: '🦐', basePrice: 4000, hatchSeconds: 580, unlockLevel: 35, color: '#C7274C', accentColor: '#FFE29C', pattern: 'spotted', trait: 'claws' },
   { id: 'blue-steel-boa', name: 'Blue Steel Boa', rarity: 'Legendary', emoji: '🦐', basePrice: 6500, hatchSeconds: 720, unlockLevel: 39, color: '#3D7699', accentColor: '#D9F7FF', pattern: 'spotted', trait: 'claws' },
   { id: 'calceo-dragon', name: 'Calceo Dragon', rarity: 'Legendary', emoji: '🦐', basePrice: 10500, hatchSeconds: 880, unlockLevel: 43, color: '#E9E2C2', accentColor: '#8B2F3D', pattern: 'striped', trait: 'long-whiskers' },
+  { id: 'lehman-bro', name: 'Lehman Bro Shrimp', rarity: 'Legendary', emoji: '🦐', basePrice: 14500, hatchSeconds: 980, unlockLevel: 46, color: '#667788', accentColor: '#DCE6ED', pattern: 'banded', trait: 'pinstripe', displayScale: 1.15, legend: 'A legacy Wall Street crustacean whose risk committee has seen things.' },
   { id: 'golden-galaxy', name: 'Golden Galaxy', rarity: 'Mythic', emoji: '🦐', basePrice: 17000, hatchSeconds: 1050, unlockLevel: 48, color: '#E7B83D', accentColor: '#FFF7B5', pattern: 'spotted', trait: 'crown' },
+  { id: 'craymer', name: 'Jim Craymer Shrimp', rarity: 'Mythic', emoji: '🦐', basePrice: 23000, hatchSeconds: 1175, unlockLevel: 52, color: '#E64B42', accentColor: '#FFF0C8', pattern: 'solid', trait: 'red-tie', displayScale: 1.18, legend: 'A frantic market-commentator shrimp with extremely high conviction and a tiny red tie.' },
   { id: 'aurora-bolt', name: 'Aurora Bolt', rarity: 'Mythic', emoji: '🦐', basePrice: 27500, hatchSeconds: 1250, unlockLevel: 53, color: '#54D6C7', accentColor: '#D599FF', pattern: 'banded', trait: 'fan-tail' },
   { id: 'void-tiger', name: 'Void Tiger', rarity: 'Mythic', emoji: '🦐', basePrice: 44000, hatchSeconds: 1500, unlockLevel: 58, color: '#21133A', accentColor: '#F36CFF', pattern: 'striped', trait: 'claws' },
+  { id: 'shellfort', name: 'Jordan Shellfort', rarity: 'Mythic', emoji: '🦐', basePrice: 52000, hatchSeconds: 1600, unlockLevel: 60, color: '#F2D39F', accentColor: '#FFFFFF', pattern: 'striped', trait: 'pinstripe', displayScale: 1.2, legend: 'The Wolf of Shell Street. Sells anything that can fit in a tiny aquarium prospectus.' },
   { id: 'stardust-boa', name: 'Stardust Boa', rarity: 'Exotic', emoji: '🦐', basePrice: 71000, hatchSeconds: 1800, unlockLevel: 64, color: '#6A78E8', accentColor: '#FFF2D1', pattern: 'spotted', trait: 'long-whiskers' },
+  { id: 'big-shrimp', name: 'The Big Shrimp', rarity: 'Exotic', emoji: '🦐', basePrice: 94000, hatchSeconds: 2000, unlockLevel: 67, color: '#556B78', accentColor: '#CFE8F0', pattern: 'solid', trait: 'glasses', displayScale: 1.35, legend: 'A contrarian fund-manager shrimp who keeps reading the footnotes while everyone else celebrates.' },
   { id: 'solar-flare', name: 'Solar Flare', rarity: 'Exotic', emoji: '🦐', basePrice: 115000, hatchSeconds: 2200, unlockLevel: 70, color: '#FF5B31', accentColor: '#FFE566', pattern: 'striped', trait: 'claws' },
   { id: 'crown-jewel', name: 'Crown Jewel', rarity: 'Exotic', emoji: '🦐', basePrice: 185000, hatchSeconds: 2700, unlockLevel: 77, color: '#B46BFF', accentColor: '#7DFFF1', pattern: 'banded', trait: 'crown' },
 ];

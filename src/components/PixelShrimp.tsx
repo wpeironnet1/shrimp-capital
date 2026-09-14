@@ -3,36 +3,56 @@ import { StyleSheet, View } from 'react-native';
 
 type Pattern = 'solid' | 'banded' | 'striped' | 'spotted';
 type Trait = 'long-whiskers' | 'fan-tail' | 'claws' | 'crown';
-export type ShrimpAccessory = 'chain' | 'crown';
+export type ShrimpAccessory = 'chain' | 'crown' | 'visor';
 
 export function PixelShrimp({ color, accentColor = '#F5B6A9', pattern = 'solid', trait, accessory, size = 48, flip = false }: { color: string; accentColor?: string; pattern?: Pattern; trait?: Trait; accessory?: ShrimpAccessory; size?: number; flip?: boolean }) {
   const scale = size / 48;
+  const px = (value: number) => value * scale;
   return (
-    <View accessibilityLabel="Pixel shrimp" style={[styles.canvas, { width: size, height: 30 * scale, transform: [{ scaleX: flip ? -1 : 1 }] }]}>
-      <View style={[styles.tail, { backgroundColor: color, transform: [{ rotate: '45deg' }, { scale }], left: 1 * scale, top: 9 * scale }]} />
-      {trait === 'fan-tail' && <><View style={[styles.tailFin, { backgroundColor: accentColor, width: 11 * scale, height: 8 * scale, left: -2 * scale, top: 2 * scale, transform: [{ rotate: '-22deg' }] }]} /><View style={[styles.tailFin, { backgroundColor: accentColor, width: 11 * scale, height: 8 * scale, left: -2 * scale, top: 20 * scale, transform: [{ rotate: '22deg' }] }]} /></>}
-      <View style={[styles.bodyBack, { backgroundColor: color, width: 16 * scale, height: 16 * scale, left: 9 * scale, top: 7 * scale }]} />
-      <View style={[styles.bodyFront, { backgroundColor: color, width: 18 * scale, height: 18 * scale, left: 21 * scale, top: 5 * scale }]} />
-      <View style={[styles.head, { backgroundColor: color, width: 11 * scale, height: 13 * scale, left: 36 * scale, top: 4 * scale }]} />
-      {pattern === 'banded' && <><View style={[styles.mark, { backgroundColor: accentColor, width: 5 * scale, height: 16 * scale, left: 16 * scale, top: 7 * scale }]} /><View style={[styles.mark, { backgroundColor: accentColor, width: 5 * scale, height: 17 * scale, left: 28 * scale, top: 6 * scale }]} /></>}
-      {pattern === 'striped' && <><View style={[styles.mark, { backgroundColor: accentColor, width: 3 * scale, height: 16 * scale, left: 15 * scale, top: 7 * scale }]} /><View style={[styles.mark, { backgroundColor: accentColor, width: 3 * scale, height: 17 * scale, left: 23 * scale, top: 6 * scale }]} /><View style={[styles.mark, { backgroundColor: accentColor, width: 3 * scale, height: 16 * scale, left: 31 * scale, top: 6 * scale }]} /></>}
-      {pattern === 'spotted' && <><View style={[styles.spot, { backgroundColor: accentColor, width: 4 * scale, height: 4 * scale, left: 16 * scale, top: 10 * scale }]} /><View style={[styles.spot, { backgroundColor: accentColor, width: 4 * scale, height: 4 * scale, left: 27 * scale, top: 15 * scale }]} /><View style={[styles.spot, { backgroundColor: accentColor, width: 3 * scale, height: 3 * scale, left: 35 * scale, top: 8 * scale }]} /></>}
-      <View style={[styles.highlight, { width: 19 * scale, height: 3 * scale, left: 17 * scale, top: 7 * scale }]} />
-      <View style={[styles.eye, { width: 3 * scale, height: 3 * scale, left: 41 * scale, top: 5 * scale }]} />
-      {trait === 'crown' && <><View style={[styles.crest, { backgroundColor: accentColor, width: 5 * scale, height: 7 * scale, left: 34 * scale, top: -1 * scale }]} /><View style={[styles.crest, { backgroundColor: accentColor, width: 5 * scale, height: 9 * scale, left: 40 * scale, top: -3 * scale }]} /></>}
-      {accessory === 'chain' && <><View style={[styles.chain, { width: 18 * scale, height: 3 * scale, left: 22 * scale, top: 18 * scale, transform: [{ rotate: '12deg' }] }]} /><View style={[styles.pendant, { width: 5 * scale, height: 5 * scale, left: 30 * scale, top: 21 * scale }]} /></>}
-      {accessory === 'crown' && <><View style={[styles.goldCrownBase, { width: 15 * scale, height: 4 * scale, left: 34 * scale, top: -3 * scale }]} /><View style={[styles.goldCrownPoint, { width: 4 * scale, height: 8 * scale, left: 35 * scale, top: -9 * scale }]} /><View style={[styles.goldCrownPoint, { width: 4 * scale, height: 11 * scale, left: 41 * scale, top: -12 * scale }]} /><View style={[styles.goldCrownPoint, { width: 4 * scale, height: 8 * scale, left: 47 * scale, top: -9 * scale }]} /></>}
-      {trait === 'claws' && <><View style={[styles.arm, { backgroundColor: accentColor, width: 14 * scale, height: 3 * scale, left: 36 * scale, top: 18 * scale, transform: [{ rotate: '20deg' }] }]} /><View style={[styles.claw, { borderColor: accentColor, width: 9 * scale, height: 8 * scale, left: 47 * scale, top: 20 * scale }]} /></>}
-      <View style={[styles.leg, { backgroundColor: accentColor, width: 3 * scale, height: 8 * scale, left: 20 * scale, top: 20 * scale, transform: [{ rotate: '24deg' }] }]} />
-      <View style={[styles.leg, { backgroundColor: accentColor, width: 3 * scale, height: 8 * scale, left: 28 * scale, top: 20 * scale, transform: [{ rotate: '24deg' }] }]} />
-      <View style={[styles.antenna, { backgroundColor: accentColor, width: 15 * scale, left: 43 * scale, top: 5 * scale, transform: [{ rotate: '-18deg' }] }]} />
-      {trait === 'long-whiskers' && <><View style={[styles.antenna, { backgroundColor: accentColor, width: 28 * scale, left: 42 * scale, top: 3 * scale, transform: [{ rotate: '-25deg' }] }]} /><View style={[styles.antenna, { backgroundColor: accentColor, width: 25 * scale, left: 43 * scale, top: 12 * scale, transform: [{ rotate: '19deg' }] }]} /></>}
+    <View accessibilityLabel="Pixel shrimp" style={[styles.canvas, { width: size, height: px(34), transform: [{ scaleX: flip ? -1 : 1 }] }]}>
+      <View style={[styles.tailShadow, { width: px(12), height: px(12), left: px(1), top: px(10), transform: [{ rotate: '45deg' }] }]} />
+      <View style={[styles.tail, { backgroundColor: color, width: px(12), height: px(12), left: px(2), top: px(9), transform: [{ rotate: '45deg' }] }]} />
+      <View style={[styles.tailHighlight, { backgroundColor: accentColor, width: px(5), height: px(5), left: px(2), top: px(7), transform: [{ rotate: '45deg' }] }]} />
+      {trait === 'fan-tail' && <><View style={[styles.tailFin, { backgroundColor: accentColor, width: px(12), height: px(8), left: px(-2), top: px(2), transform: [{ rotate: '-22deg' }] }]} /><View style={[styles.tailFin, { backgroundColor: accentColor, width: px(12), height: px(8), left: px(-2), top: px(21), transform: [{ rotate: '22deg' }] }]} /></>}
+
+      <View style={[styles.bodyShadow, { width: px(18), height: px(17), left: px(9), top: px(8) }]} />
+      <View style={[styles.bodyBack, { backgroundColor: color, width: px(17), height: px(16), left: px(9), top: px(7) }]} />
+      <View style={[styles.bodyMidShadow, { width: px(19), height: px(19), left: px(20), top: px(6) }]} />
+      <View style={[styles.bodyFront, { backgroundColor: color, width: px(18), height: px(18), left: px(21), top: px(5) }]} />
+      <View style={[styles.headShadow, { width: px(12), height: px(14), left: px(35), top: px(5) }]} />
+      <View style={[styles.head, { backgroundColor: color, width: px(11), height: px(13), left: px(36), top: px(4) }]} />
+
+      {pattern === 'banded' && <><View style={[styles.mark, { backgroundColor: accentColor, width: px(5), height: px(16), left: px(16), top: px(7) }]} /><View style={[styles.mark, { backgroundColor: accentColor, width: px(5), height: px(17), left: px(28), top: px(6) }]} /></>}
+      {pattern === 'striped' && <><View style={[styles.mark, { backgroundColor: accentColor, width: px(3), height: px(16), left: px(15), top: px(7) }]} /><View style={[styles.mark, { backgroundColor: accentColor, width: px(3), height: px(17), left: px(23), top: px(6) }]} /><View style={[styles.mark, { backgroundColor: accentColor, width: px(3), height: px(16), left: px(31), top: px(6) }]} /></>}
+      {pattern === 'spotted' && <><View style={[styles.spot, { backgroundColor: accentColor, width: px(4), height: px(4), left: px(16), top: px(10) }]} /><View style={[styles.spot, { backgroundColor: accentColor, width: px(4), height: px(4), left: px(27), top: px(15) }]} /><View style={[styles.spot, { backgroundColor: accentColor, width: px(3), height: px(3), left: px(35), top: px(8) }]} /></>}
+
+      <View style={[styles.highlight, { width: px(17), height: px(2), left: px(18), top: px(7) }]} />
+      <View style={[styles.shellPixel, { backgroundColor: accentColor, width: px(3), height: px(2), left: px(12), top: px(11) }]} />
+      <View style={[styles.shellPixel, { backgroundColor: accentColor, width: px(2), height: px(2), left: px(25), top: px(18) }]} />
+      <View style={[styles.eyeWhite, { width: px(4), height: px(4), left: px(40), top: px(4) }]} />
+      <View style={[styles.eye, { width: px(2.5), height: px(2.5), left: px(41), top: px(5) }]} />
+
+      {trait === 'crown' && <><View style={[styles.crest, { backgroundColor: accentColor, width: px(5), height: px(7), left: px(34), top: px(-1) }]} /><View style={[styles.crest, { backgroundColor: accentColor, width: px(5), height: px(9), left: px(40), top: px(-3) }]} /></>}
+      {accessory === 'chain' && <><View style={[styles.chain, { width: px(18), height: px(3), left: px(22), top: px(18), transform: [{ rotate: '12deg' }] }]} /><View style={[styles.pendant, { width: px(5), height: px(5), left: px(30), top: px(21) }]} /></>}
+      {accessory === 'crown' && <><View style={[styles.goldCrownBase, { width: px(15), height: px(4), left: px(34), top: px(-3) }]} /><View style={[styles.goldCrownPoint, { width: px(4), height: px(8), left: px(35), top: px(-9) }]} /><View style={[styles.goldCrownPoint, { width: px(4), height: px(11), left: px(41), top: px(-12) }]} /><View style={[styles.goldCrownPoint, { width: px(4), height: px(8), left: px(47), top: px(-9) }]} /></>}
+      {accessory === 'visor' && <><View style={[styles.visorBand, { width: px(18), height: px(3), left: px(32), top: px(1), transform: [{ rotate: '-7deg' }] }]} /><View style={[styles.visorBill, { width: px(14), height: px(4), left: px(36), top: px(-2), transform: [{ rotate: '-7deg' }] }]} /><View style={[styles.visorHighlight, { width: px(6), height: px(1.5), left: px(38), top: px(-1) }]} /></>}
+
+      {trait === 'claws' && <><View style={[styles.arm, { backgroundColor: accentColor, width: px(14), height: px(3), left: px(36), top: px(18), transform: [{ rotate: '20deg' }] }]} /><View style={[styles.claw, { borderColor: accentColor, width: px(9), height: px(8), left: px(47), top: px(20), borderWidth: Math.max(1, px(3)) }]} /></>}
+      <View style={[styles.leg, { backgroundColor: accentColor, width: px(2), height: px(8), left: px(17), top: px(21), transform: [{ rotate: '28deg' }] }]} />
+      <View style={[styles.leg, { backgroundColor: accentColor, width: px(2), height: px(9), left: px(22), top: px(21), transform: [{ rotate: '20deg' }] }]} />
+      <View style={[styles.leg, { backgroundColor: accentColor, width: px(2), height: px(8), left: px(28), top: px(21), transform: [{ rotate: '26deg' }] }]} />
+      <View style={[styles.leg, { backgroundColor: accentColor, width: px(2), height: px(7), left: px(33), top: px(20), transform: [{ rotate: '18deg' }] }]} />
+      <View style={[styles.antenna, { backgroundColor: accentColor, width: px(16), left: px(43), top: px(5), transform: [{ rotate: '-18deg' }] }]} />
+      <View style={[styles.antenna, { backgroundColor: accentColor, width: px(13), left: px(44), top: px(11), transform: [{ rotate: '13deg' }] }]} />
+      {trait === 'long-whiskers' && <><View style={[styles.antenna, { backgroundColor: accentColor, width: px(28), left: px(42), top: px(3), transform: [{ rotate: '-25deg' }] }]} /><View style={[styles.antenna, { backgroundColor: accentColor, width: px(25), left: px(43), top: px(12), transform: [{ rotate: '19deg' }] }]} /></>}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  canvas: { position: 'relative' }, tail: { position: 'absolute', width: 12, height: 12 }, tailFin: { position: 'absolute' }, bodyBack: { position: 'absolute' }, bodyFront: { position: 'absolute' }, head: { position: 'absolute' },
-  mark: { position: 'absolute' }, spot: { position: 'absolute' }, highlight: { position: 'absolute', backgroundColor: 'rgba(255,255,255,0.45)' }, eye: { position: 'absolute', backgroundColor: '#071A22' },
-  leg: { position: 'absolute', backgroundColor: '#F5B6A9' }, antenna: { position: 'absolute', height: 2, backgroundColor: '#F5B6A9' }, crest: { position: 'absolute' }, arm: { position: 'absolute' }, claw: { position: 'absolute', borderWidth: 3, borderLeftWidth: 0, backgroundColor: 'transparent' }, chain: { position: 'absolute', backgroundColor: '#FFD24A', borderBottomWidth: 1, borderBottomColor: '#9E691D' }, pendant: { position: 'absolute', backgroundColor: '#FFE37B', borderWidth: 1, borderColor: '#9E691D', transform: [{ rotate: '45deg' }] }, goldCrownBase: { position: 'absolute', backgroundColor: '#F2B92E', borderBottomWidth: 1, borderBottomColor: '#8F5E17' }, goldCrownPoint: { position: 'absolute', backgroundColor: '#FFD95A' },
+  canvas: { position: 'relative' }, tail: { position: 'absolute' }, tailShadow: { position: 'absolute', backgroundColor: '#071A2255' }, tailHighlight: { position: 'absolute', opacity: 0.7 }, tailFin: { position: 'absolute' },
+  bodyShadow: { position: 'absolute', backgroundColor: '#071A2244' }, bodyMidShadow: { position: 'absolute', backgroundColor: '#071A224A' }, headShadow: { position: 'absolute', backgroundColor: '#071A2250' }, bodyBack: { position: 'absolute' }, bodyFront: { position: 'absolute' }, head: { position: 'absolute' },
+  mark: { position: 'absolute' }, spot: { position: 'absolute' }, highlight: { position: 'absolute', backgroundColor: 'rgba(255,255,255,0.5)' }, shellPixel: { position: 'absolute', opacity: 0.65 }, eyeWhite: { position: 'absolute', backgroundColor: '#F7FFF6' }, eye: { position: 'absolute', backgroundColor: '#071A22' },
+  leg: { position: 'absolute' }, antenna: { position: 'absolute', height: 2 }, crest: { position: 'absolute' }, arm: { position: 'absolute' }, claw: { position: 'absolute', borderLeftWidth: 0, backgroundColor: 'transparent' }, chain: { position: 'absolute', backgroundColor: '#FFD24A', borderBottomWidth: 1, borderBottomColor: '#9E691D' }, pendant: { position: 'absolute', backgroundColor: '#FFE37B', borderWidth: 1, borderColor: '#9E691D', transform: [{ rotate: '45deg' }] }, goldCrownBase: { position: 'absolute', backgroundColor: '#F2B92E', borderBottomWidth: 1, borderBottomColor: '#8F5E17' }, goldCrownPoint: { position: 'absolute', backgroundColor: '#FFD95A' },
+  visorBand: { position: 'absolute', backgroundColor: '#224B31', borderBottomWidth: 1, borderBottomColor: '#10281A' }, visorBill: { position: 'absolute', backgroundColor: '#4EA568', borderWidth: 1, borderColor: '#1E5B32' }, visorHighlight: { position: 'absolute', backgroundColor: '#A4E2AF' },
 });

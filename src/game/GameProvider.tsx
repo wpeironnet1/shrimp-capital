@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { missions, upgrades } from './catalog';
-import { accrueProduction, applyXp, canClaimDailyReward, dailyRewardAmount, dayKey, GameState, hatch, initialState, missionProgress, nextDailyStreak, sell, upgradeCost } from './engine';
+import { accrueProduction, applyXp, canClaimDailyReward, dailyRewardAmount, dayKey, feedTank, GameState, hatch, initialState, missionProgress, nextDailyStreak, sell, serviceTank, upgradeCost } from './engine';
 
 const SAVE_KEY = '@shrimp-capital/save-v1';
 type GameContextValue = {
@@ -15,6 +15,8 @@ type GameContextValue = {
   selectSpecies: (id: string) => void;
   buyUpgrade: (id: string) => void;
   expandTank: () => void;
+  feed: () => void;
+  service: () => void;
   claimMission: (id: string) => void;
   claimDailyReward: () => void;
 };
@@ -35,6 +37,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         shrimp: { ...initialState.shrimp, ...parsed.shrimp },
         shrimpAccessories: { ...initialState.shrimpAccessories, ...parsed.shrimpAccessories },
         upgrades: { ...initialState.upgrades, ...parsed.upgrades },
+        conditions: { ...initialState.conditions, ...parsed.conditions },
+        conditionUpdatedAt: parsed.conditionUpdatedAt ?? parsed.lastUpdatedAt ?? Date.now(),
         stats: { ...initialState.stats, ...parsed.stats },
         claimedMissions: { ...initialState.claimedMissions, ...parsed.claimedMissions },
       } as GameState;
@@ -67,13 +71,23 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       if (!item) return current;
       const cost = upgradeCost(item.baseCost, current.upgrades[id] ?? 0);
       if (current.cash < cost) return current;
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       return { ...current, cash: current.cash - cost, upgrades: { ...current.upgrades, [id]: (current.upgrades[id] ?? 0) + 1 }, stats: { ...current.stats, upgradesBought: current.stats.upgradesBought + 1 } };
     }),
     expandTank: () => setState((current) => {
       const cost = Math.round(75 * Math.pow(1.45, Math.max(0, (current.tankCapacity - 20) / 10)));
       if (current.cash < cost) return current;
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
       return { ...current, cash: current.cash - cost, tankCapacity: current.tankCapacity + 10 };
     }),
+    feed: () => {
+      setState((current) => feedTank(current));
+      Haptics.selectionAsync();
+    },
+    service: () => {
+      setState((current) => serviceTank(current));
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    },
     claimMission: (id) => setState((current) => {
       const mission = missions.find((entry) => entry.id === id);
       if (!mission || current.claimedMissions[id] || missionProgress(current, mission.metric) < mission.target) return current;

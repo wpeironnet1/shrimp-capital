@@ -48,7 +48,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       }
       if (!raw) return;
       const parsed = JSON.parse(raw) as Partial<GameState>;
-      const normalizedAccessories = Object.fromEntries(Object.entries(parsed.shrimpAccessories ?? {}).map(([id, value]) => [id, { chain: value?.chain ?? 0, crown: value?.crown ?? 0, visor: value?.visor ?? 0 }]));
+      const normalizedAccessories = Object.fromEntries(Object.entries(parsed.shrimpAccessories ?? {}).map(([id, value]) => [id, { chain: value?.chain ?? 0, crown: value?.crown ?? 0, visor: value?.visor ?? 0, suit: value?.suit ?? 0 }]));
       const discoveredFromStock = Object.fromEntries(Object.entries(parsed.shrimp ?? {}).filter(([, amount]) => (amount ?? 0) > 0).map(([id]) => [id, true]));
       const saved = {
         ...initialState,

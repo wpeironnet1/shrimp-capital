@@ -11,32 +11,32 @@ export default function TabLayout(){
   return <Tabs screenOptions={({route})=>({
     headerShown:false,
     tabBarActiveTintColor:colors.goldLight,
-    tabBarInactiveTintColor:'#87A3A7',
+    tabBarInactiveTintColor:'#A8BEC1',
     tabBarHideOnKeyboard:true,
     tabBarStyle:{
       position:'absolute',
       backgroundColor:'#05161D',
       borderTopWidth:3,
       borderTopColor:colors.brass,
-      height:mobile?64:76,
-      paddingTop:mobile?4:6,
-      paddingBottom:mobile?5:7,
+      height:mobile?70:80,
+      paddingTop:mobile?5:7,
+      paddingBottom:mobile?6:8,
       shadowColor:'#000',
       shadowOpacity:.65,
       shadowRadius:0,
       shadowOffset:{width:0,height:-5},
     },
     tabBarItemStyle:{
-      marginHorizontal:mobile?2:5,
+      marginHorizontal:mobile?3:6,
       marginVertical:3,
-      minHeight:50,
+      minHeight:54,
       borderWidth:1,
-      borderColor:'#29434B',
+      borderColor:'#36545D',
       backgroundColor:'#0A2933',
     },
     tabBarLabelStyle:{
       fontFamily:'PressStart2P',
-      fontSize:tiny?5:mobile?6:7,
+      fontSize:tiny?7:mobile?8:9,
       letterSpacing:0,
       marginBottom:mobile?2:4,
       textTransform:'uppercase',
@@ -44,7 +44,7 @@ export default function TabLayout(){
     tabBarIcon:({color,focused})=><Ionicons
       name={route.name==='index'?'fish':route.name==='market'?'stats-chart':'business'}
       color={focused?colors.goldLight:color}
-      size={mobile?(focused?22:20):(focused?24:22)}
+      size={mobile?(focused?25:23):(focused?27:24)}
     />,
   })}>
     <Tabs.Screen name="index" options={{title:'Farm'}}/>

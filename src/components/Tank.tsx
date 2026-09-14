@@ -25,8 +25,10 @@ function visiblePopulation(population: Record<string, number>) {
 
 function ShrimpActor({ shrimp, index }: { shrimp: TankShrimp; index: number }) {
   const bob = useRef(new Animated.Value(0)).current;
-  const dart = useRef(new Animated.Value(0)).current;
+  const drift = useRef(new Animated.Value(0)).current;
+  const reaction = useRef(new Animated.Value(0)).current;
   const [flip, setFlip] = useState(index % 2 === 1);
+  const reactionType = index % 3;
   const row = Math.floor(index / 6);
   const column = index % 6;
   const left = 5 + column * 15 + (row % 2) * 5;
@@ -34,29 +36,64 @@ function ShrimpActor({ shrimp, index }: { shrimp: TankShrimp; index: number }) {
   const size = (index === 0 ? 43 : 25 + ((index * 7) % 9)) + raritySize[shrimp.item.rarity];
 
   useEffect(() => {
-    const loop = Animated.loop(Animated.sequence([
+    const bobLoop = Animated.loop(Animated.sequence([
       Animated.timing(bob, { toValue: -4, duration: 750 + (index % 5) * 120, useNativeDriver: true }),
       Animated.timing(bob, { toValue: 4, duration: 750 + (index % 5) * 120, useNativeDriver: true }),
     ]));
-    loop.start();
-    return () => loop.stop();
+    bobLoop.start();
+    return () => bobLoop.stop();
   }, [bob, index]);
+
+  useEffect(() => {
+    let active = true;
+    const distance = 9 + (index % 4) * 4;
+    const duration = 2300 + (index % 6) * 310;
+    const wander = (target: number) => {
+      if (!active) return;
+      setFlip(target < 0);
+      Animated.timing(drift, { toValue: target, duration, useNativeDriver: true }).start(({ finished }) => {
+        if (finished && active) wander(-target);
+      });
+    };
+    wander(index % 2 === 0 ? distance : -distance);
+    return () => { active = false; drift.stopAnimation(); };
+  }, [drift, index]);
 
   const makeSwim = (event: GestureResponderEvent) => {
     event.stopPropagation();
-    dart.stopAnimation();
-    dart.setValue(0);
-    Animated.timing(dart, { toValue: 1, duration: 520, useNativeDriver: true }).start(() => setFlip((value) => !value));
+    reaction.stopAnimation();
+    reaction.setValue(0);
+    const duration = reactionType === 2 ? 760 : reactionType === 0 ? 620 : 480;
+    Animated.timing(reaction, { toValue: 1, duration, useNativeDriver: true }).start(() => {
+      if (reactionType === 0) setFlip((value) => !value);
+    });
   };
 
   const direction = flip ? -1 : 1;
+  const reactionX = reactionType === 0
+    ? reaction.interpolate({ inputRange: [0, 0.68, 1], outputRange: [0, 72 * direction, 0] })
+    : reactionType === 1
+      ? reaction.interpolate({ inputRange: [0, 0.3, 0.65, 1], outputRange: [0, 13 * direction, -9 * direction, 0] })
+      : reaction.interpolate({ inputRange: [0, 0.45, 1], outputRange: [0, 5 * direction, 0] });
+  const reactionY = reactionType === 1
+    ? reaction.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, -9, 0] })
+    : reaction.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, -3, 0] });
+  const reactionRotate = reactionType === 0
+    ? reaction.interpolate({ inputRange: [0, 0.68, 1], outputRange: ['0deg', `${360 * direction}deg`, `${360 * direction}deg`] })
+    : reaction.interpolate({ inputRange: [0, 0.35, 0.7, 1], outputRange: ['0deg', `${9 * direction}deg`, `${-6 * direction}deg`, '0deg'] });
   return <Animated.View style={[styles.actor, { left: `${left}%` as `${number}%`, top, transform: [
     { translateY: bob },
-    { translateX: dart.interpolate({ inputRange: [0, 0.55, 1], outputRange: [0, 22 * direction, 0] }) },
-    { rotate: dart.interpolate({ inputRange: [0, 0.55, 1], outputRange: ['0deg', `${7 * direction}deg`, '0deg'] }) },
+    { translateX: drift },
+    { translateX: reactionX },
+    { translateY: reactionY },
+    { rotate: reactionRotate },
   ] }]}>
-    <Pressable accessibilityRole="button" accessibilityLabel={`Make ${shrimp.item.name} swim`} hitSlop={8} onPress={makeSwim}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`Make ${shrimp.item.name} react`} hitSlop={8} onPress={makeSwim}>
       <PixelShrimp color={shrimp.item.color} accentColor={shrimp.item.accentColor} pattern={shrimp.item.pattern} trait={shrimp.item.trait} size={size} flip={flip} />
+      {reactionType === 2 && <Animated.View pointerEvents="none" style={[styles.bubbleBurst, {
+        opacity: reaction.interpolate({ inputRange: [0, 0.18, 0.72, 1], outputRange: [0, 1, 0.8, 0] }),
+        transform: [{ translateY: reaction.interpolate({ inputRange: [0, 1], outputRange: [5, -25] }) }],
+      }]}><PixelText style={styles.bubbleBurstText}>○ · ○</PixelText></Animated.View>}
     </Pressable>
   </Animated.View>;
 }
@@ -100,7 +137,7 @@ export function Tank({ population, capacity, upgrades, onPress }: { population: 
 
 const styles = StyleSheet.create({
   shell: { height: 285, borderWidth: 5, borderColor: '#285765', borderRadius: 22, overflow: 'hidden', backgroundColor: colors.deep, shadowColor: '#000', shadowOpacity: 0.45, shadowRadius: 12, shadowOffset: { width: 0, height: 8 } },
-  water: { flex: 1, alignItems: 'center', justifyContent: 'center' }, bubbles: { position: 'absolute', top: 24, left: 22 }, bubble: { color: '#8EE8E2', opacity: 0.65, fontSize: 22 }, actor: { position: 'absolute', zIndex: 3 }, empty: { color: '#A8E5E1', opacity: 0.72, fontSize: 10 },
+  water: { flex: 1, alignItems: 'center', justifyContent: 'center' }, bubbles: { position: 'absolute', top: 24, left: 22 }, bubble: { color: '#8EE8E2', opacity: 0.65, fontSize: 22 }, actor: { position: 'absolute', zIndex: 3 }, bubbleBurst: { position: 'absolute', top: -7, right: -10, zIndex: 5 }, bubbleBurstText: { color: '#B8FFFA', fontSize: 10, textShadowColor: '#0B5366', textShadowRadius: 2 }, empty: { color: '#A8E5E1', opacity: 0.72, fontSize: 10 },
   plant: { position: 'absolute', left: 25, bottom: 27, width: 28, height: 65, zIndex: 2 }, plantTwo: { left: 74, height: 48, transform: [{ scaleX: -0.8 }] }, stem: { position: 'absolute', left: 12, bottom: 0, width: 5, height: 60, backgroundColor: '#3A8F68' }, leaf: { position: 'absolute', width: 18, height: 8, backgroundColor: '#55B579' }, leafLeft: { left: 0, top: 25, transform: [{ rotate: '25deg' }] }, leafRight: { right: 0, top: 10, transform: [{ rotate: '-30deg' }] },
   sand: { position: 'absolute', bottom: 0, height: 36, width: '100%', backgroundColor: '#C99B62', borderTopWidth: 5, borderTopColor: '#E7BE7B', zIndex: 1 }, caption: { position: 'absolute', top: 14, right: 15, alignItems: 'flex-end', zIndex: 6 }, count: { fontSize: 18 }, hint: { fontSize: 8, color: colors.aqua, marginTop: 3 },
   heater: { position: 'absolute', left: 8, top: 76, width: 14, height: 93, zIndex: 4, alignItems: 'center' }, heaterGlow: { position: 'absolute', width: 24, height: 93, borderRadius: 12, backgroundColor: '#FF755E' }, heaterCore: { width: 7, height: 78, marginTop: 7, borderRadius: 4, backgroundColor: '#FFB64A', borderWidth: 2, borderColor: '#4A2A27' },

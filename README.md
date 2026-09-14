@@ -18,7 +18,8 @@
 - Code-native pixel shrimp sprites, aquarium plants, and animated swimming
 - Daily Market Open rewards with persistent streak progression
 - Population-accurate aquarium display (performance-capped at 24 visible shrimp)
-- Tap-reactive shrimp with turns, rarity patterns, claws, crests, and long feelers
+- Independently wandering shrimp with three tap reactions: spin-and-dart, shimmy, and bubble burst
+- Rarity patterns, claws, crests, fan tails, long feelers, and tier-based sizes
 - Visible filter, heater, algae, and tank-expansion decorations
 
 ## Run locally

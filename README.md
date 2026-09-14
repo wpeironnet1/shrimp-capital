@@ -19,6 +19,7 @@
 - Daily Market Open rewards with persistent streak progression
 - Population-accurate aquarium display (performance-capped at 24 visible shrimp)
 - Independently wandering shrimp with three tap reactions: spin-and-dart, shimmy, and bubble burst
+- Random ambient shrimp jumps with above-water arcs and pixel splash-out/splash-in effects
 - Rarity patterns, claws, crests, fan tails, long feelers, and tier-based sizes
 - Multi-stage animated filter, heater, algae, and tank-expansion installations
 - Persistent 1-in-500 accessory hatches with tiny gold chains or crowns

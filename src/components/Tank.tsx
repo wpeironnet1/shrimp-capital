@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, GestureResponderEvent, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Easing, GestureResponderEvent, Pressable, StyleSheet, View } from 'react-native';
 import { ShrimpSpecies, species } from '../game/catalog';
 import { colors } from '../theme/colors';
 import { PixelShrimp, ShrimpAccessory } from './PixelShrimp';
@@ -27,10 +27,29 @@ function visiblePopulation(population: Record<string, number>, accessories: Reco
   return result;
 }
 
-function ShrimpActor({ shrimp, index }: { shrimp: TankShrimp; index: number }) {
+function PixelSplash({ animation, landing, direction, top }: { animation: Animated.Value; landing?: boolean; direction: number; top: number }) {
+  const opacity = landing
+    ? animation.interpolate({ inputRange: [0, 0.76, 0.87, 1], outputRange: [0, 0, 1, 0] })
+    : animation.interpolate({ inputRange: [0, 0.05, 0.17, 1], outputRange: [0, 1, 0, 0] });
+  const scale = landing
+    ? animation.interpolate({ inputRange: [0, 0.76, 0.9, 1], outputRange: [0.5, 0.5, 1.25, 0.8] })
+    : animation.interpolate({ inputRange: [0, 0.1, 0.2, 1], outputRange: [0.5, 1.2, 0.8, 0.8] });
+  return <Animated.View pointerEvents="none" style={[styles.jumpSplash, {
+    top: -top + 21,
+    left: landing ? 29 * direction : 1,
+    opacity,
+    transform: [{ scale }],
+  }]}>
+    <View style={[styles.splashDrop, styles.splashDropLeft]} /><View style={styles.splashDrop} /><View style={[styles.splashDrop, styles.splashDropRight]} />
+    <View style={styles.splashLineLeft} /><View style={styles.splashLineCenter} /><View style={styles.splashLineRight} />
+  </Animated.View>;
+}
+
+function ShrimpActor({ shrimp, index, jumpToken }: { shrimp: TankShrimp; index: number; jumpToken: number }) {
   const bob = useRef(new Animated.Value(0)).current;
   const drift = useRef(new Animated.Value(0)).current;
   const reaction = useRef(new Animated.Value(0)).current;
+  const jump = useRef(new Animated.Value(0)).current;
   const [flip, setFlip] = useState(index % 2 === 1);
   const reactionType = index % 3;
   const row = Math.floor(index / 6);
@@ -63,6 +82,13 @@ function ShrimpActor({ shrimp, index }: { shrimp: TankShrimp; index: number }) {
     return () => { active = false; drift.stopAnimation(); };
   }, [drift, index]);
 
+  useEffect(() => {
+    if (!jumpToken) return;
+    jump.stopAnimation();
+    jump.setValue(0);
+    Animated.timing(jump, { toValue: 1, duration: 1250, easing: Easing.linear, useNativeDriver: true }).start();
+  }, [jump, jumpToken]);
+
   const makeSwim = (event: GestureResponderEvent) => {
     event.stopPropagation();
     reaction.stopAnimation();
@@ -85,21 +111,28 @@ function ShrimpActor({ shrimp, index }: { shrimp: TankShrimp; index: number }) {
   const reactionRotate = reactionType === 0
     ? reaction.interpolate({ inputRange: [0, 0.68, 1], outputRange: ['0deg', `${360 * direction}deg`, `${360 * direction}deg`] })
     : reaction.interpolate({ inputRange: [0, 0.35, 0.7, 1], outputRange: ['0deg', `${9 * direction}deg`, `${-6 * direction}deg`, '0deg'] });
-  return <Animated.View style={[styles.actor, { left: `${left}%` as `${number}%`, top, transform: [
+  const jumpDirection = index % 2 === 0 ? 1 : -1;
+  return <View style={[styles.actor, { left: `${left}%` as `${number}%`, top }]}>
+    <Animated.View style={{ transform: [
     { translateY: bob },
     { translateX: drift },
     { translateX: reactionX },
     { translateY: reactionY },
     { rotate: reactionRotate },
-  ] }]}>
-    <Pressable accessibilityRole="button" accessibilityLabel={`Make ${shrimp.item.name} react`} hitSlop={8} onPress={makeSwim}>
-      <PixelShrimp color={shrimp.item.color} accentColor={shrimp.item.accentColor} pattern={shrimp.item.pattern} trait={shrimp.item.trait} accessory={shrimp.accessory} size={size} flip={flip} />
-      {reactionType === 2 && <Animated.View pointerEvents="none" style={[styles.bubbleBurst, {
-        opacity: reaction.interpolate({ inputRange: [0, 0.18, 0.72, 1], outputRange: [0, 1, 0.8, 0] }),
-        transform: [{ translateY: reaction.interpolate({ inputRange: [0, 1], outputRange: [5, -25] }) }],
-      }]}><PixelText style={styles.bubbleBurstText}>○ · ○</PixelText></Animated.View>}
-    </Pressable>
-  </Animated.View>;
+    { translateX: jump.interpolate({ inputRange: [0, 1], outputRange: [0, 32 * jumpDirection] }) },
+    { translateY: jump.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, -top - 50, 0] }) },
+    { rotate: jump.interpolate({ inputRange: [0, 0.5, 1], outputRange: ['0deg', `${145 * jumpDirection}deg`, `${290 * jumpDirection}deg`] }) },
+  ] }}>
+      <Pressable accessibilityRole="button" accessibilityLabel={`Make ${shrimp.item.name} react`} hitSlop={8} onPress={makeSwim}>
+        <PixelShrimp color={shrimp.item.color} accentColor={shrimp.item.accentColor} pattern={shrimp.item.pattern} trait={shrimp.item.trait} accessory={shrimp.accessory} size={size} flip={flip} />
+        {reactionType === 2 && <Animated.View pointerEvents="none" style={[styles.bubbleBurst, {
+          opacity: reaction.interpolate({ inputRange: [0, 0.18, 0.72, 1], outputRange: [0, 1, 0.8, 0] }),
+          transform: [{ translateY: reaction.interpolate({ inputRange: [0, 1], outputRange: [5, -25] }) }],
+        }]}><PixelText style={styles.bubbleBurstText}>○ · ○</PixelText></Animated.View>}
+      </Pressable>
+    </Animated.View>
+    <PixelSplash animation={jump} direction={jumpDirection} top={top} /><PixelSplash animation={jump} landing direction={jumpDirection} top={top} />
+  </View>;
 }
 
 function EquipmentMotion({ kind, level }: { kind: 'filter' | 'heater'; level: number }) {
@@ -160,12 +193,26 @@ function TankUpgrades({ upgrades, capacity }: { upgrades: Record<string, number>
 
 export function Tank({ population, accessoryPopulation, capacity, upgrades, onPress }: { population: Record<string, number>; accessoryPopulation: Record<string, { chain: number; crown: number }>; capacity: number; upgrades: Record<string, number>; onPress: () => void }) {
   const shrimp = useMemo(() => visiblePopulation(population, accessoryPopulation), [accessoryPopulation, population]);
+  const [jumpEvent, setJumpEvent] = useState({ index: -1, token: 0 });
   const count = Object.values(population).reduce((sum, amount) => sum + amount, 0);
+  useEffect(() => {
+    if (shrimp.length === 0) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const scheduleJump = (first = false) => {
+      const delay = first ? 6000 + Math.random() * 8000 : 12000 + Math.random() * 16000;
+      timer = setTimeout(() => {
+        setJumpEvent({ index: Math.floor(Math.random() * shrimp.length), token: Date.now() });
+        scheduleJump();
+      }, delay);
+    };
+    scheduleJump(true);
+    return () => clearTimeout(timer);
+  }, [shrimp.length]);
   return <Pressable accessibilityRole="button" accessibilityLabel={`Aquarium with ${count} shrimp. Tap open water to hatch another.`} onPress={onPress} style={({ pressed }) => [styles.shell, pressed && { transform: [{ scale: 0.985 }] }]}>
     <LinearGradient colors={['#1F7F91', '#0C5368', '#092C3B']} style={styles.water}>
       <View style={styles.bubbles}><PixelText style={styles.bubble}>○  ·  ○    ·</PixelText></View>
       <TankUpgrades upgrades={upgrades} capacity={capacity} />
-      {shrimp.map((entry, index) => <ShrimpActor key={entry.key} shrimp={entry} index={index} />)}
+      {shrimp.map((entry, index) => <ShrimpActor key={entry.key} shrimp={entry} index={index} jumpToken={jumpEvent.index === index ? jumpEvent.token : 0} />)}
       {count === 0 && <PixelText style={styles.empty}>TAP TO FUND YOUR FIRST SHRIMP</PixelText>}
       <View style={styles.plant}><View style={styles.stem} /><View style={[styles.leaf, styles.leafLeft]} /><View style={[styles.leaf, styles.leafRight]} /></View>
       <View style={styles.sand} />
@@ -175,8 +222,8 @@ export function Tank({ population, accessoryPopulation, capacity, upgrades, onPr
 }
 
 const styles = StyleSheet.create({
-  shell: { height: 285, borderWidth: 5, borderColor: '#285765', borderRadius: 22, overflow: 'hidden', backgroundColor: colors.deep, shadowColor: '#000', shadowOpacity: 0.45, shadowRadius: 12, shadowOffset: { width: 0, height: 8 } },
-  water: { flex: 1, alignItems: 'center', justifyContent: 'center' }, bubbles: { position: 'absolute', top: 24, left: 22 }, bubble: { color: '#8EE8E2', opacity: 0.65, fontSize: 22 }, actor: { position: 'absolute', zIndex: 3 }, bubbleBurst: { position: 'absolute', top: -7, right: -10, zIndex: 5 }, bubbleBurstText: { color: '#B8FFFA', fontSize: 10, textShadowColor: '#0B5366', textShadowRadius: 2 }, empty: { color: '#A8E5E1', opacity: 0.72, fontSize: 10 },
+  shell: { height: 285, borderWidth: 5, borderColor: '#285765', borderRadius: 22, overflow: 'visible', backgroundColor: colors.deep, shadowColor: '#000', shadowOpacity: 0.45, shadowRadius: 12, shadowOffset: { width: 0, height: 8 } },
+  water: { flex: 1, borderRadius: 17, alignItems: 'center', justifyContent: 'center' }, bubbles: { position: 'absolute', top: 24, left: 22 }, bubble: { color: '#8EE8E2', opacity: 0.65, fontSize: 22 }, actor: { position: 'absolute', zIndex: 7 }, bubbleBurst: { position: 'absolute', top: -7, right: -10, zIndex: 5 }, bubbleBurstText: { color: '#B8FFFA', fontSize: 10, textShadowColor: '#0B5366', textShadowRadius: 2 }, jumpSplash: { position: 'absolute', width: 45, height: 25, zIndex: 8 }, splashDrop: { position: 'absolute', top: 1, left: 19, width: 4, height: 7, backgroundColor: '#B8FFFA' }, splashDropLeft: { left: 7, top: 7, transform: [{ rotate: '-35deg' }] }, splashDropRight: { left: 32, top: 6, transform: [{ rotate: '35deg' }] }, splashLineLeft: { position: 'absolute', left: 5, top: 15, width: 14, height: 3, backgroundColor: '#72D9DF', transform: [{ rotate: '-20deg' }] }, splashLineCenter: { position: 'absolute', left: 18, top: 13, width: 10, height: 3, backgroundColor: '#B8FFFA' }, splashLineRight: { position: 'absolute', left: 27, top: 15, width: 14, height: 3, backgroundColor: '#72D9DF', transform: [{ rotate: '20deg' }] }, empty: { color: '#A8E5E1', opacity: 0.72, fontSize: 10 },
   plant: { position: 'absolute', left: 25, bottom: 27, width: 28, height: 65, zIndex: 2 }, plantTwo: { left: 74, height: 48, transform: [{ scaleX: -0.8 }] }, stem: { position: 'absolute', left: 12, bottom: 0, width: 5, height: 60, backgroundColor: '#3A8F68' }, leaf: { position: 'absolute', width: 18, height: 8, backgroundColor: '#55B579' }, leafLeft: { left: 0, top: 25, transform: [{ rotate: '25deg' }] }, leafRight: { right: 0, top: 10, transform: [{ rotate: '-30deg' }] },
   sand: { position: 'absolute', bottom: 0, height: 36, width: '100%', backgroundColor: '#C99B62', borderTopWidth: 5, borderTopColor: '#E7BE7B', zIndex: 1 }, caption: { position: 'absolute', top: 14, right: 15, alignItems: 'flex-end', zIndex: 6 }, count: { fontSize: 18 }, hint: { fontSize: 8, color: colors.aqua, marginTop: 3 },
   heater: { position: 'absolute', left: 7, top: 66, width: 24, height: 108, zIndex: 4, alignItems: 'center' }, heaterCable: { position: 'absolute', top: -66, left: 10, width: 4, height: 72, backgroundColor: '#182C32' }, heaterGlow: { position: 'absolute', top: 9, width: 28, height: 91, borderRadius: 14, backgroundColor: '#FF755E' }, heaterCap: { width: 13, height: 9, backgroundColor: '#334B50', borderWidth: 2, borderColor: '#162D32' }, heaterCapAdvanced: { width: 19, backgroundColor: '#C38B3D' }, heaterCore: { width: 11, height: 83, overflow: 'hidden', justifyContent: 'flex-end', backgroundColor: '#472E2B', borderWidth: 2, borderColor: '#1D292B' }, heatFill: { width: '100%', backgroundColor: '#FF9B43' }, heaterTick: { position: 'absolute', right: 2, width: 7, height: 2, backgroundColor: '#FFE3A0' }, heaterController: { position: 'absolute', top: -18, left: 14, width: 23, height: 18, backgroundColor: '#314D53', borderWidth: 2, borderColor: '#142F35' }, controllerLight: { width: 5, height: 5, margin: 4, backgroundColor: '#6DFF9A' }, heaterLevel: { position: 'absolute', bottom: 8, color: '#FFF0BC', fontSize: 6 }, heaterMotion: { position: 'absolute', top: 35, right: -19, width: 30, height: 50 }, heatMote: { position: 'absolute', bottom: 0, width: 3, height: 3, backgroundColor: '#FFBD65' },

@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { missions, upgrades } from './catalog';
-import { accrueProduction, applyXp, canClaimDailyReward, dailyRewardAmount, dayKey, feedTank, GameState, hatch, initialState, missionProgress, nextDailyStreak, sell, serviceTank, upgradeCost } from './engine';
+import { accrueProduction, applyXp, breedSelected, canClaimDailyReward, dailyRewardAmount, dayKey, feedTank, GameState, hatch, initialState, launchIPO, missionProgress, nextDailyStreak, sell, serviceTank, upgradeCost } from './engine';
 
 const SAVE_KEY = '@shrimp-capital/save-v1';
 type GameContextValue = {
@@ -17,6 +17,8 @@ type GameContextValue = {
   expandTank: () => void;
   feed: () => void;
   service: () => void;
+  breed: () => void;
+  ipo: () => void;
   claimMission: (id: string) => void;
   claimDailyReward: () => void;
 };
@@ -31,11 +33,13 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     AsyncStorage.getItem(SAVE_KEY).then((raw) => {
       if (!raw) return;
       const parsed = JSON.parse(raw) as Partial<GameState>;
+      const normalizedAccessories = Object.fromEntries(Object.entries(parsed.shrimpAccessories ?? {}).map(([id, value]) => [id, { chain: value?.chain ?? 0, crown: value?.crown ?? 0, visor: value?.visor ?? 0 }]));
       const saved = {
         ...initialState,
         ...parsed,
         shrimp: { ...initialState.shrimp, ...parsed.shrimp },
-        shrimpAccessories: { ...initialState.shrimpAccessories, ...parsed.shrimpAccessories },
+        shrimpAccessories: normalizedAccessories,
+        mutations: { ...initialState.mutations, ...parsed.mutations },
         upgrades: { ...initialState.upgrades, ...parsed.upgrades },
         conditions: { ...initialState.conditions, ...parsed.conditions },
         conditionUpdatedAt: parsed.conditionUpdatedAt ?? parsed.lastUpdatedAt ?? Date.now(),
@@ -48,15 +52,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }).finally(() => setLoaded(true));
   }, []);
 
-  useEffect(() => {
-    if (loaded) AsyncStorage.setItem(SAVE_KEY, JSON.stringify(state));
-  }, [state, loaded]);
-
-  useEffect(() => {
-    if (!loaded) return;
-    const timer = setInterval(() => setState((current) => accrueProduction(current).state), 1000);
-    return () => clearInterval(timer);
-  }, [loaded]);
+  useEffect(() => { if (loaded) AsyncStorage.setItem(SAVE_KEY, JSON.stringify(state)); }, [state, loaded]);
+  useEffect(() => { if (!loaded) return; const timer = setInterval(() => setState((current) => accrueProduction(current).state), 1000); return () => clearInterval(timer); }, [loaded]);
 
   const value = useMemo<GameContextValue>(() => ({
     state,
@@ -80,14 +77,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
       return { ...current, cash: current.cash - cost, tankCapacity: current.tankCapacity + 10 };
     }),
-    feed: () => {
-      setState((current) => feedTank(current));
-      Haptics.selectionAsync();
-    },
-    service: () => {
-      setState((current) => serviceTank(current));
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    },
+    feed: () => { setState((current) => feedTank(current)); Haptics.selectionAsync(); },
+    service: () => { setState((current) => serviceTank(current)); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); },
+    breed: () => { setState((current) => breedSelected(current)); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); },
+    ipo: () => { setState((current) => launchIPO(current)); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); },
     claimMission: (id) => setState((current) => {
       const mission = missions.find((entry) => entry.id === id);
       if (!mission || current.claimedMissions[id] || missionProgress(current, mission.metric) < mission.target) return current;
@@ -106,8 +99,4 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 }
 
-export const useGame = () => {
-  const context = useContext(GameContext);
-  if (!context) throw new Error('useGame must be used inside GameProvider');
-  return context;
-};
+export const useGame = () => { const context = useContext(GameContext); if (!context) throw new Error('useGame must be used inside GameProvider'); return context; };

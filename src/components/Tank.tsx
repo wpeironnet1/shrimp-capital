@@ -2,24 +2,25 @@ import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, GestureResponderEvent, Pressable, StyleSheet, View } from 'react-native';
 import { ShrimpSpecies, species } from '../game/catalog';
+import { DecorSlot } from '../game/decor';
 import { colors } from '../theme/colors';
 import { PixelShrimp, ShrimpAccessory } from './PixelShrimp';
 import { PixelText } from './PixelText';
+import { TankOfficeDecor } from './TankOfficeDecor';
 
 const VISUAL_POPULATION_LIMIT = 24;
 const raritySize: Record<ShrimpSpecies['rarity'], number> = { Common: 0, Uncommon: 1, Rare: 2, Epic: 4, Legendary: 7, Mythic: 10, Exotic: 13 };
+type Counts = { chain: number; crown: number; visor: number };
 type TankShrimp = { key: string; item: ShrimpSpecies; accessory?: ShrimpAccessory };
 
-function visiblePopulation(population: Record<string, number>, accessories: Record<string, { chain: number; crown: number }>) {
+function visiblePopulation(population: Record<string, number>, accessories: Record<string, Counts>) {
   const stocked = species.map((item) => ({ item, count: population[item.id] ?? 0, used: 0 })).filter((entry) => entry.count > 0);
   const result: TankShrimp[] = [];
   while (result.length < VISUAL_POPULATION_LIMIT && stocked.some((entry) => entry.used < entry.count)) {
     for (const entry of stocked) {
       if (entry.used >= entry.count || result.length >= VISUAL_POPULATION_LIMIT) continue;
-      const accessoryCounts = accessories[entry.item.id] ?? { chain: 0, crown: 0 };
-      const accessory: ShrimpAccessory | undefined = entry.used < accessoryCounts.crown
-        ? 'crown'
-        : entry.used < accessoryCounts.crown + accessoryCounts.chain ? 'chain' : undefined;
+      const a = accessories[entry.item.id] ?? { chain: 0, crown: 0, visor: 0 };
+      const accessory: ShrimpAccessory | undefined = entry.used < a.crown ? 'crown' : entry.used < a.crown + a.visor ? 'visor' : entry.used < a.crown + a.visor + a.chain ? 'chain' : undefined;
       result.push({ key: `${entry.item.id}-${entry.used}`, item: entry.item, accessory });
       entry.used += 1;
     }
@@ -27,22 +28,17 @@ function visiblePopulation(population: Record<string, number>, accessories: Reco
   return result;
 }
 
-function PixelSplash({ animation, landing, direction, top }: { animation: Animated.Value; landing?: boolean; direction: number; top: number }) {
-  const opacity = landing
-    ? animation.interpolate({ inputRange: [0, 0.76, 0.87, 1], outputRange: [0, 0, 1, 0] })
-    : animation.interpolate({ inputRange: [0, 0.05, 0.17, 1], outputRange: [0, 1, 0, 0] });
-  const scale = landing
-    ? animation.interpolate({ inputRange: [0, 0.76, 0.9, 1], outputRange: [0.5, 0.5, 1.25, 0.8] })
-    : animation.interpolate({ inputRange: [0, 0.1, 0.2, 1], outputRange: [0.5, 1.2, 0.8, 0.8] });
-  return <Animated.View pointerEvents="none" style={[styles.jumpSplash, {
-    top: -top + 21,
-    left: landing ? 29 * direction : 1,
-    opacity,
-    transform: [{ scale }],
-  }]}>
-    <View style={[styles.splashDrop, styles.splashDropLeft]} /><View style={styles.splashDrop} /><View style={[styles.splashDrop, styles.splashDropRight]} />
-    <View style={styles.splashLineLeft} /><View style={styles.splashLineCenter} /><View style={styles.splashLineRight} />
-  </Animated.View>;
+function JumpEffects({ animation, direction, label }: { animation: Animated.Value; direction: number; label?: string }) {
+  const takeoffOpacity = animation.interpolate({ inputRange: [0,.08,.18,.28,1], outputRange: [0,0,1,0,0] });
+  const landingOpacity = animation.interpolate({ inputRange: [0,.72,.83,.94,1], outputRange: [0,0,1,.65,0] });
+  const rippleScale = animation.interpolate({ inputRange: [0,.78,.9,1], outputRange: [.3,.3,1.15,1.8] });
+  return <View pointerEvents="none" style={styles.jumpFx}>
+    <Animated.View style={[styles.surfaceShadow,{opacity:animation.interpolate({inputRange:[0,.18,.42,.68,.86,1],outputRange:[0,.55,.25,.2,.5,0]}),transform:[{scaleX:animation.interpolate({inputRange:[0,.5,1],outputRange:[.7,1.25,.7]})}]}]} />
+    <Animated.View style={[styles.takeoffSplash,{opacity:takeoffOpacity,transform:[{scale:animation.interpolate({inputRange:[0,.16,.3,1],outputRange:[.5,1.25,.7,.7]})}]}]}><View style={styles.dropA}/><View style={styles.dropB}/><View style={styles.dropC}/></Animated.View>
+    <Animated.View style={[styles.landingSplash,{opacity:landingOpacity,transform:[{scale:animation.interpolate({inputRange:[0,.78,.88,1],outputRange:[.6,.6,1.4,.85]})}]}]}><View style={styles.dropA}/><View style={styles.dropB}/><View style={styles.dropC}/></Animated.View>
+    <Animated.View style={[styles.ripple,{opacity:landingOpacity,transform:[{scaleX:rippleScale},{scaleY:animation.interpolate({inputRange:[0,.78,1],outputRange:[.25,.25,.65]})}]}]} />
+    {label && <Animated.View style={[styles.jumpLabel,{opacity:animation.interpolate({inputRange:[0,.18,.32,.66,.82,1],outputRange:[0,0,1,1,0,0]}),transform:[{translateY:animation.interpolate({inputRange:[0,.2,.65,1],outputRange:[4,0,-12,-18]})},{translateX:animation.interpolate({inputRange:[0,1],outputRange:[0,18*direction]})}]}]}><PixelText style={styles.jumpLabelText}>{label}</PixelText></Animated.View>}
+  </View>;
 }
 
 function ShrimpActor({ shrimp, index, jumpToken }: { shrimp: TankShrimp; index: number; jumpToken: number }) {
@@ -51,183 +47,95 @@ function ShrimpActor({ shrimp, index, jumpToken }: { shrimp: TankShrimp; index: 
   const reaction = useRef(new Animated.Value(0)).current;
   const jump = useRef(new Animated.Value(0)).current;
   const [flip, setFlip] = useState(index % 2 === 1);
+  const [jumpLabel, setJumpLabel] = useState<string | undefined>();
+  const row = Math.floor(index / 6); const column = index % 6;
+  const left = 6 + column * 15 + (row % 2) * 4;
+  const top = 54 + row * 42 + ((index * 11) % 15);
+  const size = (index === 0 ? 45 : 28 + ((index * 7) % 8)) + raritySize[shrimp.item.rarity];
   const reactionType = index % 3;
-  const row = Math.floor(index / 6);
-  const column = index % 6;
-  const left = 5 + column * 15 + (row % 2) * 5;
-  const top = 47 + row * 43 + ((index * 11) % 17);
-  const size = (index === 0 ? 43 : 25 + ((index * 7) % 9)) + raritySize[shrimp.item.rarity];
 
-  useEffect(() => {
-    const bobLoop = Animated.loop(Animated.sequence([
-      Animated.timing(bob, { toValue: -4, duration: 750 + (index % 5) * 120, useNativeDriver: true }),
-      Animated.timing(bob, { toValue: 4, duration: 750 + (index % 5) * 120, useNativeDriver: true }),
-    ]));
-    bobLoop.start();
-    return () => bobLoop.stop();
-  }, [bob, index]);
-
-  useEffect(() => {
-    let active = true;
-    const distance = 9 + (index % 4) * 4;
-    const duration = 2300 + (index % 6) * 310;
-    const wander = (target: number) => {
-      if (!active) return;
-      setFlip(target < 0);
-      Animated.timing(drift, { toValue: target, duration, useNativeDriver: true }).start(({ finished }) => {
-        if (finished && active) wander(-target);
-      });
-    };
-    wander(index % 2 === 0 ? distance : -distance);
-    return () => { active = false; drift.stopAnimation(); };
-  }, [drift, index]);
-
+  useEffect(() => { const loop=Animated.loop(Animated.sequence([Animated.timing(bob,{toValue:-4,duration:820+(index%5)*110,useNativeDriver:true}),Animated.timing(bob,{toValue:4,duration:820+(index%5)*110,useNativeDriver:true})])); loop.start(); return()=>loop.stop(); },[bob,index]);
+  useEffect(() => { let active=true; const distance=10+(index%4)*4; const wander=(target:number)=>{if(!active)return;setFlip(target<0);Animated.timing(drift,{toValue:target,duration:2600+(index%6)*330,useNativeDriver:true}).start(({finished})=>finished&&active&&wander(-target));};wander(index%2===0?distance:-distance);return()=>{active=false;drift.stopAnimation();};},[drift,index]);
   useEffect(() => {
     if (!jumpToken) return;
-    jump.stopAnimation();
-    jump.setValue(0);
-    Animated.timing(jump, { toValue: 1, duration: 1250, easing: Easing.linear, useNativeDriver: true }).start();
-  }, [jump, jumpToken]);
+    jump.stopAnimation(); jump.setValue(0);
+    const labels=['AIRBORNE BONUS','RISK-ON MOVE','VOLATILITY EVENT'];
+    setJumpLabel(Math.random()<.28?labels[Math.floor(Math.random()*labels.length)]:undefined);
+    Animated.sequence([
+      Animated.timing(jump,{toValue:.11,duration:170,easing:Easing.inOut(Easing.quad),useNativeDriver:true}),
+      Animated.timing(jump,{toValue:1,duration:1180,easing:Easing.linear,useNativeDriver:true}),
+    ]).start();
+  },[jump,jumpToken]);
 
-  const makeSwim = (event: GestureResponderEvent) => {
-    event.stopPropagation();
-    reaction.stopAnimation();
-    reaction.setValue(0);
-    const duration = reactionType === 2 ? 760 : reactionType === 0 ? 620 : 480;
-    Animated.timing(reaction, { toValue: 1, duration, useNativeDriver: true }).start(() => {
-      if (reactionType === 0) setFlip((value) => !value);
-    });
-  };
-
-  const direction = flip ? -1 : 1;
-  const reactionX = reactionType === 0
-    ? reaction.interpolate({ inputRange: [0, 0.68, 1], outputRange: [0, 72 * direction, 0] })
-    : reactionType === 1
-      ? reaction.interpolate({ inputRange: [0, 0.3, 0.65, 1], outputRange: [0, 13 * direction, -9 * direction, 0] })
-      : reaction.interpolate({ inputRange: [0, 0.45, 1], outputRange: [0, 5 * direction, 0] });
-  const reactionY = reactionType === 1
-    ? reaction.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, -9, 0] })
-    : reaction.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, -3, 0] });
-  const reactionRotate = reactionType === 0
-    ? reaction.interpolate({ inputRange: [0, 0.68, 1], outputRange: ['0deg', `${360 * direction}deg`, `${360 * direction}deg`] })
-    : reaction.interpolate({ inputRange: [0, 0.35, 0.7, 1], outputRange: ['0deg', `${9 * direction}deg`, `${-6 * direction}deg`, '0deg'] });
-  const jumpDirection = index % 2 === 0 ? 1 : -1;
-  return <View style={[styles.actor, { left: `${left}%` as `${number}%`, top }]}>
-    <Animated.View style={{ transform: [
-    { translateY: bob },
-    { translateX: drift },
-    { translateX: reactionX },
-    { translateY: reactionY },
-    { rotate: reactionRotate },
-    { translateX: jump.interpolate({ inputRange: [0, 1], outputRange: [0, 32 * jumpDirection] }) },
-    { translateY: jump.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, -top - 50, 0] }) },
-    { rotate: jump.interpolate({ inputRange: [0, 0.5, 1], outputRange: ['0deg', `${145 * jumpDirection}deg`, `${290 * jumpDirection}deg`] }) },
-  ] }}>
-      <Pressable accessibilityRole="button" accessibilityLabel={`Make ${shrimp.item.name} react`} hitSlop={8} onPress={makeSwim}>
-        <PixelShrimp color={shrimp.item.color} accentColor={shrimp.item.accentColor} pattern={shrimp.item.pattern} trait={shrimp.item.trait} accessory={shrimp.accessory} size={size} flip={flip} />
-        {reactionType === 2 && <Animated.View pointerEvents="none" style={[styles.bubbleBurst, {
-          opacity: reaction.interpolate({ inputRange: [0, 0.18, 0.72, 1], outputRange: [0, 1, 0.8, 0] }),
-          transform: [{ translateY: reaction.interpolate({ inputRange: [0, 1], outputRange: [5, -25] }) }],
-        }]}><PixelText style={styles.bubbleBurstText}>○ · ○</PixelText></Animated.View>}
+  const makeSwim=(event:GestureResponderEvent)=>{event.stopPropagation();reaction.stopAnimation();reaction.setValue(0);Animated.timing(reaction,{toValue:1,duration:reactionType===2?760:reactionType===0?620:480,useNativeDriver:true}).start(()=>reactionType===0&&setFlip(v=>!v));};
+  const direction=flip?-1:1; const jumpDirection=index%2===0?1:-1;
+  const reactionX=reactionType===0?reaction.interpolate({inputRange:[0,.68,1],outputRange:[0,72*direction,0]}):reactionType===1?reaction.interpolate({inputRange:[0,.3,.65,1],outputRange:[0,13*direction,-9*direction,0]}):reaction.interpolate({inputRange:[0,.45,1],outputRange:[0,5*direction,0]});
+  const reactionY=reaction.interpolate({inputRange:[0,.5,1],outputRange:[0,reactionType===1?-9:-3,0]});
+  const jumpX=jump.interpolate({inputRange:[0,.11,.42,.72,1],outputRange:[0,-4*jumpDirection,28*jumpDirection,45*jumpDirection,52*jumpDirection]});
+  const jumpY=jump.interpolate({inputRange:[0,.06,.11,.28,.48,.67,.82,1],outputRange:[0,2,-3,-top-70,-top-100,-top-72,-14,0]});
+  const jumpRotate=jump.interpolate({inputRange:[0,.08,.11,.4,.68,1],outputRange:['0deg','-7deg','7deg',`${shrimp.accessory==='crown'||shrimp.accessory==='visor'?120:205*jumpDirection}deg`,`${shrimp.accessory==='crown'||shrimp.accessory==='visor'?210:355*jumpDirection}deg`,'0deg']});
+  const wiggle=jump.interpolate({inputRange:[0,.025,.05,.075,.1,.11,1],outputRange:['0deg','-7deg','7deg','-7deg','7deg','0deg','0deg']});
+  return <View style={[styles.actor,{left:`${left}%` as `${number}%`,top}]}>
+    <JumpEffects animation={jump} direction={jumpDirection} label={jumpLabel}/>
+    <Animated.View style={{transform:[{translateY:bob},{translateX:drift},{translateX:reactionX},{translateY:reactionY},{translateX:jumpX},{translateY:jumpY},{rotate:wiggle},{rotate:jumpRotate}]}}>
+      <Pressable accessibilityRole="button" accessibilityLabel={`${shrimp.item.name}${shrimp.accessory?` wearing ${shrimp.accessory}`:''}`} hitSlop={8} onPress={makeSwim}>
+        <PixelShrimp color={shrimp.item.color} accentColor={shrimp.item.accentColor} pattern={shrimp.item.pattern} trait={shrimp.item.trait} accessory={shrimp.accessory} size={size} flip={flip}/>
+        {reactionType===2&&<Animated.View pointerEvents="none" style={[styles.bubbleBurst,{opacity:reaction.interpolate({inputRange:[0,.18,.72,1],outputRange:[0,1,.8,0]}),transform:[{translateY:reaction.interpolate({inputRange:[0,1],outputRange:[5,-25]})}]}]}><PixelText style={styles.bubbleBurstText}>○ · ○</PixelText></Animated.View>}
       </Pressable>
     </Animated.View>
-    <PixelSplash animation={jump} direction={jumpDirection} top={top} /><PixelSplash animation={jump} landing direction={jumpDirection} top={top} />
   </View>;
 }
 
-function EquipmentMotion({ kind, level }: { kind: 'filter' | 'heater'; level: number }) {
-  const motion = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    const loop = Animated.loop(Animated.timing(motion, { toValue: 1, duration: kind === 'filter' ? 1700 : 1100, useNativeDriver: true }));
-    loop.start();
-    return () => loop.stop();
-  }, [kind, motion]);
-  const count = Math.min(5, 2 + Math.ceil(level / 2));
-  return <View pointerEvents="none" style={kind === 'filter' ? styles.filterMotion : styles.heaterMotion}>
-    {Array.from({ length: count }, (_, index) => <Animated.View key={index} style={[
-      kind === 'filter' ? styles.equipmentBubble : styles.heatMote,
-      {
-        left: index * 7,
-        opacity: motion.interpolate({ inputRange: [0, 0.15, 0.82, 1], outputRange: [0, 0.85, 0.55, 0] }),
-        transform: [{ translateY: motion.interpolate({ inputRange: [0, 1], outputRange: [index * 4, -34 - index * 3] }) }],
-      },
-    ]} />)}
-  </View>;
-}
+function BubbleColumn({ left=0 }: { left?: number }) { const a=useRef(new Animated.Value(0)).current; useEffect(()=>{const l=Animated.loop(Animated.timing(a,{toValue:1,duration:1700,useNativeDriver:true}));l.start();return()=>l.stop();},[a]);return <View style={[styles.bubbleColumn,{left}]}>{[0,1,2,3].map(i=><Animated.View key={i} style={[styles.microBubble,{left:(i%2)*7,opacity:a.interpolate({inputRange:[0,.1,.8,1],outputRange:[0,.8,.6,0]}),transform:[{translateY:a.interpolate({inputRange:[0,1],outputRange:[i*8, -72-i*5]})}]}]}/>)}</View>; }
 
-function TankUpgrades({ upgrades, capacity }: { upgrades: Record<string, number>; capacity: number }) {
-  const filter = upgrades.filter ?? 0;
-  const heater = upgrades.heater ?? 0;
-  const algae = upgrades.algae ?? 0;
-  const filterTier = Math.min(3, Math.ceil(filter / 2));
-  const heaterTier = Math.min(3, Math.ceil(heater / 2));
-  const algaeTier = Math.min(3, Math.ceil(algae / 2));
+function TankUpgrades({ upgrades }: { upgrades: Record<string, number> }) {
+  const filter=upgrades.filter??0, heater=upgrades.heater??0, algae=upgrades.algae??0;
   return <>
-    {heater > 0 && <View accessibilityLabel={`Heater level ${heater}`} style={styles.heater}>
-      <View style={styles.heaterCable} /><View style={[styles.heaterGlow, { opacity: Math.min(0.85, 0.22 + heater * 0.1) }]} />
-      <View style={[styles.heaterCap, heaterTier > 1 && styles.heaterCapAdvanced]} /><View style={styles.heaterCore}><View style={[styles.heatFill, { height: `${Math.min(88, 32 + heater * 9)}%` as `${number}%` }]} /></View>
-      {heaterTier > 1 && <><View style={[styles.heaterTick, { top: 32 }]} /><View style={[styles.heaterTick, { top: 51 }]} /><View style={[styles.heaterTick, { top: 70 }]} /></>}
-      {heaterTier > 2 && <View style={styles.heaterController}><View style={styles.controllerLight} /></View>}
-      <EquipmentMotion kind="heater" level={heater} /><PixelText style={styles.heaterLevel}>H{heater}</PixelText>
-    </View>}
-    {filter > 0 && <View accessibilityLabel={`Filter level ${filter}`} style={styles.filter}>
-      <View style={styles.filterPipe}><View style={styles.pipeHighlight} /></View><View style={styles.filterMotor}><View style={styles.motorLight} /></View>
-      <View style={[styles.filterBody, filterTier > 1 && styles.filterBodyAdvanced]}><View style={styles.mediaWindow} /><View style={styles.filterSlat} /><View style={styles.filterSlat} /><View style={styles.filterSlat} /></View>
-      {filterTier > 1 && <View style={styles.secondCanister}><View style={styles.mediaWindowBlue} /><View style={styles.canisterBand} /></View>}
-      {filterTier > 2 && <View style={styles.filterIntake}><View style={styles.intakeFoot} /></View>}
-      <EquipmentMotion kind="filter" level={filter} /><PixelText style={styles.filterLevel}>F{filter}</PixelText>
-    </View>}
-    {algae > 0 && <View accessibilityLabel={`Algae level ${algae}`} style={styles.algaeBed}>
-      <View style={styles.algaeTray}><View style={styles.trayHighlight} /></View>
-      <View style={[styles.algaePatch, { opacity: Math.min(1, 0.45 + algae * 0.12) }]} /><View style={[styles.algaePatch, styles.algaePatchTwo, { opacity: Math.min(1, 0.35 + algae * 0.1) }]} />
-      {algaeTier > 1 && <><View style={[styles.algaePatch, styles.algaePatchThree]} /><View style={styles.algaeFrond}><View style={styles.frondTip} /></View></>}
-      {algaeTier > 2 && <View style={styles.feeder}><View style={styles.feederFood} /><View style={styles.feederNeck} /></View>}
-      <PixelText style={styles.algaeLabel}>A{algae}</PixelText>
-    </View>}
-    {capacity > 20 && <><View style={styles.tankBraceLeft} /><View style={styles.tankBraceRight} /><View style={[styles.plant, styles.plantTwo]}><View style={styles.stem} /><View style={[styles.leaf, styles.leafLeft]} /><View style={[styles.leaf, styles.leafRight]} /></View></>}
-    {capacity > 40 && <View style={styles.rock}><View style={styles.rockHighlight} /><View style={styles.rockShadow} /></View>}
-    {capacity > 60 && <View style={styles.expansionPipe}><View style={styles.expansionJoint} /><View style={styles.expansionJointBottom} /></View>}
-    {capacity > 80 && <View style={styles.capexSign}><PixelText style={styles.capexText}>CAPEX</PixelText><View style={styles.capexLight} /></View>}
+    {filter>0&&<View style={styles.filterRig}><View style={styles.filterPipe}/><View style={[styles.canister,filter>=2&&styles.canisterGold]}><View style={styles.gaugeWindow}/><View style={styles.slats}/></View>{filter>=2&&<View style={[styles.canister,styles.canisterTwo]}/>} {filter>=3&&<View style={styles.pipeNetwork}/>} {filter>=4&&<View style={styles.pressureGauge}><View style={styles.gaugeNeedle}/></View>} {filter>=5&&<View style={styles.equipmentDesk}><PixelText style={styles.equipmentDeskText}>FILTRATION DESK</PixelText><View style={styles.blinkLight}/></View>}<BubbleColumn left={-7}/></View>}
+    {heater>0&&<View style={styles.heaterRig}><View style={styles.heaterCable}/><View style={styles.heaterRod}><View style={styles.heaterFill}/></View>{heater>=2&&<View style={styles.heaterControl}><View style={styles.blinkLight}/></View>}{heater>=3&&<View style={styles.copperPipe}/>} {heater>=4&&<View style={styles.radiator}>{[0,1,2].map(i=><View key={i} style={styles.radiatorBar}/>)}</View>} {heater>=5&&<View style={styles.climateConsole}><PixelText style={styles.consoleText}>76°F AUTO</PixelText></View>}</View>}
+    {algae>0&&<View style={styles.algaeRig}><View style={styles.algaeTray}/><View style={styles.algaePatch}/><View style={[styles.algaePatch,{left:22,width:31,height:14}]}/>{algae>=2&&<View style={styles.algaeShelf}/>} {algae>=3&&<View style={styles.feederHopper}/>} {algae>=4&&<View style={styles.feedBrand}><PixelText style={styles.feedBrandText}>FUND FEED</PixelText></View>} {algae>=5&&<View style={styles.nutritionLab}><PixelText style={styles.nutritionText}>NUTRITION R&D</PixelText></View>}</View>}
+    {(upgrades.oxygen??0)>0&&<View style={styles.oxygenRig}><View style={styles.oxygenPump}><View style={styles.blinkLight}/></View><View style={styles.airTube}/><BubbleColumn left={5}/><PixelText style={styles.moduleTag}>O₂</PixelText></View>}
+    {(upgrades['breeding-lab']??0)>0&&<View style={styles.labRig}><View style={styles.incubator}><View style={styles.incubatorGlass}><View style={styles.labEgg}/></View></View><View style={styles.labLamp}/><PixelText style={styles.moduleTag}>M&A LAB</PixelText></View>}
+    {(upgrades.compliance??0)>0&&<View style={styles.complianceRig}><View style={styles.complianceDesk}/><View style={styles.clipboard}/><View style={styles.complianceLamp}/><PixelText style={styles.moduleTag}>COMPLIANCE</PixelText></View>}
+    {(upgrades.terminal??0)>0&&<View style={styles.marketRig}><View style={styles.marketScreen}><PixelText style={styles.marketScreenText}>SHRP ▲</PixelText></View><View style={styles.marketKeyboard}/></View>}
+    {(upgrades.lighting??0)>0&&<View style={styles.lightRig}><View style={styles.lightRail}/><View style={styles.lightCone}/></View>}
+    {(upgrades.generator??0)>0&&<View style={styles.generator}><View style={styles.generatorCell}/><View style={styles.generatorLight}/><PixelText style={styles.moduleTag}>BACKUP</PixelText></View>}
+    {(upgrades.showcase??0)>0&&<View style={styles.showcase}><View style={styles.showcaseGlass}/><View style={styles.showcasePedestal}/><View style={styles.showcaseGlow}/></View>}
+    {(upgrades.collector??0)>0&&<View style={styles.collector}><View style={styles.collectorArm}/><View style={styles.collectorJoint}/><View style={styles.collectorNet}/></View>}
   </>;
 }
 
-export function Tank({ population, accessoryPopulation, capacity, upgrades, onPress }: { population: Record<string, number>; accessoryPopulation: Record<string, { chain: number; crown: number }>; capacity: number; upgrades: Record<string, number>; onPress: () => void }) {
-  const shrimp = useMemo(() => visiblePopulation(population, accessoryPopulation), [accessoryPopulation, population]);
-  const [jumpEvent, setJumpEvent] = useState({ index: -1, token: 0 });
-  const count = Object.values(population).reduce((sum, amount) => sum + amount, 0);
-  useEffect(() => {
-    if (shrimp.length === 0) return;
-    let timer: ReturnType<typeof setTimeout>;
-    const scheduleJump = (first = false) => {
-      const delay = first ? 6000 + Math.random() * 8000 : 12000 + Math.random() * 16000;
-      timer = setTimeout(() => {
-        setJumpEvent({ index: Math.floor(Math.random() * shrimp.length), token: Date.now() });
-        scheduleJump();
-      }, delay);
-    };
-    scheduleJump(true);
-    return () => clearTimeout(timer);
-  }, [shrimp.length]);
-  return <Pressable accessibilityRole="button" accessibilityLabel={`Aquarium with ${count} shrimp. Tap open water to hatch another.`} onPress={onPress} style={({ pressed }) => [styles.shell, pressed && { transform: [{ scale: 0.985 }] }]}>
-    <LinearGradient colors={['#1F7F91', '#0C5368', '#092C3B']} style={styles.water}>
-      <View style={styles.bubbles}><PixelText style={styles.bubble}>○  ·  ○    ·</PixelText></View>
-      <TankUpgrades upgrades={upgrades} capacity={capacity} />
-      {shrimp.map((entry, index) => <ShrimpActor key={entry.key} shrimp={entry} index={index} jumpToken={jumpEvent.index === index ? jumpEvent.token : 0} />)}
-      {count === 0 && <PixelText style={styles.empty}>TAP TO FUND YOUR FIRST SHRIMP</PixelText>}
-      <View style={styles.plant}><View style={styles.stem} /><View style={[styles.leaf, styles.leafLeft]} /><View style={[styles.leaf, styles.leafRight]} /></View>
-      <View style={styles.sand} />
-      <View style={styles.caption}><PixelText style={styles.count}>{count} / {capacity}</PixelText><PixelText style={styles.hint}>{count > VISUAL_POPULATION_LIMIT ? `${VISUAL_POPULATION_LIMIT} ON SCREEN · ` : ''}TAP WATER TO HATCH</PixelText></View>
+export function Tank({ population, accessoryPopulation, capacity, upgrades, placedDecor={}, onPress }: { population: Record<string, number>; accessoryPopulation: Record<string, Counts>; capacity: number; upgrades: Record<string, number>; placedDecor?: Partial<Record<DecorSlot,string>>; onPress: () => void }) {
+  const shrimp=useMemo(()=>visiblePopulation(population,accessoryPopulation),[accessoryPopulation,population]);
+  const [jumpEvent,setJumpEvent]=useState({index:-1,token:0}); const count=Object.values(population).reduce((sum,n)=>sum+n,0);
+  useEffect(()=>{if(!shrimp.length)return;let timer:ReturnType<typeof setTimeout>;const schedule=(first=false)=>{timer=setTimeout(()=>{setJumpEvent({index:Math.floor(Math.random()*shrimp.length),token:Date.now()});schedule();},first?7000+Math.random()*9000:15000+Math.random()*22000);};schedule(true);return()=>clearTimeout(timer);},[shrimp.length]);
+  return <Pressable accessibilityRole="button" accessibilityLabel={`Aquarium with ${count} shrimp`} onPress={onPress} style={({pressed})=>[styles.shell,pressed&&styles.shellPressed]}>
+    <View style={styles.topRim}><View style={styles.rimHighlight}/><View style={styles.rimBoltL}/><View style={styles.rimBoltR}/></View>
+    <LinearGradient colors={['#26788A','#155E73','#0A3D50','#082B3C']} style={styles.water}>
+      <View style={styles.backPanel}/><View style={styles.backPanelTwo}/><View style={styles.cityBackdrop}>{[20,34,25,41,29,36].map((h,i)=><View key={i} style={[styles.cityTower,{height:h}]}/>)}</View>
+      <View style={styles.waterline}><View style={styles.waterlineBright}/></View>
+      <View style={styles.glassReflectionOne}/><View style={styles.glassReflectionTwo}/>
+      <View style={styles.ambientParticles}>{[0,1,2,3,4,5,6,7].map(i=><View key={i} style={[styles.particle,{left:`${8+i*12}%` as `${number}%`,top:38+(i%4)*37}]}/>)}</View>
+      <View style={styles.cableA}/><View style={styles.cableB}/>
+      <TankUpgrades upgrades={upgrades}/>
+      <TankOfficeDecor placed={placedDecor}/>
+      {shrimp.map((entry,index)=><ShrimpActor key={entry.key} shrimp={entry} index={index} jumpToken={jumpEvent.index===index?jumpEvent.token:0}/>)}
+      {count===0&&<PixelText style={styles.empty}>TAP THE WATER TO FUND YOUR FIRST SHRIMP</PixelText>}
+      <View style={styles.gravel}>{Array.from({length:22},(_,i)=><View key={i} style={[styles.gravelRock,{left:`${i*4.7}%` as `${number}%`,width:6+(i%3)*3,height:4+(i%4)*2,opacity:.55+(i%3)*.12}]}/>)}</View>
+      <View style={styles.floorLip}/>
+      <View style={styles.caption}><PixelText style={styles.count}>{count} / {capacity}</PixelText><PixelText style={styles.hint}>{count>VISUAL_POPULATION_LIMIT?`${VISUAL_POPULATION_LIMIT} ON SCREEN · `:''}TAP WATER TO HATCH</PixelText></View>
     </LinearGradient>
+    <View style={styles.leftGlassEdge}/><View style={styles.rightGlassEdge}/><View style={styles.bottomFrame}/>
   </Pressable>;
 }
 
-const styles = StyleSheet.create({
-  shell: { height: 285, borderWidth: 5, borderColor: '#285765', borderRadius: 22, overflow: 'visible', backgroundColor: colors.deep, shadowColor: '#000', shadowOpacity: 0.45, shadowRadius: 12, shadowOffset: { width: 0, height: 8 } },
-  water: { flex: 1, borderRadius: 17, alignItems: 'center', justifyContent: 'center' }, bubbles: { position: 'absolute', top: 24, left: 22 }, bubble: { color: '#8EE8E2', opacity: 0.65, fontSize: 22 }, actor: { position: 'absolute', zIndex: 7 }, bubbleBurst: { position: 'absolute', top: -7, right: -10, zIndex: 5 }, bubbleBurstText: { color: '#B8FFFA', fontSize: 10, textShadowColor: '#0B5366', textShadowRadius: 2 }, jumpSplash: { position: 'absolute', width: 45, height: 25, zIndex: 8 }, splashDrop: { position: 'absolute', top: 1, left: 19, width: 4, height: 7, backgroundColor: '#B8FFFA' }, splashDropLeft: { left: 7, top: 7, transform: [{ rotate: '-35deg' }] }, splashDropRight: { left: 32, top: 6, transform: [{ rotate: '35deg' }] }, splashLineLeft: { position: 'absolute', left: 5, top: 15, width: 14, height: 3, backgroundColor: '#72D9DF', transform: [{ rotate: '-20deg' }] }, splashLineCenter: { position: 'absolute', left: 18, top: 13, width: 10, height: 3, backgroundColor: '#B8FFFA' }, splashLineRight: { position: 'absolute', left: 27, top: 15, width: 14, height: 3, backgroundColor: '#72D9DF', transform: [{ rotate: '20deg' }] }, empty: { color: '#A8E5E1', opacity: 0.72, fontSize: 10 },
-  plant: { position: 'absolute', left: 25, bottom: 27, width: 28, height: 65, zIndex: 2 }, plantTwo: { left: 74, height: 48, transform: [{ scaleX: -0.8 }] }, stem: { position: 'absolute', left: 12, bottom: 0, width: 5, height: 60, backgroundColor: '#3A8F68' }, leaf: { position: 'absolute', width: 18, height: 8, backgroundColor: '#55B579' }, leafLeft: { left: 0, top: 25, transform: [{ rotate: '25deg' }] }, leafRight: { right: 0, top: 10, transform: [{ rotate: '-30deg' }] },
-  sand: { position: 'absolute', bottom: 0, height: 36, width: '100%', backgroundColor: '#C99B62', borderTopWidth: 5, borderTopColor: '#E7BE7B', zIndex: 1 }, caption: { position: 'absolute', top: 14, right: 15, alignItems: 'flex-end', zIndex: 6 }, count: { fontSize: 18 }, hint: { fontSize: 8, color: colors.aqua, marginTop: 3 },
-  heater: { position: 'absolute', left: 7, top: 66, width: 24, height: 108, zIndex: 4, alignItems: 'center' }, heaterCable: { position: 'absolute', top: -66, left: 10, width: 4, height: 72, backgroundColor: '#182C32' }, heaterGlow: { position: 'absolute', top: 9, width: 28, height: 91, borderRadius: 14, backgroundColor: '#FF755E' }, heaterCap: { width: 13, height: 9, backgroundColor: '#334B50', borderWidth: 2, borderColor: '#162D32' }, heaterCapAdvanced: { width: 19, backgroundColor: '#C38B3D' }, heaterCore: { width: 11, height: 83, overflow: 'hidden', justifyContent: 'flex-end', backgroundColor: '#472E2B', borderWidth: 2, borderColor: '#1D292B' }, heatFill: { width: '100%', backgroundColor: '#FF9B43' }, heaterTick: { position: 'absolute', right: 2, width: 7, height: 2, backgroundColor: '#FFE3A0' }, heaterController: { position: 'absolute', top: -18, left: 14, width: 23, height: 18, backgroundColor: '#314D53', borderWidth: 2, borderColor: '#142F35' }, controllerLight: { width: 5, height: 5, margin: 4, backgroundColor: '#6DFF9A' }, heaterLevel: { position: 'absolute', bottom: 8, color: '#FFF0BC', fontSize: 6 }, heaterMotion: { position: 'absolute', top: 35, right: -19, width: 30, height: 50 }, heatMote: { position: 'absolute', bottom: 0, width: 3, height: 3, backgroundColor: '#FFBD65' },
-  filter: { position: 'absolute', right: 5, bottom: 37, width: 69, height: 112, zIndex: 4, alignItems: 'flex-end' }, filterPipe: { position: 'absolute', top: 1, right: 14, width: 12, height: 33, backgroundColor: '#607D82', borderWidth: 2, borderColor: '#18343B' }, pipeHighlight: { width: 3, height: 25, marginLeft: 2, backgroundColor: '#9BB3B3' }, filterMotor: { position: 'absolute', top: 24, right: 5, width: 30, height: 18, backgroundColor: '#263F45', borderWidth: 2, borderColor: '#132E35' }, motorLight: { width: 5, height: 5, marginLeft: 5, marginTop: 4, backgroundColor: '#6DF5E1' }, filterBody: { position: 'absolute', right: 4, bottom: 4, width: 34, height: 64, backgroundColor: '#385961', borderWidth: 3, borderColor: '#18343B', paddingTop: 7, gap: 5, alignItems: 'center' }, filterBodyAdvanced: { backgroundColor: '#315A64', borderColor: '#D69C43' }, mediaWindow: { width: 20, height: 13, backgroundColor: '#CE9E51', borderWidth: 2, borderColor: '#243D40' }, filterSlat: { width: 21, height: 3, backgroundColor: '#72A3A7' }, secondCanister: { position: 'absolute', left: 2, bottom: 4, width: 27, height: 55, backgroundColor: '#3A5962', borderWidth: 3, borderColor: '#18343B', alignItems: 'center', paddingTop: 6 }, mediaWindowBlue: { width: 15, height: 21, backgroundColor: '#68B6B9', borderWidth: 2, borderColor: '#203D42' }, canisterBand: { width: 20, height: 4, marginTop: 8, backgroundColor: '#D69C43' }, filterIntake: { position: 'absolute', left: -5, bottom: -1, width: 7, height: 75, backgroundColor: '#6B8889', borderWidth: 2, borderColor: '#17343B' }, intakeFoot: { position: 'absolute', bottom: 0, left: -5, width: 14, height: 9, backgroundColor: '#2A4B51' }, filterLevel: { position: 'absolute', right: 11, bottom: 8, color: '#FFF0BC', fontSize: 6 }, filterMotion: { position: 'absolute', top: 0, left: 4, width: 37, height: 50 }, equipmentBubble: { position: 'absolute', bottom: 0, width: 6, height: 6, borderRadius: 3, borderWidth: 2, borderColor: '#A6F2ED', backgroundColor: 'transparent' },
-  algaeBed: { position: 'absolute', right: 69, bottom: 29, width: 96, height: 48, zIndex: 2 }, algaeTray: { position: 'absolute', bottom: 0, left: 0, width: 86, height: 13, backgroundColor: '#74573F', borderWidth: 3, borderColor: '#382E28' }, trayHighlight: { width: 73, height: 3, margin: 2, backgroundColor: '#A78258' }, algaePatch: { position: 'absolute', bottom: 8, left: 5, width: 45, height: 18, borderRadius: 12, backgroundColor: '#55A84F' }, algaePatchTwo: { left: 35, width: 38, height: 23, backgroundColor: '#3B8F48' }, algaePatchThree: { left: 20, bottom: 18, width: 32, height: 16, backgroundColor: '#79C657' }, algaeFrond: { position: 'absolute', left: 60, bottom: 17, width: 5, height: 29, backgroundColor: '#2C8248', transform: [{ rotate: '11deg' }] }, frondTip: { position: 'absolute', top: -2, left: -5, width: 15, height: 7, backgroundColor: '#75C866', transform: [{ rotate: '-20deg' }] }, feeder: { position: 'absolute', right: -1, bottom: 13, width: 25, height: 27, borderRadius: 7, backgroundColor: '#C8E1D5', borderWidth: 3, borderColor: '#35595A', overflow: 'visible' }, feederFood: { position: 'absolute', bottom: 3, left: 3, width: 13, height: 10, backgroundColor: '#5AA84F' }, feederNeck: { position: 'absolute', top: -9, left: 7, width: 7, height: 10, backgroundColor: '#D9A84E' }, algaeLabel: { position: 'absolute', left: 38, bottom: 3, color: '#D8FFB5', fontSize: 6 },
-  tankBraceLeft: { position: 'absolute', left: 48, top: 0, width: 5, height: '100%', backgroundColor: 'rgba(122,191,194,0.18)', zIndex: 1 }, tankBraceRight: { position: 'absolute', right: 48, top: 0, width: 5, height: '100%', backgroundColor: 'rgba(122,191,194,0.18)', zIndex: 1 }, rock: { position: 'absolute', left: 108, bottom: 29, width: 48, height: 29, borderRadius: 9, backgroundColor: '#667579', zIndex: 2 }, rockHighlight: { width: 27, height: 5, marginLeft: 7, marginTop: 5, backgroundColor: '#8D9C98' }, rockShadow: { position: 'absolute', right: 3, bottom: 3, width: 17, height: 8, backgroundColor: '#475A60' }, expansionPipe: { position: 'absolute', top: 0, left: 91, width: 9, height: 45, backgroundColor: '#607B7D', borderWidth: 2, borderColor: '#1A393F', zIndex: 2 }, expansionJoint: { position: 'absolute', left: -5, bottom: 4, width: 15, height: 8, backgroundColor: '#A0713B' }, expansionJointBottom: { position: 'absolute', left: 1, bottom: -8, width: 19, height: 10, backgroundColor: '#48666B', borderWidth: 2, borderColor: '#1B383E' }, capexSign: { position: 'absolute', left: 111, top: 9, paddingVertical: 4, paddingHorizontal: 7, backgroundColor: '#213B43', borderWidth: 2, borderColor: '#D5A247', zIndex: 5 }, capexText: { color: '#FFD86B', fontSize: 7 }, capexLight: { position: 'absolute', right: -5, top: -5, width: 7, height: 7, backgroundColor: '#6DFF9A', borderWidth: 1, borderColor: '#18343B' },
+const styles=StyleSheet.create({
+  shell:{height:318,borderWidth:5,borderColor:'#275A67',borderRadius:22,overflow:'visible',backgroundColor:'#061A22',shadowColor:'#000',shadowOpacity:.48,shadowRadius:14,shadowOffset:{width:0,height:10}},shellPressed:{transform:[{scale:.992}]},topRim:{position:'absolute',zIndex:30,top:-9,left:-5,right:-5,height:18,borderRadius:9,backgroundColor:'#233D46',borderWidth:3,borderColor:'#A97D3E'},rimHighlight:{height:3,marginHorizontal:14,marginTop:3,backgroundColor:'#D1A057',opacity:.75},rimBoltL:{position:'absolute',left:17,top:5,width:5,height:5,borderRadius:3,backgroundColor:'#E1BD73'},rimBoltR:{position:'absolute',right:17,top:5,width:5,height:5,borderRadius:3,backgroundColor:'#E1BD73'},
+  water:{flex:1,borderRadius:16,position:'relative'},backPanel:{position:'absolute',left:'4%',top:42,width:'28%',height:114,backgroundColor:'#124557',borderWidth:3,borderColor:'#1F5B6B'},backPanelTwo:{position:'absolute',right:'5%',top:47,width:'24%',height:103,backgroundColor:'#103E50',borderWidth:3,borderColor:'#1A5868'},cityBackdrop:{position:'absolute',left:'36%',top:62,width:118,height:48,flexDirection:'row',alignItems:'flex-end',gap:5,opacity:.32},cityTower:{width:13,backgroundColor:'#7CA4AF'},waterline:{position:'absolute',left:0,right:0,top:14,height:5,backgroundColor:'#4CB0BC',opacity:.8,zIndex:9},waterlineBright:{height:2,backgroundColor:'#9BE6E7',opacity:.7},glassReflectionOne:{position:'absolute',left:18,top:26,width:12,height:180,backgroundColor:'#B8F7F4',opacity:.06,transform:[{rotate:'7deg'}]},glassReflectionTwo:{position:'absolute',right:36,top:35,width:7,height:138,backgroundColor:'#B8F7F4',opacity:.05,transform:[{rotate:'-8deg'}]},particle:{position:'absolute',width:3,height:3,borderRadius:2,backgroundColor:'#9CE0DF',opacity:.25},ambientParticles:{...StyleSheet.absoluteFillObject},cableA:{position:'absolute',left:92,bottom:39,width:95,height:3,backgroundColor:'#172D33',transform:[{rotate:'5deg'}]},cableB:{position:'absolute',right:86,bottom:44,width:79,height:3,backgroundColor:'#1E3438',transform:[{rotate:'-8deg'}]},
+  actor:{position:'absolute',zIndex:12},bubbleBurst:{position:'absolute',top:-7,right:-10,zIndex:5},bubbleBurstText:{color:'#B8FFFA',fontSize:10,textShadowColor:'#0B5366',textShadowRadius:2},jumpFx:{position:'absolute',left:0,top:-38,width:80,height:70,zIndex:4},surfaceShadow:{position:'absolute',left:5,top:42,width:39,height:7,borderRadius:10,backgroundColor:'#062A38'},takeoffSplash:{position:'absolute',left:3,top:29,width:42,height:25},landingSplash:{position:'absolute',left:34,top:29,width:42,height:25},dropA:{position:'absolute',left:5,top:8,width:4,height:11,backgroundColor:'#A8F0EE',transform:[{rotate:'-28deg'}]},dropB:{position:'absolute',left:18,top:0,width:4,height:14,backgroundColor:'#D5FFFF'},dropC:{position:'absolute',right:5,top:7,width:4,height:11,backgroundColor:'#87DEE2',transform:[{rotate:'29deg'}]},ripple:{position:'absolute',left:9,top:43,width:39,height:10,borderRadius:18,borderWidth:2,borderColor:'#B4F0EF'},jumpLabel:{position:'absolute',left:-22,top:-7,width:105,alignItems:'center'},jumpLabelText:{fontSize:6,color:'#FFD36B',backgroundColor:'#071A22CC',paddingHorizontal:5,paddingVertical:3,borderRadius:4},
+  filterRig:{position:'absolute',right:7,bottom:37,width:74,height:118,zIndex:7},filterPipe:{position:'absolute',right:11,top:-27,width:11,height:47,backgroundColor:'#55787C',borderWidth:2,borderColor:'#173139'},canister:{position:'absolute',right:2,bottom:0,width:34,height:67,backgroundColor:'#3C626A',borderWidth:3,borderColor:'#172F36'},canisterGold:{borderColor:'#C39A4A'},canisterTwo:{right:38,width:29,height:56,backgroundColor:'#315963'},gaugeWindow:{width:19,height:15,backgroundColor:'#C69648',borderWidth:2,borderColor:'#273B3E',margin:5},slats:{height:24,borderTopWidth:3,borderBottomWidth:3,borderColor:'#83ADB0',margin:5},pipeNetwork:{position:'absolute',right:24,top:-12,width:42,height:30,borderTopWidth:5,borderLeftWidth:5,borderColor:'#A86F40'},pressureGauge:{position:'absolute',right:37,top:-26,width:22,height:22,borderRadius:11,backgroundColor:'#E8DDB7',borderWidth:3,borderColor:'#8A663A'},gaugeNeedle:{position:'absolute',left:9,top:4,width:2,height:10,backgroundColor:'#A23A31',transform:[{rotate:'35deg'}]},equipmentDesk:{position:'absolute',right:0,bottom:-26,width:74,height:25,backgroundColor:'#233A40',borderWidth:2,borderColor:'#B08A46',alignItems:'center',justifyContent:'center'},equipmentDeskText:{fontSize:4,color:'#F4D58C'},blinkLight:{width:5,height:5,borderRadius:3,backgroundColor:'#69F38D',margin:4},bubbleColumn:{position:'absolute',bottom:8,width:22,height:90},microBubble:{position:'absolute',bottom:0,width:6,height:6,borderRadius:3,borderWidth:2,borderColor:'#A6F2ED'},
+  heaterRig:{position:'absolute',left:8,top:72,width:76,height:123,zIndex:7},heaterCable:{position:'absolute',left:12,top:-73,width:4,height:79,backgroundColor:'#172B30'},heaterRod:{position:'absolute',left:5,top:0,width:15,height:92,backgroundColor:'#3D3030',borderWidth:3,borderColor:'#1B292D',justifyContent:'flex-end'},heaterFill:{height:'72%',backgroundColor:'#FF944C'},heaterControl:{position:'absolute',left:24,top:1,width:27,height:21,backgroundColor:'#304F55',borderWidth:2,borderColor:'#142D32'},copperPipe:{position:'absolute',left:24,top:31,width:42,height:7,backgroundColor:'#A96F43'},radiator:{position:'absolute',left:27,top:48,width:41,height:43,flexDirection:'row',gap:4},radiatorBar:{width:8,height:41,backgroundColor:'#7A4C3A',borderWidth:2,borderColor:'#3F302C'},climateConsole:{position:'absolute',left:25,top:96,width:47,height:22,backgroundColor:'#152F37',borderWidth:2,borderColor:'#C29446',alignItems:'center',justifyContent:'center'},consoleText:{fontSize:5,color:'#FFD47A'},
+  algaeRig:{position:'absolute',right:91,bottom:36,width:104,height:57,zIndex:5},algaeTray:{position:'absolute',left:0,bottom:0,width:87,height:14,backgroundColor:'#74523B',borderWidth:3,borderColor:'#392A23'},algaePatch:{position:'absolute',left:7,bottom:11,width:39,height:17,borderRadius:12,backgroundColor:'#4A9A50'},algaeShelf:{position:'absolute',left:5,bottom:28,width:67,height:7,backgroundColor:'#6B5A3D'},feederHopper:{position:'absolute',right:5,bottom:13,width:20,height:32,backgroundColor:'#59676A',borderWidth:2,borderColor:'#293A3E'},feedBrand:{position:'absolute',left:16,bottom:32,width:51,height:15,backgroundColor:'#2C583A',borderWidth:2,borderColor:'#B99143',alignItems:'center',justifyContent:'center'},feedBrandText:{fontSize:4,color:'#EED595'},nutritionLab:{position:'absolute',left:7,bottom:46,width:72,height:16,backgroundColor:'#173B3A',borderWidth:2,borderColor:'#59A96C',alignItems:'center',justifyContent:'center'},nutritionText:{fontSize:4,color:'#A9E5B2'},
+  oxygenRig:{position:'absolute',left:92,bottom:39,width:55,height:76,zIndex:6},oxygenPump:{position:'absolute',bottom:0,width:29,height:25,backgroundColor:'#365D67',borderWidth:3,borderColor:'#17333A'},airTube:{position:'absolute',left:13,bottom:21,width:5,height:46,backgroundColor:'#7DB2B6'},labRig:{position:'absolute',left:'36%',bottom:39,width:69,height:78,zIndex:6},incubator:{position:'absolute',bottom:0,width:42,height:51,backgroundColor:'#304D55',borderWidth:3,borderColor:'#142E34',padding:5},incubatorGlass:{height:29,backgroundColor:'#6DB6BE66',borderWidth:2,borderColor:'#8FDDE0'},labEgg:{width:8,height:11,borderRadius:5,backgroundColor:'#F2E5C0',alignSelf:'center',marginTop:7},labLamp:{position:'absolute',right:3,bottom:18,width:18,height:5,backgroundColor:'#E2C565'},complianceRig:{position:'absolute',left:'48%',bottom:39,width:68,height:50,zIndex:6},complianceDesk:{position:'absolute',bottom:0,width:56,height:18,backgroundColor:'#6C4B37',borderWidth:2,borderColor:'#35271F'},clipboard:{position:'absolute',left:7,bottom:16,width:18,height:24,backgroundColor:'#E7DDBB',borderWidth:2,borderColor:'#7B6C51'},complianceLamp:{position:'absolute',right:6,bottom:17,width:13,height:19,borderTopWidth:6,borderRightWidth:3,borderColor:'#D4B65D'},marketRig:{position:'absolute',right:'31%',top:67,width:48,height:43,zIndex:5},marketScreen:{width:44,height:28,backgroundColor:'#091C23',borderWidth:3,borderColor:'#49666D',alignItems:'center',justifyContent:'center'},marketScreenText:{fontSize:6,color:'#76E89B'},marketKeyboard:{width:48,height:7,backgroundColor:'#536267'},lightRig:{position:'absolute',left:'34%',top:19,width:133,height:56,zIndex:4},lightRail:{width:133,height:8,backgroundColor:'#273C44',borderWidth:2,borderColor:'#B28E4D'},lightCone:{alignSelf:'center',width:79,height:47,backgroundColor:'#FFF4A91A'},generator:{position:'absolute',right:17,bottom:38,width:53,height:44,backgroundColor:'#4B5151',borderWidth:3,borderColor:'#252F31',zIndex:7},generatorCell:{position:'absolute',left:6,top:8,width:28,height:15,backgroundColor:'#2E3839'},generatorLight:{position:'absolute',right:5,top:7,width:6,height:6,backgroundColor:'#78EE87'},showcase:{position:'absolute',right:'18%',bottom:37,width:49,height:68,zIndex:6},showcaseGlass:{width:49,height:48,backgroundColor:'#A9F0EF22',borderWidth:3,borderColor:'#D1AC57'},showcasePedestal:{alignSelf:'center',width:31,height:17,backgroundColor:'#5D4931',borderWidth:2,borderColor:'#B28C4A'},showcaseGlow:{position:'absolute',left:10,top:6,width:29,height:29,borderRadius:16,backgroundColor:'#FFE99022'},collector:{position:'absolute',right:'7%',top:62,width:68,height:74,zIndex:8},collectorArm:{position:'absolute',right:9,top:4,width:7,height:48,backgroundColor:'#6F8589',transform:[{rotate:'24deg'}]},collectorJoint:{position:'absolute',right:20,top:39,width:13,height:13,borderRadius:7,backgroundColor:'#C59A49'},collectorNet:{position:'absolute',right:23,bottom:1,width:31,height:22,borderWidth:3,borderColor:'#9AB9B9',transform:[{rotate:'-13deg'}]},moduleTag:{position:'absolute',bottom:-12,left:0,fontSize:4,color:'#F1DA9C',backgroundColor:'#102B33',paddingHorizontal:3,paddingVertical:2},
+  gravel:{position:'absolute',left:0,right:0,bottom:12,height:39,backgroundColor:'#9D7A57',borderTopWidth:5,borderTopColor:'#C89D69',zIndex:2},gravelRock:{position:'absolute',bottom:5,borderRadius:4,backgroundColor:'#4A5A57'},floorLip:{position:'absolute',left:0,right:0,bottom:0,height:14,backgroundColor:'#493D34',borderTopWidth:3,borderTopColor:'#C29B61',zIndex:15},caption:{position:'absolute',top:27,right:14,alignItems:'flex-end',zIndex:20,backgroundColor:'#071A2288',borderRadius:8,padding:7},count:{fontSize:16},hint:{fontSize:6,color:colors.aqua,marginTop:3},empty:{color:'#A8E5E1',opacity:.8,fontSize:9,alignSelf:'center',marginTop:130},leftGlassEdge:{position:'absolute',left:2,top:14,bottom:13,width:7,backgroundColor:'#7DD7D922',borderRightWidth:2,borderRightColor:'#7DDEE044'},rightGlassEdge:{position:'absolute',right:2,top:14,bottom:13,width:7,backgroundColor:'#7DD7D916',borderLeftWidth:2,borderLeftColor:'#7DDEE033'},bottomFrame:{position:'absolute',left:-4,right:-4,bottom:-9,height:18,borderRadius:9,backgroundColor:'#243D45',borderWidth:3,borderColor:'#A87E42'},
 });

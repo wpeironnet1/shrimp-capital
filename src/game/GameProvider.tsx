@@ -49,12 +49,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       if (!raw) return;
       const parsed = JSON.parse(raw) as Partial<GameState>;
       const normalizedAccessories = Object.fromEntries(Object.entries(parsed.shrimpAccessories ?? {}).map(([id, value]) => [id, { chain: value?.chain ?? 0, crown: value?.crown ?? 0, visor: value?.visor ?? 0 }]));
+      const discoveredFromStock = Object.fromEntries(Object.entries(parsed.shrimp ?? {}).filter(([, amount]) => (amount ?? 0) > 0).map(([id]) => [id, true]));
       const saved = {
         ...initialState,
         ...parsed,
         shrimp: { ...initialState.shrimp, ...parsed.shrimp },
         shrimpAccessories: normalizedAccessories,
         mutations: { ...initialState.mutations, ...parsed.mutations },
+        lineage: { ...initialState.lineage, ...parsed.lineage },
+        discoveredSpecies: { ...initialState.discoveredSpecies, ...discoveredFromStock, ...parsed.discoveredSpecies },
         upgrades: { ...initialState.upgrades, ...parsed.upgrades },
         conditions: { ...initialState.conditions, ...parsed.conditions },
         conditionUpdatedAt: parsed.conditionUpdatedAt ?? parsed.lastUpdatedAt ?? Date.now(),
@@ -80,7 +83,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     dismissOfflineReport: () => setOfflineHatches(0),
     hatchNow: () => { setState(hatch); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); },
     sellOne: (id) => { setState((current) => sell(current, id)); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); },
-    selectSpecies: (id) => setState((current) => ({ ...current, selectedSpecies: id, lastUpdatedAt: Date.now() })),
+    selectSpecies: (id) => setState((current) => ({ ...current, selectedSpecies: id, discoveredSpecies: { ...current.discoveredSpecies, [id]: current.discoveredSpecies[id] ?? false }, lastUpdatedAt: Date.now() })),
     buyUpgrade: (id) => setState((current) => {
       const item = upgrades.find((upgrade) => upgrade.id === id);
       if (!item) return current;

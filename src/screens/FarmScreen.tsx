@@ -33,7 +33,7 @@ export function FarmScreen() {
         </View>
         <MissionPanel state={state} onClaim={claimMission} />
         <DailyRewardCard state={state} onClaim={claimDailyReward} />
-        <Tank population={state.shrimp} capacity={state.tankCapacity} upgrades={state.upgrades} onPress={hatchNow} />
+        <Tank population={state.shrimp} accessoryPopulation={state.shrimpAccessories} capacity={state.tankCapacity} upgrades={state.upgrades} onPress={hatchNow} />
         <View style={styles.productionBar} accessibilityLabel={tankFull ? 'Tank full' : `Next shrimp in ${nextHatch} seconds`}>
           <View style={styles.liveDot} />
           <PixelText style={styles.productionLabel}>{tankFull ? 'TANK FULL — SELL OR EXPAND' : `AUTO-HATCH IN ${nextHatch}s`}</PixelText>

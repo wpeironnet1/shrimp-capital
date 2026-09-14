@@ -21,6 +21,7 @@
 - Independently wandering shrimp with three tap reactions: spin-and-dart, shimmy, and bubble burst
 - Rarity patterns, claws, crests, fan tails, long feelers, and tier-based sizes
 - Multi-stage animated filter, heater, algae, and tank-expansion installations
+- Persistent 1-in-500 accessory hatches with tiny gold chains or crowns
 
 ## Run locally
 

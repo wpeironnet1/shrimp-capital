@@ -33,6 +33,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         ...initialState,
         ...parsed,
         shrimp: { ...initialState.shrimp, ...parsed.shrimp },
+        shrimpAccessories: { ...initialState.shrimpAccessories, ...parsed.shrimpAccessories },
         upgrades: { ...initialState.upgrades, ...parsed.upgrades },
         stats: { ...initialState.stats, ...parsed.stats },
         claimedMissions: { ...initialState.claimedMissions, ...parsed.claimedMissions },

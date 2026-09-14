@@ -3,20 +3,24 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, GestureResponderEvent, Pressable, StyleSheet, View } from 'react-native';
 import { ShrimpSpecies, species } from '../game/catalog';
 import { colors } from '../theme/colors';
-import { PixelShrimp } from './PixelShrimp';
+import { PixelShrimp, ShrimpAccessory } from './PixelShrimp';
 import { PixelText } from './PixelText';
 
 const VISUAL_POPULATION_LIMIT = 24;
 const raritySize: Record<ShrimpSpecies['rarity'], number> = { Common: 0, Uncommon: 1, Rare: 2, Epic: 4, Legendary: 7, Mythic: 10, Exotic: 13 };
-type TankShrimp = { key: string; item: ShrimpSpecies };
+type TankShrimp = { key: string; item: ShrimpSpecies; accessory?: ShrimpAccessory };
 
-function visiblePopulation(population: Record<string, number>) {
+function visiblePopulation(population: Record<string, number>, accessories: Record<string, { chain: number; crown: number }>) {
   const stocked = species.map((item) => ({ item, count: population[item.id] ?? 0, used: 0 })).filter((entry) => entry.count > 0);
   const result: TankShrimp[] = [];
   while (result.length < VISUAL_POPULATION_LIMIT && stocked.some((entry) => entry.used < entry.count)) {
     for (const entry of stocked) {
       if (entry.used >= entry.count || result.length >= VISUAL_POPULATION_LIMIT) continue;
-      result.push({ key: `${entry.item.id}-${entry.used}`, item: entry.item });
+      const accessoryCounts = accessories[entry.item.id] ?? { chain: 0, crown: 0 };
+      const accessory: ShrimpAccessory | undefined = entry.used < accessoryCounts.crown
+        ? 'crown'
+        : entry.used < accessoryCounts.crown + accessoryCounts.chain ? 'chain' : undefined;
+      result.push({ key: `${entry.item.id}-${entry.used}`, item: entry.item, accessory });
       entry.used += 1;
     }
   }
@@ -89,7 +93,7 @@ function ShrimpActor({ shrimp, index }: { shrimp: TankShrimp; index: number }) {
     { rotate: reactionRotate },
   ] }]}>
     <Pressable accessibilityRole="button" accessibilityLabel={`Make ${shrimp.item.name} react`} hitSlop={8} onPress={makeSwim}>
-      <PixelShrimp color={shrimp.item.color} accentColor={shrimp.item.accentColor} pattern={shrimp.item.pattern} trait={shrimp.item.trait} size={size} flip={flip} />
+      <PixelShrimp color={shrimp.item.color} accentColor={shrimp.item.accentColor} pattern={shrimp.item.pattern} trait={shrimp.item.trait} accessory={shrimp.accessory} size={size} flip={flip} />
       {reactionType === 2 && <Animated.View pointerEvents="none" style={[styles.bubbleBurst, {
         opacity: reaction.interpolate({ inputRange: [0, 0.18, 0.72, 1], outputRange: [0, 1, 0.8, 0] }),
         transform: [{ translateY: reaction.interpolate({ inputRange: [0, 1], outputRange: [5, -25] }) }],
@@ -154,8 +158,8 @@ function TankUpgrades({ upgrades, capacity }: { upgrades: Record<string, number>
   </>;
 }
 
-export function Tank({ population, capacity, upgrades, onPress }: { population: Record<string, number>; capacity: number; upgrades: Record<string, number>; onPress: () => void }) {
-  const shrimp = useMemo(() => visiblePopulation(population), [population]);
+export function Tank({ population, accessoryPopulation, capacity, upgrades, onPress }: { population: Record<string, number>; accessoryPopulation: Record<string, { chain: number; crown: number }>; capacity: number; upgrades: Record<string, number>; onPress: () => void }) {
+  const shrimp = useMemo(() => visiblePopulation(population, accessoryPopulation), [accessoryPopulation, population]);
   const count = Object.values(population).reduce((sum, amount) => sum + amount, 0);
   return <Pressable accessibilityRole="button" accessibilityLabel={`Aquarium with ${count} shrimp. Tap open water to hatch another.`} onPress={onPress} style={({ pressed }) => [styles.shell, pressed && { transform: [{ scale: 0.985 }] }]}>
     <LinearGradient colors={['#1F7F91', '#0C5368', '#092C3B']} style={styles.water}>

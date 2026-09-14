@@ -3,6 +3,7 @@ import { species } from './catalog';
 export type GameState = {
   cash: number;
   shrimp: Record<string, number>;
+  shrimpAccessories: Record<string, { chain: number; crown: number }>;
   selectedSpecies: string;
   level: number;
   xp: number;
@@ -19,6 +20,7 @@ export type GameState = {
 export const initialState: GameState = {
   cash: 24,
   shrimp: { cherry: 3 },
+  shrimpAccessories: {},
   selectedSpecies: 'cherry',
   level: 1,
   xp: 0,
@@ -40,6 +42,30 @@ export const speedMultiplier = (state: GameState) => 1 + (state.upgrades.heater 
 export const valueMultiplier = (state: GameState) => 1 + (state.upgrades.algae ?? 0) * 0.25;
 export const dayKey = (date = new Date()) => date.toISOString().slice(0, 10);
 export const dailyRewardAmount = (streak: number) => Math.min(60, 20 + Math.max(0, streak - 1) * 5);
+export const ACCESSORY_ODDS = 500;
+
+function rollAccessoryDrops(seed: number, amount: number) {
+  let random = seed >>> 0;
+  let chain = 0;
+  let crown = 0;
+  for (let index = 0; index < amount; index += 1) {
+    random = (Math.imul(random, 1664525) + 1013904223) >>> 0;
+    if (random / 0x100000000 >= 1 / ACCESSORY_ODDS) continue;
+    random = (Math.imul(random, 1664525) + 1013904223) >>> 0;
+    if (random % 2 === 0) chain += 1;
+    else crown += 1;
+  }
+  return { chain, crown };
+}
+
+function addAccessoryDrops(state: GameState, speciesId: string, amount: number, seed: number) {
+  const drops = rollAccessoryDrops(seed, amount);
+  const owned = state.shrimpAccessories[speciesId] ?? { chain: 0, crown: 0 };
+  return {
+    ...state.shrimpAccessories,
+    [speciesId]: { chain: owned.chain + drops.chain, crown: owned.crown + drops.crown },
+  };
+}
 
 export function nextDailyStreak(state: GameState, today = new Date()) {
   if (!state.lastDailyClaim) return 1;
@@ -55,11 +81,13 @@ export function hatch(state: GameState): GameState {
   if (totalShrimp(state) >= state.tankCapacity) return state;
   const amount = Math.max(1, Math.floor(productionMultiplier(state)));
   const room = state.tankCapacity - totalShrimp(state);
+  const hatched = Math.min(amount, room);
   return {
     ...state,
-    shrimp: { ...state.shrimp, [state.selectedSpecies]: (state.shrimp[state.selectedSpecies] ?? 0) + Math.min(amount, room) },
-    xp: state.xp + Math.min(amount, room),
-    stats: { ...state.stats, hatched: state.stats.hatched + Math.min(amount, room) },
+    shrimp: { ...state.shrimp, [state.selectedSpecies]: (state.shrimp[state.selectedSpecies] ?? 0) + hatched },
+    shrimpAccessories: addAccessoryDrops(state, state.selectedSpecies, hatched, state.lastUpdatedAt + state.stats.hatched * 7919),
+    xp: state.xp + hatched,
+    stats: { ...state.stats, hatched: state.stats.hatched + hatched },
   };
 }
 
@@ -68,6 +96,11 @@ export function sell(state: GameState, speciesId: string, amount = 1): GameState
   const owned = state.shrimp[speciesId] ?? 0;
   if (!item || owned < amount) return state;
   const proceeds = Math.round(item.basePrice * amount * valueMultiplier(state));
+  const accessories = state.shrimpAccessories[speciesId] ?? { chain: 0, crown: 0 };
+  let accessoriesToSell = Math.max(0, amount - Math.max(0, owned - accessories.chain - accessories.crown));
+  const chainSold = Math.min(accessories.chain, accessoriesToSell);
+  accessoriesToSell -= chainSold;
+  const crownSold = Math.min(accessories.crown, accessoriesToSell);
   let xp = state.xp + amount * 2;
   let level = state.level;
   while (xp >= xpForNextLevel(level)) {
@@ -78,6 +111,7 @@ export function sell(state: GameState, speciesId: string, amount = 1): GameState
     ...state,
     cash: state.cash + proceeds,
     shrimp: { ...state.shrimp, [speciesId]: owned - amount },
+    shrimpAccessories: { ...state.shrimpAccessories, [speciesId]: { chain: accessories.chain - chainSold, crown: accessories.crown - crownSold } },
     xp,
     level,
     lifetimeRevenue: state.lifetimeRevenue + proceeds,
@@ -106,6 +140,7 @@ export function accrueProduction(state: GameState, now = Date.now()): { state: G
     state: {
       ...state,
       shrimp: { ...state.shrimp, [state.selectedSpecies]: (state.shrimp[state.selectedSpecies] ?? 0) + hatched },
+      shrimpAccessories: addAccessoryDrops(state, state.selectedSpecies, hatched, state.lastUpdatedAt + cycles * 104729 + state.stats.hatched),
       xp: state.xp + hatched,
       stats: { ...state.stats, hatched: state.stats.hatched + hatched },
       lastUpdatedAt: state.lastUpdatedAt + cycles * cycleMilliseconds,

@@ -3,7 +3,14 @@ import { StyleSheet, Text, TextProps } from 'react-native';
 import { colors } from '../theme/colors';
 
 export function PixelText({ style, ...props }: TextProps) {
-  return <Text {...props} allowFontScaling={false} style={[styles.text, style]} />;
+  return (
+    <Text
+      {...props}
+      allowFontScaling
+      maxFontSizeMultiplier={1.18}
+      style={[styles.text, style]}
+    />
+  );
 }
 
 const styles = StyleSheet.create({
@@ -11,7 +18,7 @@ const styles = StyleSheet.create({
     color: colors.cream,
     fontFamily: 'VT323',
     fontWeight: '400',
-    letterSpacing: 0.7,
+    letterSpacing: 0.45,
     textShadowColor: '#02090DDD',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 0,

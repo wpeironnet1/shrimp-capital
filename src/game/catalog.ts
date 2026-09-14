@@ -40,9 +40,17 @@ export const species: ShrimpSpecies[] = [
 ];
 
 export const upgrades = [
-  { id: 'filter', name: 'Suspiciously Good Filter', detail: '+20% production', icon: 'water', baseCost: 50 },
-  { id: 'heater', name: 'Wall Street Heater', detail: '+15% hatch speed', icon: 'thermometer', baseCost: 90 },
-  { id: 'algae', name: 'Artisanal Algae', detail: '+25% sale value', icon: 'leaf', baseCost: 160 },
+  { id: 'filter', name: 'Suspiciously Good Filter', detail: '+20% production · cleaner water/oxygen', icon: 'water', baseCost: 50 },
+  { id: 'heater', name: 'Wall Street Heater', detail: '+15% hatch speed · temperature stability', icon: 'thermometer', baseCost: 90 },
+  { id: 'algae', name: 'Artisanal Algae', detail: '+25% sale value · feeding support', icon: 'leaf', baseCost: 160 },
+  { id: 'oxygen', name: 'Institutional Oxygen Desk', detail: '+10% production · stronger aeration', icon: 'cloud', baseCost: 220 },
+  { id: 'breeding-lab', name: 'M&A Breeding Lab', detail: 'Improves breeding efficiency and mutation odds', icon: 'flask', baseCost: 320 },
+  { id: 'compliance', name: 'Compliance Desk', detail: 'Softens negative market and inspection events', icon: 'document-text', baseCost: 420 },
+  { id: 'terminal', name: 'Shell Street Terminal', detail: '+8% sale value during market events', icon: 'desktop', baseCost: 560 },
+  { id: 'lighting', name: 'Executive Lighting Rig', detail: '+5% exotic display value · premium lighting', icon: 'sunny', baseCost: 700 },
+  { id: 'generator', name: 'Security Generator', detail: 'Protects production during power failures', icon: 'battery-charging', baseCost: 900 },
+  { id: 'showcase', name: 'Luxury Shrimp Showcase', detail: '+10% accessory and premium sale value', icon: 'diamond', baseCost: 1200 },
+  { id: 'collector', name: 'Auto-Collector Net Arm', detail: '+12% passive production', icon: 'hardware-chip', baseCost: 1500 },
 ] as const;
 
 export type MissionMetric = 'hatched' | 'sold' | 'upgradesBought' | 'lifetimeRevenue' | 'tankCapacity' | 'level' | 'accessories';

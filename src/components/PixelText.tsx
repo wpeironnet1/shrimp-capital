@@ -4,9 +4,9 @@ import { colors } from '../theme/colors';
 
 export function PixelText({ style, ...props }: TextProps) {
   const flattened = StyleSheet.flatten(style) ?? {};
-  const requestedSize = typeof flattened.fontSize === 'number' ? flattened.fontSize : 13;
+  const requestedSize = typeof flattened.fontSize === 'number' ? flattened.fontSize : 14;
   const isDisplayPixel = flattened.fontFamily === 'PressStart2P';
-  const minimumSize = isDisplayPixel ? 10 : 12;
+  const minimumSize = isDisplayPixel ? 11 : 14;
   const fontSize = Math.max(minimumSize, requestedSize);
   const requestedLineHeight = typeof flattened.lineHeight === 'number' ? flattened.lineHeight : undefined;
   const minimumLineHeight = isDisplayPixel ? fontSize + 6 : fontSize + 4;
@@ -27,7 +27,7 @@ const styles = StyleSheet.create({
     color: colors.cream,
     fontFamily: 'VT323',
     fontWeight: '400',
-    letterSpacing: 0.12,
+    letterSpacing: 0.08,
     textShadowColor: '#010609',
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 0,

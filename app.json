@@ -6,9 +6,18 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
-    "ios": { "supportsTablet": true, "bundleIdentifier": "com.shrimpcapital.game" },
-    "android": { "package": "com.shrimpcapital.game" },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.shrimpcapital.game",
+      "buildNumber": "1"
+    },
+    "android": {
+      "package": "com.shrimpcapital.game",
+      "versionCode": 1
+    },
     "plugins": ["expo-router"],
-    "experiments": { "typedRoutes": true }
+    "experiments": {
+      "typedRoutes": true
+    }
   }
 }

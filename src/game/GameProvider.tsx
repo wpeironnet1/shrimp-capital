@@ -2,13 +2,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { missions, upgrades } from './catalog';
+import { decorItems, DecorSlot } from './decor';
 import { accrueProduction, applyXp, breedSelected, canClaimDailyReward, dailyRewardAmount, dayKey, feedTank, GameState, hatch, initialState, launchIPO, missionProgress, nextDailyStreak, sell, serviceTank, upgradeCost } from './engine';
 
 const SAVE_KEY = '@shrimp-capital/save-v1';
+const DECOR_KEY = '@shrimp-capital/decor-v1';
+type DecorSave = { owned: Record<string, boolean>; placed: Partial<Record<DecorSlot, string>> };
 type GameContextValue = {
   state: GameState;
   loaded: boolean;
   offlineHatches: number;
+  ownedDecor: Record<string, boolean>;
+  placedDecor: Partial<Record<DecorSlot, string>>;
   dismissOfflineReport: () => void;
   hatchNow: () => void;
   sellOne: (id: string) => void;
@@ -19,6 +24,9 @@ type GameContextValue = {
   service: () => void;
   breed: () => void;
   ipo: () => void;
+  buyDecor: (id: string) => void;
+  placeDecor: (id: string) => void;
+  removeDecor: (slot: DecorSlot) => void;
   claimMission: (id: string) => void;
   claimDailyReward: () => void;
 };
@@ -28,9 +36,16 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState(initialState);
   const [loaded, setLoaded] = useState(false);
   const [offlineHatches, setOfflineHatches] = useState(0);
+  const [ownedDecor, setOwnedDecor] = useState<Record<string, boolean>>({});
+  const [placedDecor, setPlacedDecor] = useState<Partial<Record<DecorSlot, string>>>({});
 
   useEffect(() => {
-    AsyncStorage.getItem(SAVE_KEY).then((raw) => {
+    Promise.all([AsyncStorage.getItem(SAVE_KEY), AsyncStorage.getItem(DECOR_KEY)]).then(([raw, decorRaw]) => {
+      if (decorRaw) {
+        const parsedDecor = JSON.parse(decorRaw) as DecorSave;
+        setOwnedDecor(parsedDecor.owned ?? {});
+        setPlacedDecor(parsedDecor.placed ?? {});
+      }
       if (!raw) return;
       const parsed = JSON.parse(raw) as Partial<GameState>;
       const normalizedAccessories = Object.fromEntries(Object.entries(parsed.shrimpAccessories ?? {}).map(([id, value]) => [id, { chain: value?.chain ?? 0, crown: value?.crown ?? 0, visor: value?.visor ?? 0 }]));
@@ -53,12 +68,15 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => { if (loaded) AsyncStorage.setItem(SAVE_KEY, JSON.stringify(state)); }, [state, loaded]);
+  useEffect(() => { if (loaded) AsyncStorage.setItem(DECOR_KEY, JSON.stringify({ owned: ownedDecor, placed: placedDecor })); }, [ownedDecor, placedDecor, loaded]);
   useEffect(() => { if (!loaded) return; const timer = setInterval(() => setState((current) => accrueProduction(current).state), 1000); return () => clearInterval(timer); }, [loaded]);
 
   const value = useMemo<GameContextValue>(() => ({
     state,
     loaded,
     offlineHatches,
+    ownedDecor,
+    placedDecor,
     dismissOfflineReport: () => setOfflineHatches(0),
     hatchNow: () => { setState(hatch); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); },
     sellOne: (id) => { setState((current) => sell(current, id)); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); },
@@ -81,6 +99,21 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     service: () => { setState((current) => serviceTank(current)); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); },
     breed: () => { setState((current) => breedSelected(current)); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); },
     ipo: () => { setState((current) => launchIPO(current)); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); },
+    buyDecor: (id) => {
+      const item = decorItems.find((entry) => entry.id === id);
+      if (!item || ownedDecor[id] || state.level < item.unlockLevel || state.cash < item.price) return;
+      setState((current) => ({ ...current, cash: current.cash - item.price }));
+      setOwnedDecor((current) => ({ ...current, [id]: true }));
+      setPlacedDecor((current) => ({ ...current, [item.slot]: id }));
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    },
+    placeDecor: (id) => {
+      const item = decorItems.find((entry) => entry.id === id);
+      if (!item || !ownedDecor[id]) return;
+      setPlacedDecor((current) => ({ ...current, [item.slot]: id }));
+      Haptics.selectionAsync();
+    },
+    removeDecor: (slot) => setPlacedDecor((current) => { const next = { ...current }; delete next[slot]; return next; }),
     claimMission: (id) => setState((current) => {
       const mission = missions.find((entry) => entry.id === id);
       if (!mission || current.claimedMissions[id] || missionProgress(current, mission.metric) < mission.target) return current;
@@ -94,7 +127,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       return { ...current, cash: current.cash + dailyRewardAmount(streak), dailyStreak: streak, lastDailyClaim: dayKey() };
     }),
-  }), [state, loaded, offlineHatches]);
+  }), [state, loaded, offlineHatches, ownedDecor, placedDecor]);
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 }

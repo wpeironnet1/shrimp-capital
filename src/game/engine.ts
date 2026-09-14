@@ -1,5 +1,12 @@
 import { MissionMetric, species } from './catalog';
 
+export type TankConditions = {
+  waterQuality: number;
+  temperature: number;
+  oxygen: number;
+  feeding: number;
+};
+
 export type GameState = {
   cash: number;
   shrimp: Record<string, number>;
@@ -9,6 +16,8 @@ export type GameState = {
   xp: number;
   tankCapacity: number;
   upgrades: Record<string, number>;
+  conditions: TankConditions;
+  conditionUpdatedAt: number;
   lifetimeRevenue: number;
   stats: { hatched: number; sold: number; upgradesBought: number };
   claimedMissions: Record<string, boolean>;
@@ -26,6 +35,8 @@ export const initialState: GameState = {
   xp: 0,
   tankCapacity: 20,
   upgrades: {},
+  conditions: { waterQuality: 96, temperature: 76, oxygen: 94, feeding: 82 },
+  conditionUpdatedAt: Date.now(),
   lifetimeRevenue: 0,
   stats: { hatched: 0, sold: 0, upgradesBought: 0 },
   claimedMissions: {},
@@ -34,6 +45,7 @@ export const initialState: GameState = {
   lastUpdatedAt: Date.now(),
 };
 
+const clamp = (value: number, min = 0, max = 100) => Math.max(min, Math.min(max, value));
 export const totalShrimp = (state: GameState) => Object.values(state.shrimp).reduce((a, b) => a + b, 0);
 export const xpForNextLevel = (level: number) => 30 + level * 25;
 export function applyXp(level: number, xp: number, gained: number) {
@@ -46,12 +58,81 @@ export function applyXp(level: number, xp: number, gained: number) {
   return { level: nextLevel, xp: nextXp };
 }
 export const upgradeCost = (base: number, owned: number) => Math.round(base * Math.pow(1.65, owned));
-export const productionMultiplier = (state: GameState) => 1 + (state.upgrades.filter ?? 0) * 0.2;
-export const speedMultiplier = (state: GameState) => 1 + (state.upgrades.heater ?? 0) * 0.15;
-export const valueMultiplier = (state: GameState) => 1 + (state.upgrades.algae ?? 0) * 0.25;
+
+export function tankHealth(state: GameState) {
+  const temperatureScore = clamp(100 - Math.abs(state.conditions.temperature - 76) * 12);
+  return Math.round((state.conditions.waterQuality + state.conditions.oxygen + state.conditions.feeding + temperatureScore) / 4);
+}
+
+export function conditionMultiplier(state: GameState) {
+  const health = tankHealth(state);
+  if (health >= 92) return 1;
+  if (health >= 80) return 0.94;
+  if (health >= 65) return 0.82;
+  if (health >= 45) return 0.65;
+  return 0.45;
+}
+
+export const productionMultiplier = (state: GameState) => (1 + (state.upgrades.filter ?? 0) * 0.2) * conditionMultiplier(state);
+export const speedMultiplier = (state: GameState) => (1 + (state.upgrades.heater ?? 0) * 0.15) * Math.max(0.55, conditionMultiplier(state));
+export const valueMultiplier = (state: GameState) => (1 + (state.upgrades.algae ?? 0) * 0.25) * (0.8 + tankHealth(state) / 500);
 export const dayKey = (date = new Date()) => date.toISOString().slice(0, 10);
 export const dailyRewardAmount = (streak: number) => Math.min(60, 20 + Math.max(0, streak - 1) * 5);
 export const ACCESSORY_ODDS = 500;
+
+export function advanceTankConditions(state: GameState, now = Date.now()): GameState {
+  const elapsedMinutes = Math.max(0, (now - (state.conditionUpdatedAt || now)) / 60_000);
+  if (elapsedMinutes < 0.1) return state;
+
+  const population = totalShrimp(state);
+  const crowding = state.tankCapacity <= 0 ? 0 : population / state.tankCapacity;
+  const filterLevel = state.upgrades.filter ?? 0;
+  const heaterLevel = state.upgrades.heater ?? 0;
+  const algaeLevel = state.upgrades.algae ?? 0;
+  const c = state.conditions ?? initialState.conditions;
+
+  const waterDrain = Math.max(0.03, 0.17 + crowding * 0.24 - filterLevel * 0.045);
+  const oxygenDrain = Math.max(0.02, 0.11 + crowding * 0.2 - filterLevel * 0.035);
+  const feedDrain = Math.max(0.08, 0.5 + crowding * 0.38 - algaeLevel * 0.06);
+  const targetTemperature = heaterLevel > 0 ? Math.min(78, 75 + heaterLevel * 0.45) : 72;
+  const temperatureStep = Math.min(1, elapsedMinutes * (heaterLevel > 0 ? 0.08 + heaterLevel * 0.015 : 0.035));
+  const temperature = c.temperature + (targetTemperature - c.temperature) * temperatureStep;
+
+  return {
+    ...state,
+    conditions: {
+      waterQuality: clamp(c.waterQuality - waterDrain * elapsedMinutes),
+      temperature: Math.round(temperature * 10) / 10,
+      oxygen: clamp(c.oxygen - oxygenDrain * elapsedMinutes),
+      feeding: clamp(c.feeding - feedDrain * elapsedMinutes),
+    },
+    conditionUpdatedAt: now,
+  };
+}
+
+export function feedTank(state: GameState): GameState {
+  if (state.cash < 2 || state.conditions.feeding >= 98) return state;
+  return {
+    ...state,
+    cash: state.cash - 2,
+    conditions: { ...state.conditions, feeding: clamp(state.conditions.feeding + 42) },
+    conditionUpdatedAt: Date.now(),
+  };
+}
+
+export function serviceTank(state: GameState): GameState {
+  if (state.cash < 4 || (state.conditions.waterQuality >= 98 && state.conditions.oxygen >= 98)) return state;
+  return {
+    ...state,
+    cash: state.cash - 4,
+    conditions: {
+      ...state.conditions,
+      waterQuality: clamp(state.conditions.waterQuality + 48),
+      oxygen: clamp(state.conditions.oxygen + 35),
+    },
+    conditionUpdatedAt: Date.now(),
+  };
+}
 
 export function missionProgress(state: GameState, metric: MissionMetric) {
   if (metric === 'lifetimeRevenue') return state.lifetimeRevenue;
@@ -94,7 +175,8 @@ export function nextDailyStreak(state: GameState, today = new Date()) {
 
 export const canClaimDailyReward = (state: GameState, today = new Date()) => state.lastDailyClaim !== dayKey(today);
 
-export function hatch(state: GameState): GameState {
+export function hatch(input: GameState): GameState {
+  const state = advanceTankConditions(input);
   if (totalShrimp(state) >= state.tankCapacity) return state;
   const amount = Math.max(1, Math.floor(productionMultiplier(state)));
   const room = state.tankCapacity - totalShrimp(state);
@@ -109,7 +191,8 @@ export function hatch(state: GameState): GameState {
   };
 }
 
-export function sell(state: GameState, speciesId: string, amount = 1): GameState {
+export function sell(input: GameState, speciesId: string, amount = 1): GameState {
+  const state = advanceTankConditions(input);
   const item = species.find((entry) => entry.id === speciesId);
   const owned = state.shrimp[speciesId] ?? 0;
   if (!item || owned < amount) return state;
@@ -132,14 +215,16 @@ export function sell(state: GameState, speciesId: string, amount = 1): GameState
   };
 }
 
-export function calculateOfflineHatches(state: GameState, now = Date.now()) {
+export function calculateOfflineHatches(input: GameState, now = Date.now()) {
+  const state = advanceTankConditions(input, now);
   const item = species.find((entry) => entry.id === state.selectedSpecies) ?? species[0];
   const elapsedSeconds = Math.max(0, (now - state.lastUpdatedAt) / 1000);
   const cycle = item.hatchSeconds / speedMultiplier(state);
   return Math.min(state.tankCapacity - totalShrimp(state), Math.floor(elapsedSeconds / cycle));
 }
 
-export function accrueProduction(state: GameState, now = Date.now()): { state: GameState; hatched: number } {
+export function accrueProduction(input: GameState, now = Date.now()): { state: GameState; hatched: number } {
+  const state = advanceTankConditions(input, now);
   const item = species.find((entry) => entry.id === state.selectedSpecies) ?? species[0];
   const cycleMilliseconds = item.hatchSeconds / speedMultiplier(state) * 1000;
   const cycles = Math.floor(Math.max(0, now - state.lastUpdatedAt) / cycleMilliseconds);
@@ -161,7 +246,8 @@ export function accrueProduction(state: GameState, now = Date.now()): { state: G
   };
 }
 
-export function secondsUntilNextHatch(state: GameState, now = Date.now()) {
+export function secondsUntilNextHatch(input: GameState, now = Date.now()) {
+  const state = advanceTankConditions(input, now);
   if (totalShrimp(state) >= state.tankCapacity) return 0;
   const item = species.find((entry) => entry.id === state.selectedSpecies) ?? species[0];
   const cycleMilliseconds = item.hatchSeconds / speedMultiplier(state) * 1000;

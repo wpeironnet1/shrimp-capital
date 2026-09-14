@@ -14,3 +14,10 @@ test('species ladder contains a long, increasingly valuable collection', () => {
   assert.ok(new Set(entries.map((entry) => entry.rarity)).size >= 7);
   assert.ok(entries.at(-1).price >= 100_000);
 });
+
+test('challenge ladder contains 24 cash and XP mandates', () => {
+  const rewardXpEntries = [...catalog.matchAll(/rewardXp: (\d+)/g)].map((match) => Number(match[1]));
+  assert.equal(rewardXpEntries.length, 24);
+  assert.ok(rewardXpEntries.every((reward) => reward > 0));
+  assert.ok(rewardXpEntries.at(-1) > rewardXpEntries[0]);
+});

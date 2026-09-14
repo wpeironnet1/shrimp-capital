@@ -45,9 +45,30 @@ export const upgrades = [
   { id: 'algae', name: 'Artisanal Algae', detail: '+25% sale value', icon: 'leaf', baseCost: 160 },
 ] as const;
 
-export type MissionMetric = 'hatched' | 'sold' | 'upgradesBought';
+export type MissionMetric = 'hatched' | 'sold' | 'upgradesBought' | 'lifetimeRevenue' | 'tankCapacity' | 'level' | 'accessories';
 export const missions = [
-  { id: 'first-brood', title: 'Seed the portfolio', detail: 'Hatch 10 shrimp', metric: 'hatched', target: 10, reward: 30 },
-  { id: 'liquidity-event', title: 'Create a liquidity event', detail: 'Sell 8 shrimp', metric: 'sold', target: 8, reward: 45 },
-  { id: 'capex-cycle', title: 'Invest in infrastructure', detail: 'Buy 2 upgrades', metric: 'upgradesBought', target: 2, reward: 80 },
-] satisfies Array<{ id: string; title: string; detail: string; metric: MissionMetric; target: number; reward: number }>;
+  { id: 'first-brood', title: 'Seed the portfolio', detail: 'Hatch 10 shrimp', metric: 'hatched', target: 10, reward: 30, rewardXp: 20 },
+  { id: 'liquidity-event', title: 'Create a liquidity event', detail: 'Sell 8 shrimp', metric: 'sold', target: 8, reward: 45, rewardXp: 25 },
+  { id: 'capex-cycle', title: 'Invest in infrastructure', detail: 'Buy 2 upgrades', metric: 'upgradesBought', target: 2, reward: 80, rewardXp: 35 },
+  { id: 'bigger-office', title: 'Lease more square footage', detail: 'Reach 30 tank capacity', metric: 'tankCapacity', target: 30, reward: 90, rewardXp: 40 },
+  { id: 'fifty-under-management', title: 'Assets under management', detail: 'Hatch 50 shrimp', metric: 'hatched', target: 50, reward: 120, rewardXp: 50 },
+  { id: 'first-quarter', title: 'Beat quarterly guidance', detail: 'Earn $250 lifetime revenue', metric: 'lifetimeRevenue', target: 250, reward: 150, rewardXp: 55 },
+  { id: 'repeat-customer', title: 'Find market liquidity', detail: 'Sell 50 shrimp', metric: 'sold', target: 50, reward: 180, rewardXp: 65 },
+  { id: 'junior-partner', title: 'Make junior partner', detail: 'Reach level 5', metric: 'level', target: 5, reward: 225, rewardXp: 80 },
+  { id: 'operations-desk', title: 'Build an operations desk', detail: 'Buy 5 upgrades', metric: 'upgradesBought', target: 5, reward: 275, rewardXp: 90 },
+  { id: 'corner-tank', title: 'Secure the corner tank', detail: 'Reach 50 tank capacity', metric: 'tankCapacity', target: 50, reward: 350, rewardXp: 100 },
+  { id: 'two-hundred-club', title: 'Scale the hatchery', detail: 'Hatch 200 shrimp', metric: 'hatched', target: 200, reward: 450, rewardXp: 125 },
+  { id: 'four-figure-fund', title: 'Enter four figures', detail: 'Earn $2,500 lifetime revenue', metric: 'lifetimeRevenue', target: 2500, reward: 600, rewardXp: 150 },
+  { id: 'distribution-network', title: 'Build distribution', detail: 'Sell 200 shrimp', metric: 'sold', target: 200, reward: 750, rewardXp: 175 },
+  { id: 'managing-director', title: 'Become managing director', detail: 'Reach level 10', metric: 'level', target: 10, reward: 900, rewardXp: 225 },
+  { id: 'vertical-integration', title: 'Vertically integrate', detail: 'Buy 10 upgrades', metric: 'upgradesBought', target: 10, reward: 1200, rewardXp: 250 },
+  { id: 'campus-expansion', title: 'Open a shrimp campus', detail: 'Reach 80 tank capacity', metric: 'tankCapacity', target: 80, reward: 1500, rewardXp: 275 },
+  { id: 'thousand-hatch', title: 'Industrialize the brood', detail: 'Hatch 1,000 shrimp', metric: 'hatched', target: 1000, reward: 2200, rewardXp: 350 },
+  { id: 'serious-money', title: 'Report serious revenue', detail: 'Earn $25,000 lifetime revenue', metric: 'lifetimeRevenue', target: 25000, reward: 3000, rewardXp: 425 },
+  { id: 'wholesale-desk', title: 'Open the wholesale desk', detail: 'Sell 1,000 shrimp', metric: 'sold', target: 1000, reward: 4000, rewardXp: 500 },
+  { id: 'aquatic-vp', title: 'Appoint an aquatic VP', detail: 'Reach level 20', metric: 'level', target: 20, reward: 5000, rewardXp: 650 },
+  { id: 'automation-stack', title: 'Automate everything', detail: 'Buy 20 upgrades', metric: 'upgradesBought', target: 20, reward: 6500, rewardXp: 750 },
+  { id: 'regional-hq', title: 'Build regional HQ', detail: 'Reach 120 tank capacity', metric: 'tankCapacity', target: 120, reward: 8000, rewardXp: 900 },
+  { id: 'five-thousand-hatch', title: 'Dominate the shrimp index', detail: 'Hatch 5,000 shrimp', metric: 'hatched', target: 5000, reward: 12000, rewardXp: 1200 },
+  { id: 'luxury-allocation', title: 'Acquire wearable assets', detail: 'Hatch a shrimp with an accessory', metric: 'accessories', target: 1, reward: 15000, rewardXp: 1500 },
+] satisfies Array<{ id: string; title: string; detail: string; metric: MissionMetric; target: number; reward: number; rewardXp: number }>;

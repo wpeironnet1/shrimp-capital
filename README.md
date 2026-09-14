@@ -14,7 +14,7 @@
 - Haptic interactions
 - Automatic timed hatching with a live production countdown
 - Offline-return report showing shrimp produced while away
-- Starter mission chain with tracked progress and cash rewards
+- 24-challenge progression ladder with tracked cash and XP rewards
 - Code-native pixel shrimp sprites, aquarium plants, and animated swimming
 - Daily Market Open rewards with persistent streak progression
 - Population-accurate aquarium display (performance-capped at 24 visible shrimp)

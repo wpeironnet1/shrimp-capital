@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Haptics from 'expo-haptics';
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { missions, upgrades } from './catalog';
-import { accrueProduction, canClaimDailyReward, dailyRewardAmount, dayKey, GameState, hatch, initialState, nextDailyStreak, sell, upgradeCost } from './engine';
+import { accrueProduction, applyXp, canClaimDailyReward, dailyRewardAmount, dayKey, GameState, hatch, initialState, missionProgress, nextDailyStreak, sell, upgradeCost } from './engine';
 
 const SAVE_KEY = '@shrimp-capital/save-v1';
 type GameContextValue = {
@@ -76,9 +76,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }),
     claimMission: (id) => setState((current) => {
       const mission = missions.find((entry) => entry.id === id);
-      if (!mission || current.claimedMissions[id] || current.stats[mission.metric] < mission.target) return current;
+      if (!mission || current.claimedMissions[id] || missionProgress(current, mission.metric) < mission.target) return current;
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      return { ...current, cash: current.cash + mission.reward, claimedMissions: { ...current.claimedMissions, [id]: true } };
+      const progression = applyXp(current.level, current.xp, mission.rewardXp);
+      return { ...current, ...progression, cash: current.cash + mission.reward, claimedMissions: { ...current.claimedMissions, [id]: true } };
     }),
     claimDailyReward: () => setState((current) => {
       if (!canClaimDailyReward(current)) return current;

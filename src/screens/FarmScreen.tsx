@@ -15,7 +15,6 @@ import { colors } from '../theme/colors';
 
 export function FarmScreen() {
   const { state, hatchNow, sellOne, selectSpecies, offlineHatches, dismissOfflineReport, claimMission, claimDailyReward } = useGame();
-  const unlocked = species.filter((item) => item.unlockLevel <= state.level);
   const current = species.find((item) => item.id === state.selectedSpecies) ?? species[0];
   const tankFull = totalShrimp(state) >= state.tankCapacity;
   const nextHatch = secondsUntilNextHatch(state);
@@ -34,7 +33,7 @@ export function FarmScreen() {
         </View>
         <MissionPanel state={state} onClaim={claimMission} />
         <DailyRewardCard state={state} onClaim={claimDailyReward} />
-        <Tank count={totalShrimp(state)} capacity={state.tankCapacity} color={current.color} onPress={hatchNow} />
+        <Tank population={state.shrimp} capacity={state.tankCapacity} upgrades={state.upgrades} onPress={hatchNow} />
         <View style={styles.productionBar} accessibilityLabel={tankFull ? 'Tank full' : `Next shrimp in ${nextHatch} seconds`}>
           <View style={styles.liveDot} />
           <PixelText style={styles.productionLabel}>{tankFull ? 'TANK FULL — SELL OR EXPAND' : `AUTO-HATCH IN ${nextHatch}s`}</PixelText>
@@ -42,13 +41,16 @@ export function FarmScreen() {
         </View>
         <View style={styles.speciesHeading}><PixelText style={styles.sectionTitle}>CURRENT STOCK</PixelText><PixelText style={styles.rarity}>{current.rarity.toUpperCase()}</PixelText></View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.speciesRow}>
-          {unlocked.map((item) => (
-            <Pressable key={item.id} onPress={() => selectSpecies(item.id)} style={[styles.speciesCard, state.selectedSpecies === item.id && styles.speciesSelected]}>
-              <PixelShrimp color={item.color} size={34} />
+          {species.map((item) => {
+            const locked = item.unlockLevel > state.level;
+            return (
+            <Pressable accessibilityRole="button" accessibilityState={{ disabled: locked, selected: state.selectedSpecies === item.id }} key={item.id} disabled={locked} onPress={() => selectSpecies(item.id)} style={[styles.speciesCard, locked && styles.speciesLocked, state.selectedSpecies === item.id && styles.speciesSelected]}>
+              <PixelShrimp color={item.color} accentColor={item.accentColor} pattern={item.pattern} trait={item.trait} size={34 + (item.rarity === 'Exotic' ? 7 : item.rarity === 'Mythic' ? 5 : item.rarity === 'Legendary' ? 3 : 0)} />
               <PixelText style={styles.speciesName}>{item.name}</PixelText>
-              <PixelText style={styles.speciesValue}>${item.basePrice} ea.</PixelText>
+              <PixelText style={styles.speciesRarity}>{item.rarity.toUpperCase()}</PixelText>
+              <PixelText style={styles.speciesValue}>{locked ? `UNLOCK LV. ${item.unlockLevel}` : `$${item.basePrice.toLocaleString()} ea.`}</PixelText>
             </Pressable>
-          ))}
+          );})}
         </ScrollView>
         <View style={styles.sellCard}>
           <View><PixelText style={styles.sellTitle}>Sell one {current.name}</PixelText><PixelText style={styles.sellDetail}>{state.shrimp[current.id] ?? 0} ready · Market is irrational</PixelText></View>
@@ -66,6 +68,6 @@ const styles = StyleSheet.create({
   eyebrow: { fontSize: 11, color: colors.coral, letterSpacing: 2.4 }, title: { fontSize: 24, marginTop: 3 }, money: { alignItems: 'flex-end', backgroundColor: '#0C313C', borderRadius: 12, paddingVertical: 9, paddingHorizontal: 12, borderWidth: 1, borderColor: '#28515C' }, moneyText: { color: colors.gold, fontSize: 18 }, moneyHint: { color: colors.muted, fontSize: 7, marginTop: 2 },
   levelRow: { flexDirection: 'row', alignItems: 'center', gap: 8 }, level: { color: colors.aqua, fontSize: 11 }, xp: { color: colors.muted, fontSize: 9 }, xpTrack: { flex: 1, height: 8, borderRadius: 4, backgroundColor: '#1B414B', overflow: 'hidden' }, xpFill: { height: '100%', backgroundColor: colors.aqua },
   productionBar: { marginTop: -7, backgroundColor: '#0C313C', borderRadius: 10, paddingVertical: 9, paddingHorizontal: 11, flexDirection: 'row', alignItems: 'center', gap: 7, borderWidth: 1, borderColor: '#234B56' }, liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.success }, productionLabel: { color: colors.aqua, fontSize: 9, flex: 1 }, productionRate: { color: colors.muted, fontSize: 8 },
-  speciesHeading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, sectionTitle: { fontSize: 13, letterSpacing: 1.5 }, rarity: { fontSize: 9, color: colors.coral }, speciesRow: { gap: 10 }, speciesCard: { width: 125, padding: 12, borderRadius: 14, backgroundColor: colors.panel, borderWidth: 2, borderColor: '#23515C' }, speciesSelected: { borderColor: colors.coral, backgroundColor: '#184955' }, speciesName: { fontSize: 12, marginTop: 7 }, speciesValue: { color: colors.gold, fontSize: 10, marginTop: 5 },
+  speciesHeading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, sectionTitle: { fontSize: 13, letterSpacing: 1.5 }, rarity: { fontSize: 9, color: colors.coral }, speciesRow: { gap: 10 }, speciesCard: { width: 134, minHeight: 124, padding: 12, borderRadius: 14, backgroundColor: colors.panel, borderWidth: 2, borderColor: '#23515C' }, speciesLocked: { opacity: 0.42 }, speciesSelected: { borderColor: colors.coral, backgroundColor: '#184955' }, speciesName: { fontSize: 11, marginTop: 7 }, speciesRarity: { color: colors.aqua, fontSize: 7, marginTop: 5 }, speciesValue: { color: colors.gold, fontSize: 9, marginTop: 5 },
   sellCard: { backgroundColor: colors.cream, borderRadius: 16, padding: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, sellTitle: { color: colors.ink, fontSize: 13 }, sellDetail: { color: '#4B666A', fontSize: 8, marginTop: 4 }, sellButton: { backgroundColor: colors.gold, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }, sellButtonText: { color: colors.ink, fontSize: 10 },
 });

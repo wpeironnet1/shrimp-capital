@@ -7,7 +7,7 @@
 - Tap-to-hatch shrimp farming loop
 - Sell shrimp for cash and XP
 - Persistent local save and offline growth
-- Four species with level-gated rarity
+- 24 species across seven level-gated rarity tiers
 - Tank capacity and compounding operations upgrades
 - Farm, market, and future clans screens
 - Mobile-first dark pixel-inspired visual system
@@ -17,6 +17,9 @@
 - Starter mission chain with tracked progress and cash rewards
 - Code-native pixel shrimp sprites, aquarium plants, and animated swimming
 - Daily Market Open rewards with persistent streak progression
+- Population-accurate aquarium display (performance-capped at 24 visible shrimp)
+- Tap-reactive shrimp with turns, rarity patterns, claws, crests, and long feelers
+- Visible filter, heater, algae, and tank-expansion decorations
 
 ## Run locally
 

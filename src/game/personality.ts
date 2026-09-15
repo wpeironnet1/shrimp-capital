@@ -34,6 +34,10 @@ export function personalityFor(seed: string): ShrimpPersonalityProfile {
   return profiles[hashSeed(seed) % profiles.length];
 }
 
+export function personalityForSpecies(speciesId: string, populationIndex = 0): ShrimpPersonalityProfile {
+  return personalityFor(`${speciesId}-${Math.max(0, populationIndex)}`);
+}
+
 export function personalityReactionPool(seed: string, hasAccessory: boolean): ShrimpReaction[] {
   const profile = personalityFor(seed);
   const pool: ShrimpReaction[] = ['dart', 'spin', 'bubbles', 'wiggle', 'reverse', profile.reactionBias, profile.reactionBias];

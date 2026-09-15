@@ -4,19 +4,21 @@ import { colors } from '../theme/colors';
 
 export function PixelText({ style, ...props }: TextProps) {
   const flattened = StyleSheet.flatten(style) ?? {};
-  const requestedSize = typeof flattened.fontSize === 'number' ? flattened.fontSize : 14;
+  const requestedSize = typeof flattened.fontSize === 'number' ? flattened.fontSize : 15;
   const isDisplayPixel = flattened.fontFamily === 'PressStart2P';
-  const minimumSize = isDisplayPixel ? 11 : 14;
+  // PressStart2P becomes difficult to scan below 12px on phone-density screens.
+  // VT323 is intentionally airy, so 15px is a better practical body-text floor.
+  const minimumSize = isDisplayPixel ? 12 : 15;
   const fontSize = Math.max(minimumSize, requestedSize);
   const requestedLineHeight = typeof flattened.lineHeight === 'number' ? flattened.lineHeight : undefined;
-  const minimumLineHeight = isDisplayPixel ? fontSize + 6 : fontSize + 4;
+  const minimumLineHeight = isDisplayPixel ? fontSize + 7 : fontSize + 5;
   const lineHeight = requestedLineHeight ? Math.max(requestedLineHeight, minimumLineHeight) : minimumLineHeight;
 
   return (
     <Text
       {...props}
       allowFontScaling
-      maxFontSizeMultiplier={1.35}
+      maxFontSizeMultiplier={1.5}
       style={[styles.text, style, { fontSize, lineHeight }]}
     />
   );

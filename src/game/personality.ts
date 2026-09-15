@@ -1,9 +1,11 @@
 export type ShrimpPersonality = 'Curious' | 'Hyper' | 'Lazy' | 'Shy' | 'Greedy' | 'Lucky' | 'Bold' | 'Diligent';
 
+export type ShrimpReaction = 'wiggle' | 'dart' | 'bubbles' | 'reverse' | 'spin' | 'accessory';
+
 export type ShrimpPersonalityProfile = {
   name: ShrimpPersonality;
   tagline: string;
-  reactionBias: 'wiggle' | 'dart' | 'bubbles' | 'reverse' | 'spin' | 'accessory';
+  reactionBias: ShrimpReaction;
   driftMultiplier: number;
   bobMultiplier: number;
 };
@@ -32,10 +34,17 @@ export function personalityFor(seed: string): ShrimpPersonalityProfile {
   return profiles[hashSeed(seed) % profiles.length];
 }
 
-export function personalityReactionPool(seed: string, hasAccessory: boolean) {
+export function personalityReactionPool(seed: string, hasAccessory: boolean): ShrimpReaction[] {
   const profile = personalityFor(seed);
-  const base = ['dart', 'spin', 'bubbles', 'wiggle', 'reverse'] as const;
-  const pool: Array<(typeof base)[number] | 'accessory'> = [...base, profile.reactionBias, profile.reactionBias];
+  const pool: ShrimpReaction[] = ['dart', 'spin', 'bubbles', 'wiggle', 'reverse', profile.reactionBias, profile.reactionBias];
   if (hasAccessory) pool.push('accessory', 'accessory');
   return pool;
+}
+
+export function personalityMotion(seed: string, baseDrift: number, baseBobDuration: number) {
+  const profile = personalityFor(seed);
+  return {
+    driftDistance: Math.max(5, Math.round(baseDrift * profile.driftMultiplier)),
+    bobDuration: Math.max(650, Math.round(baseBobDuration / profile.bobMultiplier)),
+  };
 }

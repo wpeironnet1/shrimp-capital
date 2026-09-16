@@ -13,10 +13,10 @@ test('tank keeps a varied set of direct shrimp reactions', () => {
 });
 
 test('jumping shrimp receive explicit foreground priority', () => {
-  const jumpLayer = tank.match(/zIndex:jumping\?(\d+):/);
+  const jumpLayer = tank.match(/zIndex:(?:jumping|jumpToken)\?(\d+):/);
   assert.ok(jumpLayer, 'jumping shrimp should have an explicit foreground z-index');
   assert.ok(Number(jumpLayer[1]) >= 200, `jump foreground layer is too low: ${jumpLayer[1]}`);
-  assert.match(tank, /elevation:jumping\?\d+:/, 'native jump foreground should also use elevation');
+  assert.match(tank, /elevation:(?:jumping|jumpToken)\?\d+:/, 'native jump foreground should also use elevation');
 });
 
 test('tank event overlays yield while a shrimp jump is active', () => {

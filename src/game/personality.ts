@@ -40,7 +40,8 @@ export function personalityForSpecies(speciesId: string, populationIndex = 0): S
 
 export function personalityReactionPool(seed: string, hasAccessory: boolean): ShrimpReaction[] {
   const profile = personalityFor(seed);
-  const pool: ShrimpReaction[] = ['dart', 'spin', 'bubbles', 'wiggle', 'reverse', profile.reactionBias, profile.reactionBias];
+  const safeBias: ShrimpReaction = profile.reactionBias === 'accessory' && !hasAccessory ? 'wiggle' : profile.reactionBias;
+  const pool: ShrimpReaction[] = ['dart', 'spin', 'bubbles', 'wiggle', 'reverse', safeBias, safeBias];
   if (hasAccessory) pool.push('accessory', 'accessory');
   return pool;
 }

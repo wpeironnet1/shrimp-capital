@@ -30,10 +30,11 @@ test('personality motion stays deterministic and bounded for tank animation safe
   assert.ok(source.includes('Math.max(650, Math.round(baseBobDuration / profile.bobMultiplier))'));
 });
 
-test('tap reaction pool preserves every core reaction plus personality weighting', () => {
+test('tap reaction pool preserves every core reaction plus safe personality weighting', () => {
   for (const reaction of ['dart', 'spin', 'bubbles', 'wiggle', 'reverse']) {
     assert.ok(source.includes(`'${reaction}'`), `missing ${reaction} reaction`);
   }
-  assert.ok(source.includes('profile.reactionBias, profile.reactionBias'));
+  assert.ok(source.includes("profile.reactionBias === 'accessory' && !hasAccessory ? 'wiggle' : profile.reactionBias"));
+  assert.ok(source.includes('safeBias, safeBias'));
   assert.ok(source.includes("pool.push('accessory', 'accessory')"));
 });

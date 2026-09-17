@@ -50,14 +50,14 @@ export function TankConditionPanel({state,onFeed,onService}:{state:GameState;onF
         <PixelText style={styles.title}>TANK CONDITION</PixelText>
         <PixelText style={styles.headerHint}>HEALTHY WATER, OXYGEN, FEEDING, AND TEMPERATURE PROTECT HATCH SPEED AND SALE VALUE.</PixelText>
       </View>
-      <View style={[styles.statusPill,health<65&&styles.statusPillDanger]}>
+      <View style={[styles.statusPill,compact&&styles.statusPillCompact,health<65&&styles.statusPillDanger]}>
         <View style={[styles.statusDot,health<65&&styles.statusDotDanger]}/>
         <View style={styles.statusCopy}><PixelText style={styles.statusLabel}>OPS SCORE</PixelText><PixelText style={styles.status}>{status} · {health}%</PixelText></View>
       </View>
     </View>
 
-    <View style={[styles.recommendation,health<65&&styles.recommendationDanger]}>
-      <Ionicons name={needsService?'construct':needsFeed?'fish':'checkmark-circle'} size={18} color={health<65?colors.danger:colors.goldLight}/>
+    <View style={[styles.recommendation,stacked&&styles.recommendationStacked,health<65&&styles.recommendationDanger]}>
+      <Ionicons name={needsService?'construct':needsFeed?'fish':'checkmark-circle'} size={20} color={health<65?colors.danger:colors.goldLight}/>
       <PixelText style={[styles.recommendationText,health<65&&styles.recommendationTextDanger]}>{recommendation}</PixelText>
     </View>
 
@@ -85,12 +85,13 @@ export function TankConditionPanel({state,onFeed,onService}:{state:GameState;onF
 const styles=StyleSheet.create({
   outer:{backgroundColor:'#071C24',borderWidth:2,borderColor:colors.brass,padding:4,shadowColor:'#000',shadowOpacity:.4,shadowRadius:0,shadowOffset:{width:3,height:4}},
   header:{backgroundColor:'#0C2B35',borderWidth:1,borderColor:'#365964',borderBottomWidth:2,borderBottomColor:colors.brass,padding:14,flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:14},
-  headerCompact:{padding:12,alignItems:'flex-start',flexDirection:'column'},
+  headerCompact:{padding:12,alignItems:'stretch',flexDirection:'column',gap:12},
   headerCopy:{flex:1,minWidth:0},
   kicker:{color:colors.aqua,fontSize:12,letterSpacing:.5},
   title:{fontFamily:'PressStart2P',fontSize:12,lineHeight:18,marginTop:6,color:colors.cream},
   headerHint:{fontSize:13,lineHeight:19,color:'#C8D7D9',marginTop:8,maxWidth:760},
   statusPill:{flexDirection:'row',alignItems:'center',gap:9,backgroundColor:'#153A32',borderWidth:2,borderColor:'#426F5C',paddingVertical:10,paddingHorizontal:12,minWidth:150,minHeight:56},
+  statusPillCompact:{width:'100%',minWidth:0,minHeight:60,paddingVertical:11,paddingHorizontal:13},
   statusPillDanger:{backgroundColor:'#452629',borderColor:'#844A4C'},
   statusDot:{width:10,height:10,backgroundColor:colors.success},
   statusDotDanger:{backgroundColor:colors.danger},
@@ -98,8 +99,9 @@ const styles=StyleSheet.create({
   statusLabel:{fontSize:11,color:'#BFD0CE',letterSpacing:.35},
   status:{fontSize:12,color:colors.cream,marginTop:4},
   recommendation:{minHeight:42,flexDirection:'row',alignItems:'center',gap:9,backgroundColor:'#132D31',borderBottomWidth:1,borderBottomColor:'#36545A',paddingHorizontal:12,paddingVertical:8},
+  recommendationStacked:{minHeight:50,paddingVertical:10},
   recommendationDanger:{backgroundColor:'#342327'},
-  recommendationText:{fontSize:12,color:colors.goldLight,letterSpacing:.3},
+  recommendationText:{fontSize:12,color:colors.goldLight,letterSpacing:.3,flexShrink:1},
   recommendationTextDanger:{color:'#FFB6B0'},
   gaugeGrid:{flexDirection:'row',flexWrap:'wrap',gap:8,padding:8,backgroundColor:'#0A242D'},
   gaugeGridStacked:{gap:7,padding:7},

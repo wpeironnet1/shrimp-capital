@@ -7,7 +7,7 @@ const stockBrowser = readFileSync(new URL('../src/components/StockBrowser.tsx', 
 const conditions = readFileSync(new URL('../src/components/TankConditionPanel.tsx', import.meta.url), 'utf8');
 
 test('global typography keeps a practical mobile readability floor', () => {
-  assert.match(pixelText, /minimumSize = isDisplayPixel \? 12 : 15/);
+  assert.match(pixelText, /minimumSize = isDisplayPixel \? 12 : (?:1[6-9]|[2-9]\d)/);
   assert.match(pixelText, /maxFontSizeMultiplier=\{1\.5\}/);
   assert.match(pixelText, /allowFontScaling/);
 });
@@ -19,8 +19,8 @@ test('primary aquarium operation controls remain comfortably tappable', () => {
 });
 
 test('stock selection and inspection controls preserve mobile touch area', () => {
-  assert.match(stockBrowser, /filter:\{minHeight:38/);
-  assert.match(stockBrowser, /sort:\{minHeight:38/);
-  assert.match(stockBrowser, /inspectButton:\{minHeight:38,minWidth:74/);
+  assert.match(stockBrowser, /filter:\{minHeight:(?:4[4-9]|[5-9]\d)/);
+  assert.match(stockBrowser, /sort:\{minHeight:(?:4[4-9]|[5-9]\d)/);
+  assert.match(stockBrowser, /inspectButton:\{minHeight:(?:4[4-9]|[5-9]\d),minWidth:(?:8[0-9]|9\d|[1-9]\d{2,})/);
   assert.match(stockBrowser, /cardTiny:\{width:'100%'/);
 });

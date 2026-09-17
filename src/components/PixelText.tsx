@@ -4,11 +4,12 @@ import { colors } from '../theme/colors';
 
 export function PixelText({ style, ...props }: TextProps) {
   const flattened = StyleSheet.flatten(style) ?? {};
-  const requestedSize = typeof flattened.fontSize === 'number' ? flattened.fontSize : 15;
+  const requestedSize = typeof flattened.fontSize === 'number' ? flattened.fontSize : 16;
   const isDisplayPixel = flattened.fontFamily === 'PressStart2P';
   // PressStart2P becomes difficult to scan below 12px on phone-density screens.
-  // VT323 is intentionally airy, so 15px is a better practical body-text floor.
-  const minimumSize = isDisplayPixel ? 12 : 15;
+  // VT323 has thin, airy glyphs, so a 16px floor keeps operational copy legible
+  // without forcing every card and control to carry its own mobile override.
+  const minimumSize = isDisplayPixel ? 12 : 16;
   const fontSize = Math.max(minimumSize, requestedSize);
   const requestedLineHeight = typeof flattened.lineHeight === 'number' ? flattened.lineHeight : undefined;
   const minimumLineHeight = isDisplayPixel ? fontSize + 7 : fontSize + 5;

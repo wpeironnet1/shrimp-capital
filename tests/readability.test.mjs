@@ -22,5 +22,6 @@ test('stock selection and inspection controls preserve mobile touch area', () =>
   assert.match(stockBrowser, /filter:\{minHeight:(?:4[4-9]|[5-9]\d)/);
   assert.match(stockBrowser, /sort:\{minHeight:(?:4[4-9]|[5-9]\d)/);
   assert.match(stockBrowser, /inspectButton:\{minHeight:(?:4[4-9]|[5-9]\d),minWidth:(?:8[0-9]|9\d|[1-9]\d{2,})/);
-  assert.match(stockBrowser, /cardTiny:\{width:'100%'/);
+  assert.match(stockBrowser, /cardPhone:\{width:'100%'/);
+  assert.match(stockBrowser, /cardTiny:\{minHeight:/);
 });

@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { decorItems, DecorSlot } from '../game/decor';
 import { PixelDecor } from './PixelDecor';
+import { PixelText } from './PixelText';
 
 const desktopPositions:Record<DecorSlot,object>={
   'floor-left':{left:38,bottom:78},'floor-center':{left:'43%',bottom:77},'floor-right':{right:132,bottom:78},
@@ -55,6 +56,22 @@ function WallScan({delay=0}:{delay?:number}){
   return <Animated.View pointerEvents="none" style={[styles.wallScan,{opacity:scan.interpolate({inputRange:[0,.1,.8,1],outputRange:[0,.65,.4,0]}),transform:[{translateX:scan.interpolate({inputRange:[0,1],outputRange:[0,61]})}]}]}/>;
 }
 
+function MarketTicker({compact}:{compact:boolean}){
+  const crawl=useRef(new Animated.Value(0)).current;
+  useEffect(()=>{const loop=Animated.loop(Animated.sequence([
+    Animated.timing(crawl,{toValue:1,duration:9200,easing:Easing.linear,useNativeDriver:true}),
+    Animated.timing(crawl,{toValue:0,duration:0,useNativeDriver:true}),
+  ]));loop.start();return()=>loop.stop();},[crawl]);
+  const distance=compact?245:390;
+  return <View pointerEvents="none" style={styles.tickerRail}>
+    <View style={styles.tickerLamp}/><View style={styles.tickerLampAmber}/>
+    <Animated.View style={[styles.tickerCrawl,{transform:[{translateX:crawl.interpolate({inputRange:[0,1],outputRange:[distance,-distance]})}]}]}>
+      <PixelText style={styles.tickerText}>SHELL ST ▲12.4   KRILL +8.2   ROE ▲4.7   TANK INDEX +19.8</PixelText>
+    </Animated.View>
+    <View style={styles.tickerScanline}/>
+  </View>;
+}
+
 function DecorDepth({slot,scale,index}:{slot:DecorSlot;scale:number;index:number}){
   if(floorSlots.has(slot))return <View pointerEvents="none" style={[styles.floorShadow,{transform:[{scaleX:scale}]}]}><View style={styles.floorHighlight}/><View style={styles.floorPixelA}/><View style={styles.floorPixelB}/><FloorActivity delay={index*210}/></View>;
   if(wallSlots.has(slot))return <View pointerEvents="none" style={[styles.wallPlate,{transform:[{scale}]}]}><View style={styles.wallPlateInner}/><WallScan delay={index*190}/><StatusPulse delay={index*170}/><View style={styles.statusLampDim}/><View style={styles.plateVent}/></View>;
@@ -65,11 +82,16 @@ function DecorDepth({slot,scale,index}:{slot:DecorSlot;scale:number;index:number
 export function TankOfficeDecor({placed}:{placed:Partial<Record<DecorSlot,string>>}){
   const {width}=useWindowDimensions();const tiny=width<430;const mobile=width<700;
   const positions=tiny?tinyPositions:mobile?mobilePositions:desktopPositions;const scales=tiny?tinyScales:mobile?mobileScales:desktopScales;
-  return <>{Object.entries(placed).map(([slot,id],index)=>{const typedSlot=slot as DecorSlot;if(!id||!decorItems.some(item=>item.id===id))return null;const scale=scales[typedSlot];return <View pointerEvents="none" key={`${slot}-${id}`} style={[styles.decorAnchor,positions[typedSlot]]}><DecorDepth slot={typedSlot} scale={scale} index={index}/><View style={styles.decorSprite}><PixelDecor id={id} animate scale={scale}/></View></View>;})}</>;
+  const furnished=Object.values(placed).filter(Boolean).length;
+  return <>{furnished>=3&&<MarketTicker compact={mobile}/>} {Object.entries(placed).map(([slot,id],index)=>{const typedSlot=slot as DecorSlot;if(!id||!decorItems.some(item=>item.id===id))return null;const scale=scales[typedSlot];return <View pointerEvents="none" key={`${slot}-${id}`} style={[styles.decorAnchor,positions[typedSlot]]}><DecorDepth slot={typedSlot} scale={scale} index={index}/><View style={styles.decorSprite}><PixelDecor id={id} animate scale={scale}/></View></View>;})}</>;
 }
 
 const styles=StyleSheet.create({
   decorAnchor:{position:'absolute',zIndex:9},decorSprite:{zIndex:2},
+  tickerRail:{position:'absolute',left:18,right:18,top:38,height:24,zIndex:7,overflow:'hidden',backgroundColor:'#03141DEB',borderWidth:2,borderColor:'#80672E',justifyContent:'center'},
+  tickerCrawl:{position:'absolute',left:0,width:520,justifyContent:'center'},tickerText:{fontFamily:'PressStart2P',fontSize:9,color:'#A7F5C0'},
+  tickerLamp:{position:'absolute',left:5,top:5,width:4,height:4,backgroundColor:'#76E99A',zIndex:3},tickerLampAmber:{position:'absolute',left:5,bottom:5,width:4,height:4,backgroundColor:'#E5B64D',zIndex:3},
+  tickerScanline:{position:'absolute',left:0,right:0,bottom:3,height:1,backgroundColor:'#A7F5C02B'},
   floorShadow:{position:'absolute',left:-13,bottom:-4,width:78,height:10,backgroundColor:'#03172266',borderRadius:2,borderTopWidth:2,borderTopColor:'#7FD4D52B',zIndex:0},
   floorHighlight:{position:'absolute',left:12,right:12,top:2,height:2,backgroundColor:'#C6F7E833'},
   floorPixelA:{position:'absolute',left:8,bottom:1,width:5,height:2,backgroundColor:'#4B9BA444'},floorPixelB:{position:'absolute',right:10,bottom:2,width:8,height:2,backgroundColor:'#8ED7CF30'},

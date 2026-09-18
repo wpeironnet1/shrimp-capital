@@ -31,9 +31,33 @@ function StatusPulse({delay=0}:{delay?:number}){
   ]));loop.start();return()=>loop.stop();},[delay,pulse]);
   return <Animated.View style={[styles.statusLamp,{opacity:pulse,transform:[{scale:pulse.interpolate({inputRange:[.28,1],outputRange:[.85,1.35]})}]}]}/>;
 }
+
+function FloorActivity({delay=0}:{delay?:number}){
+  const rise=useRef(new Animated.Value(0)).current;
+  useEffect(()=>{const loop=Animated.loop(Animated.sequence([
+    Animated.delay(900+delay),
+    Animated.timing(rise,{toValue:1,duration:2400+delay,easing:Easing.linear,useNativeDriver:true}),
+    Animated.timing(rise,{toValue:0,duration:0,useNativeDriver:true}),
+    Animated.delay(1800),
+  ]));loop.start();return()=>loop.stop();},[delay,rise]);
+  const opacity=rise.interpolate({inputRange:[0,.08,.72,1],outputRange:[0,.7,.42,0]});
+  return <Animated.View pointerEvents="none" style={[styles.floorActivity,{opacity,transform:[{translateY:rise.interpolate({inputRange:[0,1],outputRange:[0,-42]})},{translateX:rise.interpolate({inputRange:[0,.5,1],outputRange:[0,5,-2]})}]}]}><View style={styles.activityBubbleA}/><View style={styles.activityBubbleB}/><View style={styles.activityBubbleC}/></Animated.View>;
+}
+
+function WallScan({delay=0}:{delay?:number}){
+  const scan=useRef(new Animated.Value(0)).current;
+  useEffect(()=>{const loop=Animated.loop(Animated.sequence([
+    Animated.delay(600+delay),
+    Animated.timing(scan,{toValue:1,duration:1700,easing:Easing.linear,useNativeDriver:true}),
+    Animated.timing(scan,{toValue:0,duration:0,useNativeDriver:true}),
+    Animated.delay(2200+delay),
+  ]));loop.start();return()=>loop.stop();},[delay,scan]);
+  return <Animated.View pointerEvents="none" style={[styles.wallScan,{opacity:scan.interpolate({inputRange:[0,.1,.8,1],outputRange:[0,.65,.4,0]}),transform:[{translateX:scan.interpolate({inputRange:[0,1],outputRange:[0,61]})}]}]}/>;
+}
+
 function DecorDepth({slot,scale,index}:{slot:DecorSlot;scale:number;index:number}){
-  if(floorSlots.has(slot))return <View pointerEvents="none" style={[styles.floorShadow,{transform:[{scaleX:scale}]}]}><View style={styles.floorHighlight}/><View style={styles.floorPixelA}/><View style={styles.floorPixelB}/></View>;
-  if(wallSlots.has(slot))return <View pointerEvents="none" style={[styles.wallPlate,{transform:[{scale}]}]}><View style={styles.wallPlateInner}/><StatusPulse delay={index*170}/><View style={styles.statusLampDim}/><View style={styles.plateVent}/></View>;
+  if(floorSlots.has(slot))return <View pointerEvents="none" style={[styles.floorShadow,{transform:[{scaleX:scale}]}]}><View style={styles.floorHighlight}/><View style={styles.floorPixelA}/><View style={styles.floorPixelB}/><FloorActivity delay={index*210}/></View>;
+  if(wallSlots.has(slot))return <View pointerEvents="none" style={[styles.wallPlate,{transform:[{scale}]}]}><View style={styles.wallPlateInner}/><WallScan delay={index*190}/><StatusPulse delay={index*170}/><View style={styles.statusLampDim}/><View style={styles.plateVent}/></View>;
   if(slot==='ceiling')return <View pointerEvents="none" style={[styles.ceilingGlow,{transform:[{scaleX:scale}]}]}><View style={styles.ceilingCore}/></View>;
   return null;
 }
@@ -49,8 +73,13 @@ const styles=StyleSheet.create({
   floorShadow:{position:'absolute',left:-13,bottom:-4,width:78,height:10,backgroundColor:'#03172266',borderRadius:2,borderTopWidth:2,borderTopColor:'#7FD4D52B',zIndex:0},
   floorHighlight:{position:'absolute',left:12,right:12,top:2,height:2,backgroundColor:'#C6F7E833'},
   floorPixelA:{position:'absolute',left:8,bottom:1,width:5,height:2,backgroundColor:'#4B9BA444'},floorPixelB:{position:'absolute',right:10,bottom:2,width:8,height:2,backgroundColor:'#8ED7CF30'},
-  wallPlate:{position:'absolute',left:-10,top:-8,width:82,height:52,backgroundColor:'#092D3B70',borderWidth:2,borderColor:'#5FAAB34A',zIndex:0},
+  floorActivity:{position:'absolute',left:29,top:-3,width:20,height:16,zIndex:1},
+  activityBubbleA:{position:'absolute',left:2,bottom:0,width:4,height:4,borderWidth:1,borderColor:'#BDF9EF',backgroundColor:'#8ADFD344'},
+  activityBubbleB:{position:'absolute',left:10,bottom:5,width:3,height:3,borderWidth:1,borderColor:'#A9E9E0',backgroundColor:'#8ADFD333'},
+  activityBubbleC:{position:'absolute',left:15,bottom:1,width:2,height:2,backgroundColor:'#D8FFF5AA'},
+  wallPlate:{position:'absolute',left:-10,top:-8,width:82,height:52,backgroundColor:'#092D3B70',borderWidth:2,borderColor:'#5FAAB34A',zIndex:0,overflow:'hidden'},
   wallPlateInner:{position:'absolute',left:4,right:4,top:4,bottom:4,borderWidth:1,borderColor:'#B4E8D92B'},
+  wallScan:{position:'absolute',left:5,top:10,width:8,height:28,backgroundColor:'#A9F5D31F',borderLeftWidth:1,borderLeftColor:'#D9FFF277'},
   statusLamp:{position:'absolute',right:5,top:5,width:5,height:5,backgroundColor:'#8DE67D',borderWidth:1,borderColor:'#E6FFD9'},
   statusLampDim:{position:'absolute',right:13,top:6,width:3,height:3,backgroundColor:'#E5B64D',opacity:.55},
   plateVent:{position:'absolute',right:5,bottom:5,width:15,height:2,backgroundColor:'#03172288',borderLeftWidth:5,borderRightWidth:5,borderColor:'#4E899144'},

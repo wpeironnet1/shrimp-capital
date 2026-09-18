@@ -21,15 +21,18 @@ const profiles: ShrimpPersonalityProfile[] = [
   { name: 'Diligent', tagline: 'HAS NEVER MISSED A QUARTERLY FILING', reactionBias: 'accessory', driftMultiplier: 0.88, bobMultiplier: 0.92 },
 ];
 
+// Reactions are deliberately strongly weighted. A player should be able to
+// recognize temperament after only a few taps rather than seeing every shrimp
+// behave like the same actor with a different label.
 const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
-  Curious: ['wiggle', 'wiggle', 'wiggle', 'reverse', 'bubbles', 'dart', 'spin'],
-  Hyper: ['dart', 'dart', 'dart', 'spin', 'spin', 'wiggle', 'reverse'],
-  Lazy: ['bubbles', 'bubbles', 'bubbles', 'wiggle', 'wiggle', 'reverse', 'dart'],
-  Shy: ['reverse', 'reverse', 'reverse', 'bubbles', 'wiggle', 'wiggle', 'dart'],
-  Greedy: ['dart', 'dart', 'wiggle', 'dart', 'bubbles', 'spin', 'reverse'],
-  Lucky: ['spin', 'spin', 'bubbles', 'wiggle', 'spin', 'dart', 'reverse'],
-  Bold: ['spin', 'spin', 'dart', 'dart', 'spin', 'reverse', 'wiggle'],
-  Diligent: ['wiggle', 'bubbles', 'reverse', 'wiggle', 'bubbles', 'dart', 'spin'],
+  Curious: ['wiggle', 'wiggle', 'wiggle', 'wiggle', 'wiggle', 'reverse', 'bubbles', 'dart'],
+  Hyper: ['dart', 'dart', 'dart', 'dart', 'dart', 'spin', 'spin', 'wiggle'],
+  Lazy: ['bubbles', 'bubbles', 'bubbles', 'bubbles', 'bubbles', 'wiggle', 'wiggle', 'reverse'],
+  Shy: ['reverse', 'reverse', 'reverse', 'reverse', 'reverse', 'bubbles', 'wiggle', 'wiggle'],
+  Greedy: ['dart', 'dart', 'dart', 'dart', 'wiggle', 'bubbles', 'dart', 'spin'],
+  Lucky: ['spin', 'spin', 'spin', 'spin', 'bubbles', 'wiggle', 'spin', 'dart'],
+  Bold: ['spin', 'spin', 'spin', 'dart', 'dart', 'spin', 'dart', 'reverse'],
+  Diligent: ['wiggle', 'bubbles', 'wiggle', 'bubbles', 'reverse', 'wiggle', 'bubbles', 'dart'],
 };
 
 function hashSeed(seed: string) {
@@ -50,19 +53,18 @@ export function personalityForSpecies(speciesId: string, populationIndex = 0): S
 }
 
 /**
- * Tap reactions are intentionally weighted by temperament instead of drawing
- * from one mostly-generic pool. Players should be able to learn a shrimp's
- * personality just by watching it: Hyper shrimp dart, Lazy shrimp blow
- * bubbles, Shy shrimp back away, and Bold/Lucky shrimp show off with spins.
- * Accessories add a rare show-off beat without replacing the personality.
+ * Tap reactions are weighted by temperament instead of drawing from one
+ * generic pool. Accessories add a conspicuous show-off beat without replacing
+ * temperament, so finding a rare dressed shrimp changes how it feels to tap.
  */
 export function personalityReactionPool(seed: string, hasAccessory: boolean): ShrimpReaction[] {
   const profile = personalityFor(seed);
   const pool = [...reactionPools[profile.name]];
   if (hasAccessory) {
-    // Roughly one quarter of taps on an accessorized shrimp become a special
-    // sparkle/show-off reaction while its normal temperament remains visible.
-    pool.push('accessory', 'accessory', 'accessory');
+    // Rare accessories deserve to read as rare. A dressed shrimp now shows off
+    // often enough that a player is likely to discover the sparkle animation
+    // naturally, while most taps still reveal its underlying temperament.
+    pool.push('accessory', 'accessory', 'accessory', 'accessory', 'accessory');
   }
   return pool;
 }
@@ -71,9 +73,9 @@ export function personalityMotion(seed: string, baseDrift: number, baseBobDurati
   const profile = personalityFor(seed);
   const variation = 0.9 + (hashSeed(`${seed}-motion`) % 21) / 100;
   return {
-    // Deliberately broad silhouettes make temperament readable without opening
-    // an inspector: Hyper/Bold shrimp roam, Lazy/Shy shrimp hug their lane.
-    // Per-shrimp deterministic variation prevents synchronized robotic motion.
+    // Broad silhouettes make temperament readable without opening an inspector:
+    // Hyper/Bold shrimp roam, while Lazy/Shy shrimp hug their lane. Per-shrimp
+    // deterministic variation prevents synchronized robotic motion.
     driftDistance: Math.max(5, Math.round(baseDrift * profile.driftMultiplier * variation)),
     bobDuration: Math.max(650, Math.round((baseBobDuration / profile.bobMultiplier) / variation)),
   };

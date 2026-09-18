@@ -1,5 +1,5 @@
 import React from 'react';
-import { useWindowDimensions, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { decorItems, DecorSlot } from '../game/decor';
 import { PixelDecor } from './PixelDecor';
 
@@ -54,6 +54,16 @@ const tinyScales:Record<DecorSlot,number>={
   ceiling:.59,corner:.61,
 };
 
+const floorSlots=new Set<DecorSlot>(['floor-left','floor-center','floor-right','corner']);
+const wallSlots=new Set<DecorSlot>(['wall-left','wall-center','wall-right']);
+
+function DecorDepth({slot,scale}:{slot:DecorSlot;scale:number}){
+  if(floorSlots.has(slot))return <View pointerEvents="none" style={[styles.floorShadow,{transform:[{scaleX:scale}]}]}><View style={styles.floorHighlight}/></View>;
+  if(wallSlots.has(slot))return <View pointerEvents="none" style={[styles.wallPlate,{transform:[{scale}]}]}><View style={styles.wallPlateInner}/><View style={styles.statusLamp}/></View>;
+  if(slot==='ceiling')return <View pointerEvents="none" style={[styles.ceilingGlow,{transform:[{scaleX:scale}]}]}/>;
+  return null;
+}
+
 export function TankOfficeDecor({placed}:{placed:Partial<Record<DecorSlot,string>>}){
   const {width}=useWindowDimensions();
   const tiny=width<430;
@@ -64,6 +74,21 @@ export function TankOfficeDecor({placed}:{placed:Partial<Record<DecorSlot,string
   return <>{Object.entries(placed).map(([slot,id])=>{
     const typedSlot=slot as DecorSlot;
     if(!id||!decorItems.some(item=>item.id===id))return null;
-    return <View pointerEvents="none" key={`${slot}-${id}`} style={[{position:'absolute',zIndex:9},positions[typedSlot]]}><PixelDecor id={id} animate scale={scales[typedSlot]}/></View>;
+    const scale=scales[typedSlot];
+    return <View pointerEvents="none" key={`${slot}-${id}`} style={[styles.decorAnchor,positions[typedSlot]]}>
+      <DecorDepth slot={typedSlot} scale={scale}/>
+      <View style={styles.decorSprite}><PixelDecor id={id} animate scale={scale}/></View>
+    </View>;
   })}</>;
 }
+
+const styles=StyleSheet.create({
+  decorAnchor:{position:'absolute',zIndex:9},
+  decorSprite:{zIndex:2},
+  floorShadow:{position:'absolute',left:-13,bottom:-4,width:78,height:10,backgroundColor:'#03172266',borderRadius:2,borderTopWidth:2,borderTopColor:'#7FD4D52B',zIndex:0},
+  floorHighlight:{position:'absolute',left:12,right:12,top:2,height:2,backgroundColor:'#C6F7E833'},
+  wallPlate:{position:'absolute',left:-10,top:-8,width:82,height:52,backgroundColor:'#092D3B70',borderWidth:2,borderColor:'#5FAAB34A',zIndex:0},
+  wallPlateInner:{position:'absolute',left:4,right:4,top:4,bottom:4,borderWidth:1,borderColor:'#B4E8D92B'},
+  statusLamp:{position:'absolute',right:4,top:4,width:4,height:4,backgroundColor:'#8DE67D',borderWidth:1,borderColor:'#D8FFC9'},
+  ceilingGlow:{position:'absolute',left:-24,top:-8,width:108,height:18,backgroundColor:'#B8F3DF16',borderBottomWidth:2,borderBottomColor:'#D7FFF43B',zIndex:0},
+});

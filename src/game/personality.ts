@@ -21,17 +21,19 @@ const profiles: ShrimpPersonalityProfile[] = [
   { name: 'Diligent', tagline: 'HAS NEVER MISSED A QUARTERLY FILING', reactionBias: 'accessory', driftMultiplier: 0.72, bobMultiplier: 0.82 },
 ];
 
-// Each temperament owns a recognizable reaction silhouette. Repeated taps should
-// teach the player who a shrimp is before they ever open its personnel file.
+// Tap silhouettes are intentionally exaggerated at aquarium scale. Each
+// temperament has a signature move, a secondary tell, and a small chance of a
+// surprise. That keeps repeated tapping playful without making personalities
+// feel interchangeable.
 const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
-  Curious: ['wiggle', 'wiggle', 'wiggle', 'wiggle', 'wiggle', 'reverse', 'bubbles', 'dart'],
-  Hyper: ['dart', 'dart', 'dart', 'dart', 'dart', 'spin', 'dart', 'wiggle'],
-  Lazy: ['bubbles', 'bubbles', 'bubbles', 'bubbles', 'bubbles', 'wiggle', 'bubbles', 'reverse'],
-  Shy: ['reverse', 'reverse', 'reverse', 'reverse', 'reverse', 'bubbles', 'reverse', 'wiggle'],
-  Greedy: ['dart', 'dart', 'dart', 'dart', 'wiggle', 'dart', 'bubbles', 'spin'],
-  Lucky: ['spin', 'spin', 'spin', 'spin', 'bubbles', 'spin', 'wiggle', 'dart'],
-  Bold: ['spin', 'spin', 'dart', 'spin', 'dart', 'spin', 'dart', 'spin'],
-  Diligent: ['wiggle', 'bubbles', 'wiggle', 'bubbles', 'reverse', 'wiggle', 'bubbles', 'wiggle'],
+  Curious: ['wiggle', 'wiggle', 'wiggle', 'wiggle', 'wiggle', 'bubbles', 'reverse', 'dart'],
+  Hyper: ['dart', 'dart', 'dart', 'dart', 'dart', 'spin', 'wiggle', 'reverse'],
+  Lazy: ['bubbles', 'bubbles', 'bubbles', 'bubbles', 'bubbles', 'wiggle', 'reverse', 'spin'],
+  Shy: ['reverse', 'reverse', 'reverse', 'reverse', 'reverse', 'bubbles', 'wiggle', 'dart'],
+  Greedy: ['dart', 'dart', 'dart', 'dart', 'wiggle', 'bubbles', 'spin', 'reverse'],
+  Lucky: ['spin', 'spin', 'spin', 'spin', 'bubbles', 'wiggle', 'dart', 'reverse'],
+  Bold: ['spin', 'spin', 'spin', 'dart', 'dart', 'dart', 'wiggle', 'reverse'],
+  Diligent: ['wiggle', 'wiggle', 'bubbles', 'bubbles', 'reverse', 'wiggle', 'dart', 'spin'],
 };
 
 function hashSeed(seed: string) {
@@ -60,8 +62,9 @@ export function personalityReactionPool(seed: string, hasAccessory: boolean): Sh
   const profile = personalityFor(seed);
   const pool = [...reactionPools[profile.name]];
   if (hasAccessory) {
-    // A dressed shrimp should reliably feel special without turning every tap
-    // into the same animation. This makes accessory discovery obvious in-tank.
+    // Rare dressed shrimp now show off on roughly half of taps. The remaining
+    // taps still expose their underlying temperament, so the accessory feels
+    // like a special layer rather than erasing the shrimp's identity.
     pool.push('accessory', 'accessory', 'accessory', 'accessory', 'accessory', 'accessory', 'accessory', 'accessory');
   }
   return pool;
@@ -71,13 +74,13 @@ export function personalityMotion(seed: string, baseDrift: number, baseBobDurati
   const profile = personalityFor(seed);
   // Independent deterministic variations prevent neighboring shrimp from
   // marching in lockstep while preserving a stable identity across reloads.
-  const distanceVariation = 0.8 + (hashSeed(`${seed}-distance`) % 41) / 100;
-  const cadenceVariation = 0.78 + (hashSeed(`${seed}-cadence`) % 47) / 100;
+  const distanceVariation = 0.72 + (hashSeed(`${seed}-distance`) % 57) / 100;
+  const cadenceVariation = 0.7 + (hashSeed(`${seed}-cadence`) % 63) / 100;
   return {
     // Exaggerated silhouettes are intentional at aquarium scale: Hyper/Bold
-    // patrol the glass while Lazy/Shy hover locally. The wider range makes the
-    // tank read as a cast of individuals instead of cloned moving sprites.
+    // patrol the glass while Lazy/Shy hover locally. A wider per-shrimp range
+    // breaks up synchronized motion and makes a full tank feel organic.
     driftDistance: Math.max(3, Math.round(baseDrift * profile.driftMultiplier * distanceVariation)),
-    bobDuration: Math.max(500, Math.round((baseBobDuration / profile.bobMultiplier) / cadenceVariation)),
+    bobDuration: Math.max(460, Math.round((baseBobDuration / profile.bobMultiplier) / cadenceVariation)),
   };
 }

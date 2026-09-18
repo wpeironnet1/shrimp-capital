@@ -11,14 +11,14 @@ export type ShrimpPersonalityProfile = {
 };
 
 const profiles: ShrimpPersonalityProfile[] = [
-  { name: 'Curious', tagline: 'INSPECTS EVERYTHING TWICE', reactionBias: 'wiggle', driftMultiplier: 0.9, bobMultiplier: 1.05 },
-  { name: 'Hyper', tagline: 'NEVER OFF THE TRADING FLOOR', reactionBias: 'dart', driftMultiplier: 1.35, bobMultiplier: 1.25 },
-  { name: 'Lazy', tagline: 'DELEGATES MOST SWIMMING', reactionBias: 'bubbles', driftMultiplier: 0.62, bobMultiplier: 0.72 },
-  { name: 'Shy', tagline: 'PREFERS DARK POOLS OF LIQUIDITY', reactionBias: 'reverse', driftMultiplier: 0.78, bobMultiplier: 0.88 },
-  { name: 'Greedy', tagline: 'ALWAYS CHASING THE NEXT PELLET', reactionBias: 'dart', driftMultiplier: 1.12, bobMultiplier: 1.05 },
-  { name: 'Lucky', tagline: 'SOMEHOW ALWAYS BUYS THE DIP', reactionBias: 'spin', driftMultiplier: 1.0, bobMultiplier: 1.0 },
-  { name: 'Bold', tagline: 'TREATS EVERY RIPPLE LIKE A TAKEOVER', reactionBias: 'spin', driftMultiplier: 1.18, bobMultiplier: 1.12 },
-  { name: 'Diligent', tagline: 'HAS NEVER MISSED A QUARTERLY FILING', reactionBias: 'accessory', driftMultiplier: 0.94, bobMultiplier: 0.96 },
+  { name: 'Curious', tagline: 'INSPECTS EVERYTHING TWICE', reactionBias: 'wiggle', driftMultiplier: 0.92, bobMultiplier: 1.08 },
+  { name: 'Hyper', tagline: 'NEVER OFF THE TRADING FLOOR', reactionBias: 'dart', driftMultiplier: 1.65, bobMultiplier: 1.48 },
+  { name: 'Lazy', tagline: 'DELEGATES MOST SWIMMING', reactionBias: 'bubbles', driftMultiplier: 0.48, bobMultiplier: 0.58 },
+  { name: 'Shy', tagline: 'PREFERS DARK POOLS OF LIQUIDITY', reactionBias: 'reverse', driftMultiplier: 0.64, bobMultiplier: 0.78 },
+  { name: 'Greedy', tagline: 'ALWAYS CHASING THE NEXT PELLET', reactionBias: 'dart', driftMultiplier: 1.28, bobMultiplier: 1.14 },
+  { name: 'Lucky', tagline: 'SOMEHOW ALWAYS BUYS THE DIP', reactionBias: 'spin', driftMultiplier: 1.04, bobMultiplier: 1.04 },
+  { name: 'Bold', tagline: 'TREATS EVERY RIPPLE LIKE A TAKEOVER', reactionBias: 'spin', driftMultiplier: 1.42, bobMultiplier: 1.26 },
+  { name: 'Diligent', tagline: 'HAS NEVER MISSED A QUARTERLY FILING', reactionBias: 'accessory', driftMultiplier: 0.88, bobMultiplier: 0.92 },
 ];
 
 const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
@@ -71,8 +71,9 @@ export function personalityMotion(seed: string, baseDrift: number, baseBobDurati
   const profile = personalityFor(seed);
   const variation = 0.9 + (hashSeed(`${seed}-motion`) % 21) / 100;
   return {
-    // Small deterministic variation stops same-personality shrimp from moving
-    // in lockstep while retaining the strong temperament silhouette.
+    // Deliberately broad silhouettes make temperament readable without opening
+    // an inspector: Hyper/Bold shrimp roam, Lazy/Shy shrimp hug their lane.
+    // Per-shrimp deterministic variation prevents synchronized robotic motion.
     driftDistance: Math.max(5, Math.round(baseDrift * profile.driftMultiplier * variation)),
     bobDuration: Math.max(650, Math.round((baseBobDuration / profile.bobMultiplier) / variation)),
   };

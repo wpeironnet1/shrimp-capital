@@ -11,14 +11,14 @@ export type ShrimpPersonalityProfile = {
 };
 
 const profiles: ShrimpPersonalityProfile[] = [
-  { name: 'Curious', tagline: 'INSPECTS EVERYTHING TWICE', reactionBias: 'wiggle', driftMultiplier: 1.18, bobMultiplier: 1.16 },
-  { name: 'Hyper', tagline: 'NEVER OFF THE TRADING FLOOR', reactionBias: 'dart', driftMultiplier: 2.55, bobMultiplier: 2.05 },
-  { name: 'Lazy', tagline: 'DELEGATES MOST SWIMMING', reactionBias: 'bubbles', driftMultiplier: 0.18, bobMultiplier: 0.34 },
-  { name: 'Shy', tagline: 'PREFERS DARK POOLS OF LIQUIDITY', reactionBias: 'reverse', driftMultiplier: 0.34, bobMultiplier: 0.54 },
-  { name: 'Greedy', tagline: 'ALWAYS CHASING THE NEXT PELLET', reactionBias: 'dart', driftMultiplier: 1.82, bobMultiplier: 1.38 },
-  { name: 'Lucky', tagline: 'SOMEHOW ALWAYS BUYS THE DIP', reactionBias: 'spin', driftMultiplier: 1.24, bobMultiplier: 1.18 },
-  { name: 'Bold', tagline: 'TREATS EVERY RIPPLE LIKE A TAKEOVER', reactionBias: 'spin', driftMultiplier: 2.08, bobMultiplier: 1.58 },
-  { name: 'Diligent', tagline: 'HAS NEVER MISSED A QUARTERLY FILING', reactionBias: 'accessory', driftMultiplier: 0.66, bobMultiplier: 0.76 },
+  { name: 'Curious', tagline: 'INSPECTS EVERYTHING TWICE', reactionBias: 'wiggle', driftMultiplier: 1.35, bobMultiplier: 1.18 },
+  { name: 'Hyper', tagline: 'NEVER OFF THE TRADING FLOOR', reactionBias: 'dart', driftMultiplier: 3.15, bobMultiplier: 2.35 },
+  { name: 'Lazy', tagline: 'DELEGATES MOST SWIMMING', reactionBias: 'bubbles', driftMultiplier: 0.12, bobMultiplier: 0.28 },
+  { name: 'Shy', tagline: 'PREFERS DARK POOLS OF LIQUIDITY', reactionBias: 'reverse', driftMultiplier: 0.26, bobMultiplier: 0.46 },
+  { name: 'Greedy', tagline: 'ALWAYS CHASING THE NEXT PELLET', reactionBias: 'dart', driftMultiplier: 2.15, bobMultiplier: 1.48 },
+  { name: 'Lucky', tagline: 'SOMEHOW ALWAYS BUYS THE DIP', reactionBias: 'spin', driftMultiplier: 1.42, bobMultiplier: 1.26 },
+  { name: 'Bold', tagline: 'TREATS EVERY RIPPLE LIKE A TAKEOVER', reactionBias: 'spin', driftMultiplier: 2.55, bobMultiplier: 1.78 },
+  { name: 'Diligent', tagline: 'HAS NEVER MISSED A QUARTERLY FILING', reactionBias: 'accessory', driftMultiplier: 0.58, bobMultiplier: 0.68 },
 ];
 
 // Tap silhouettes are intentionally exaggerated at aquarium scale. Each
@@ -62,9 +62,9 @@ export function personalityReactionPool(seed: string, hasAccessory: boolean): Sh
   const profile = personalityFor(seed);
   const pool = [...reactionPools[profile.name]];
   if (hasAccessory) {
-    // Rare dressed shrimp show off on roughly half of taps. The remaining taps
-    // still expose temperament, so an accessory feels special without erasing
-    // the shrimp's underlying identity.
+    // Dressed shrimp should read as rare immediately when touched: about half
+    // of taps become a sparkle/show-off beat while the other half still expose
+    // the underlying temperament.
     pool.push('accessory', 'accessory', 'accessory', 'accessory', 'accessory', 'accessory', 'accessory', 'accessory');
   }
   return pool;
@@ -72,17 +72,18 @@ export function personalityReactionPool(seed: string, hasAccessory: boolean): Sh
 
 export function personalityMotion(seed: string, baseDrift: number, baseBobDuration: number) {
   const profile = personalityFor(seed);
-  // Give every visible shrimp a stable personal cadence. Broad, independent
-  // ranges are deliberate: a stocked tank should look like a collection of
-  // little traders, not twelve sprites following one aquarium metronome.
-  const distanceVariation = 0.62 + (hashSeed(`${seed}-distance`) % 79) / 100;
-  const cadenceVariation = 0.58 + (hashSeed(`${seed}-cadence`) % 91) / 100;
-  const microPauseVariation = 0.9 + (hashSeed(`${seed}-pause`) % 21) / 100;
+  // Stable per-shrimp variance prevents the tank from looking synchronized.
+  // The broad personality multipliers are intentional: at aquarium scale the
+  // player should be able to identify a hyper trader versus a lazy one without
+  // opening an inspector.
+  const distanceVariation = 0.58 + (hashSeed(`${seed}-distance`) % 91) / 100;
+  const cadenceVariation = 0.54 + (hashSeed(`${seed}-cadence`) % 101) / 100;
+  const microPauseVariation = 0.86 + (hashSeed(`${seed}-pause`) % 29) / 100;
   return {
-    // Hyper/Bold visibly patrol the glass, Greedy shrimp chase activity, while
-    // Lazy/Shy shrimp hover in tight territories. The floor keeps even the
-    // quiet personalities gently alive instead of appearing frozen.
+    // Hyper/Bold patrol aggressively, Greedy shrimp chase activity, Curious
+    // shrimp investigate a wider patch, while Lazy/Shy barely leave a perch.
+    // A two-pixel floor keeps quiet shrimp visibly breathing rather than frozen.
     driftDistance: Math.max(2, Math.round(baseDrift * profile.driftMultiplier * distanceVariation)),
-    bobDuration: Math.max(420, Math.round(((baseBobDuration / profile.bobMultiplier) / cadenceVariation) * microPauseVariation)),
+    bobDuration: Math.max(390, Math.round(((baseBobDuration / profile.bobMultiplier) / cadenceVariation) * microPauseVariation)),
   };
 }

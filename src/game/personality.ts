@@ -21,15 +21,18 @@ const profiles: ShrimpPersonalityProfile[] = [
   { name: 'Diligent', tagline: 'HAS NEVER MISSED A QUARTERLY FILING', reactionBias: 'accessory', driftMultiplier: 0.82, bobMultiplier: 0.84 },
 ];
 
+// Reactions are weighted enough to make temperament readable, but deliberately
+// retain a broad repertoire so repeated taps feel like interacting with a tiny
+// animal rather than replaying one canned animation.
 const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
-  Curious: ['wiggle', 'wiggle', 'wiggle', 'wiggle', 'bubbles', 'reverse', 'dart', 'spin'],
-  Hyper: ['dart', 'dart', 'dart', 'dart', 'spin', 'spin', 'wiggle', 'reverse', 'bubbles'],
-  Lazy: ['bubbles', 'bubbles', 'bubbles', 'bubbles', 'wiggle', 'wiggle', 'reverse', 'spin', 'dart'],
-  Shy: ['reverse', 'reverse', 'reverse', 'reverse', 'bubbles', 'bubbles', 'wiggle', 'dart', 'spin'],
-  Greedy: ['dart', 'dart', 'dart', 'dart', 'wiggle', 'bubbles', 'spin', 'reverse'],
-  Lucky: ['spin', 'spin', 'spin', 'spin', 'bubbles', 'wiggle', 'dart', 'reverse'],
-  Bold: ['spin', 'spin', 'spin', 'dart', 'dart', 'dart', 'reverse', 'wiggle', 'bubbles'],
-  Diligent: ['wiggle', 'wiggle', 'bubbles', 'bubbles', 'reverse', 'reverse', 'dart', 'spin'],
+  Curious: ['wiggle', 'wiggle', 'wiggle', 'bubbles', 'reverse', 'dart', 'spin', 'bubbles', 'wiggle', 'reverse'],
+  Hyper: ['dart', 'dart', 'dart', 'spin', 'spin', 'wiggle', 'reverse', 'bubbles', 'dart', 'wiggle'],
+  Lazy: ['bubbles', 'bubbles', 'bubbles', 'wiggle', 'wiggle', 'reverse', 'spin', 'dart', 'bubbles', 'reverse'],
+  Shy: ['reverse', 'reverse', 'reverse', 'bubbles', 'bubbles', 'wiggle', 'dart', 'spin', 'reverse', 'wiggle'],
+  Greedy: ['dart', 'dart', 'dart', 'wiggle', 'bubbles', 'spin', 'reverse', 'dart', 'wiggle', 'bubbles'],
+  Lucky: ['spin', 'spin', 'spin', 'bubbles', 'wiggle', 'dart', 'reverse', 'spin', 'bubbles', 'wiggle'],
+  Bold: ['spin', 'spin', 'spin', 'dart', 'dart', 'reverse', 'wiggle', 'bubbles', 'dart', 'spin'],
+  Diligent: ['wiggle', 'wiggle', 'bubbles', 'bubbles', 'reverse', 'reverse', 'dart', 'spin', 'wiggle', 'bubbles'],
 };
 
 function hashSeed(seed: string) {
@@ -51,17 +54,17 @@ export function personalityForSpecies(speciesId: string, populationIndex = 0): S
 
 /**
  * Tap reactions are weighted by temperament instead of drawing from one
- * generic pool. Dressed shrimp overwhelmingly show off their rare accessory,
- * while a smaller share of taps still exposes the underlying temperament.
+ * generic pool. Dressed shrimp show off their rare accessory frequently, but
+ * never at the expense of the animal's underlying personality repertoire.
  */
 export function personalityReactionPool(seed: string, hasAccessory: boolean): ShrimpReaction[] {
   const profile = personalityFor(seed);
   const pool = [...reactionPools[profile.name]];
   if (hasAccessory) {
-    // Rare accessories should feel like discoveries, not static decorations.
-    // Most taps make the shrimp show off, but the normal personality repertoire
-    // remains reachable so dressed shrimp still feel like individuals.
-    for (let i = 0; i < 36; i += 1) pool.push('accessory');
+    // Roughly half of rare-shrimp taps now trigger the special show-off motion.
+    // Previously this dominated ~80% of taps, making crowns/visors feel less
+    // alive because their normal dart/spin/wiggle/bubble reactions disappeared.
+    for (let i = 0; i < 10; i += 1) pool.push('accessory');
   }
   return pool;
 }

@@ -24,87 +24,53 @@ const wallSlots=new Set<DecorSlot>(['wall-left','wall-center','wall-right']);
 
 function StatusPulse({delay=0}:{delay?:number}){
   const pulse=useRef(new Animated.Value(.35)).current;
-  useEffect(()=>{const loop=Animated.loop(Animated.sequence([
-    Animated.delay(delay),
-    Animated.timing(pulse,{toValue:1,duration:360,easing:Easing.out(Easing.quad),useNativeDriver:true}),
-    Animated.timing(pulse,{toValue:.28,duration:820,easing:Easing.inOut(Easing.quad),useNativeDriver:true}),
-    Animated.delay(1450+delay),
-  ]));loop.start();return()=>loop.stop();},[delay,pulse]);
+  useEffect(()=>{const loop=Animated.loop(Animated.sequence([Animated.delay(delay),Animated.timing(pulse,{toValue:1,duration:360,easing:Easing.out(Easing.quad),useNativeDriver:true}),Animated.timing(pulse,{toValue:.28,duration:820,easing:Easing.inOut(Easing.quad),useNativeDriver:true}),Animated.delay(1450+delay)]));loop.start();return()=>loop.stop();},[delay,pulse]);
   return <Animated.View style={[styles.statusLamp,{opacity:pulse,transform:[{scale:pulse.interpolate({inputRange:[.28,1],outputRange:[.85,1.35]})}]}]}/>;
 }
-
 function FloorActivity({delay=0}:{delay?:number}){
   const rise=useRef(new Animated.Value(0)).current;
-  useEffect(()=>{const loop=Animated.loop(Animated.sequence([
-    Animated.delay(900+delay),
-    Animated.timing(rise,{toValue:1,duration:2400+delay,easing:Easing.linear,useNativeDriver:true}),
-    Animated.timing(rise,{toValue:0,duration:0,useNativeDriver:true}),
-    Animated.delay(1800),
-  ]));loop.start();return()=>loop.stop();},[delay,rise]);
+  useEffect(()=>{const loop=Animated.loop(Animated.sequence([Animated.delay(900+delay),Animated.timing(rise,{toValue:1,duration:2400+delay,easing:Easing.linear,useNativeDriver:true}),Animated.timing(rise,{toValue:0,duration:0,useNativeDriver:true}),Animated.delay(1800)]));loop.start();return()=>loop.stop();},[delay,rise]);
   const opacity=rise.interpolate({inputRange:[0,.08,.72,1],outputRange:[0,.7,.42,0]});
   return <Animated.View pointerEvents="none" style={[styles.floorActivity,{opacity,transform:[{translateY:rise.interpolate({inputRange:[0,1],outputRange:[0,-42]})},{translateX:rise.interpolate({inputRange:[0,.5,1],outputRange:[0,5,-2]})}]}]}><View style={styles.activityBubbleA}/><View style={styles.activityBubbleB}/><View style={styles.activityBubbleC}/></Animated.View>;
 }
-
 function WallScan({delay=0}:{delay?:number}){
   const scan=useRef(new Animated.Value(0)).current;
-  useEffect(()=>{const loop=Animated.loop(Animated.sequence([
-    Animated.delay(600+delay),
-    Animated.timing(scan,{toValue:1,duration:1700,easing:Easing.linear,useNativeDriver:true}),
-    Animated.timing(scan,{toValue:0,duration:0,useNativeDriver:true}),
-    Animated.delay(2200+delay),
-  ]));loop.start();return()=>loop.stop();},[delay,scan]);
+  useEffect(()=>{const loop=Animated.loop(Animated.sequence([Animated.delay(600+delay),Animated.timing(scan,{toValue:1,duration:1700,easing:Easing.linear,useNativeDriver:true}),Animated.timing(scan,{toValue:0,duration:0,useNativeDriver:true}),Animated.delay(2200+delay)]));loop.start();return()=>loop.stop();},[delay,scan]);
   return <Animated.View pointerEvents="none" style={[styles.wallScan,{opacity:scan.interpolate({inputRange:[0,.1,.8,1],outputRange:[0,.65,.4,0]}),transform:[{translateX:scan.interpolate({inputRange:[0,1],outputRange:[0,61]})}]}]}/>;
 }
-
 function MarketTicker({compact}:{compact:boolean}){
   const crawl=useRef(new Animated.Value(0)).current;
-  useEffect(()=>{const loop=Animated.loop(Animated.sequence([
-    Animated.timing(crawl,{toValue:1,duration:9200,easing:Easing.linear,useNativeDriver:true}),
-    Animated.timing(crawl,{toValue:0,duration:0,useNativeDriver:true}),
-  ]));loop.start();return()=>loop.stop();},[crawl]);
+  useEffect(()=>{const loop=Animated.loop(Animated.sequence([Animated.timing(crawl,{toValue:1,duration:9200,easing:Easing.linear,useNativeDriver:true}),Animated.timing(crawl,{toValue:0,duration:0,useNativeDriver:true})]));loop.start();return()=>loop.stop();},[crawl]);
   const distance=compact?245:390;
-  return <View pointerEvents="none" style={styles.tickerRail}>
-    <View style={styles.tickerLamp}/><View style={styles.tickerLampAmber}/>
-    <Animated.View style={[styles.tickerCrawl,{transform:[{translateX:crawl.interpolate({inputRange:[0,1],outputRange:[distance,-distance]})}]}]}>
-      <PixelText style={styles.tickerText}>SHELL ST ▲12.4   KRILL +8.2   ROE ▲4.7   TANK INDEX +19.8</PixelText>
-    </Animated.View>
-    <View style={styles.tickerScanline}/>
-  </View>;
+  return <View pointerEvents="none" style={styles.tickerRail}><View style={styles.tickerLamp}/><View style={styles.tickerLampAmber}/><Animated.View style={[styles.tickerCrawl,{transform:[{translateX:crawl.interpolate({inputRange:[0,1],outputRange:[distance,-distance]})}]}]}><PixelText style={styles.tickerText}>SHELL ST ▲12.4   KRILL +8.2   ROE ▲4.7   TANK INDEX +19.8</PixelText></Animated.View><View style={styles.tickerScanline}/></View>;
 }
-
+function SkylineWindow(){
+  const shimmer=useRef(new Animated.Value(.25)).current;
+  useEffect(()=>{const loop=Animated.loop(Animated.sequence([Animated.timing(shimmer,{toValue:.8,duration:1800,useNativeDriver:true}),Animated.timing(shimmer,{toValue:.25,duration:2400,useNativeDriver:true})]));loop.start();return()=>loop.stop();},[shimmer]);
+  return <View pointerEvents="none" style={styles.skylineWindow}><View style={styles.skylineMoon}/><View style={styles.skylineHorizon}/>{[18,34,25,47,31,55,38,28,44].map((height,i)=><View key={`${height}-${i}`} style={[styles.skylineTower,{height,left:5+i*18}]}><Animated.View style={[styles.skylineLight,{opacity:Animated.multiply(shimmer,.45+(i%3)*.18)}]}/></View>)}<View style={styles.windowFrameV}/><View style={styles.windowFrameH}/><PixelText style={styles.hqLabel}>SHELL STREET</PixelText></View>;
+}
+function ExecutiveGlow(){
+  const pulse=useRef(new Animated.Value(.25)).current;
+  useEffect(()=>{const loop=Animated.loop(Animated.sequence([Animated.timing(pulse,{toValue:.75,duration:1100,useNativeDriver:true}),Animated.timing(pulse,{toValue:.25,duration:1100,useNativeDriver:true})]));loop.start();return()=>loop.stop();},[pulse]);
+  return <View pointerEvents="none" style={styles.executiveRail}><Animated.View style={[styles.executiveGlow,{opacity:pulse}]}/><View style={styles.execLampA}/><View style={styles.execLampB}/><View style={styles.execLampC}/><PixelText style={styles.execText}>EXECUTIVE FLOOR · LIVE</PixelText></View>;
+}
 function DecorDepth({slot,scale,index}:{slot:DecorSlot;scale:number;index:number}){
   if(floorSlots.has(slot))return <View pointerEvents="none" style={[styles.floorShadow,{transform:[{scaleX:scale}]}]}><View style={styles.floorHighlight}/><View style={styles.floorPixelA}/><View style={styles.floorPixelB}/><FloorActivity delay={index*210}/></View>;
   if(wallSlots.has(slot))return <View pointerEvents="none" style={[styles.wallPlate,{transform:[{scale}]}]}><View style={styles.wallPlateInner}/><WallScan delay={index*190}/><StatusPulse delay={index*170}/><View style={styles.statusLampDim}/><View style={styles.plateVent}/></View>;
   if(slot==='ceiling')return <View pointerEvents="none" style={[styles.ceilingGlow,{transform:[{scaleX:scale}]}]}><View style={styles.ceilingCore}/></View>;
   return null;
 }
-
 export function TankOfficeDecor({placed}:{placed:Partial<Record<DecorSlot,string>>}){
   const {width}=useWindowDimensions();const tiny=width<430;const mobile=width<700;
   const positions=tiny?tinyPositions:mobile?mobilePositions:desktopPositions;const scales=tiny?tinyScales:mobile?mobileScales:desktopScales;
   const furnished=Object.values(placed).filter(Boolean).length;
-  return <>{furnished>=3&&<MarketTicker compact={mobile}/>} {Object.entries(placed).map(([slot,id],index)=>{const typedSlot=slot as DecorSlot;if(!id||!decorItems.some(item=>item.id===id))return null;const scale=scales[typedSlot];return <View pointerEvents="none" key={`${slot}-${id}`} style={[styles.decorAnchor,positions[typedSlot]]}><DecorDepth slot={typedSlot} scale={scale} index={index}/><View style={styles.decorSprite}><PixelDecor id={id} animate scale={scale}/></View></View>;})}</>;
+  return <>{furnished>=5&&<SkylineWindow/>}{furnished>=3&&<MarketTicker compact={mobile}/>} {furnished>=7&&<ExecutiveGlow/>}{Object.entries(placed).map(([slot,id],index)=>{const typedSlot=slot as DecorSlot;if(!id||!decorItems.some(item=>item.id===id))return null;const scale=scales[typedSlot];return <View pointerEvents="none" key={`${slot}-${id}`} style={[styles.decorAnchor,positions[typedSlot]]}><DecorDepth slot={typedSlot} scale={scale} index={index}/><View style={styles.decorSprite}><PixelDecor id={id} animate scale={scale}/></View></View>;})}</>;
 }
-
 const styles=StyleSheet.create({
   decorAnchor:{position:'absolute',zIndex:9},decorSprite:{zIndex:2},
-  tickerRail:{position:'absolute',left:18,right:18,top:38,height:24,zIndex:7,overflow:'hidden',backgroundColor:'#03141DEB',borderWidth:2,borderColor:'#80672E',justifyContent:'center'},
-  tickerCrawl:{position:'absolute',left:0,width:520,justifyContent:'center'},tickerText:{fontFamily:'PressStart2P',fontSize:9,color:'#A7F5C0'},
-  tickerLamp:{position:'absolute',left:5,top:5,width:4,height:4,backgroundColor:'#76E99A',zIndex:3},tickerLampAmber:{position:'absolute',left:5,bottom:5,width:4,height:4,backgroundColor:'#E5B64D',zIndex:3},
-  tickerScanline:{position:'absolute',left:0,right:0,bottom:3,height:1,backgroundColor:'#A7F5C02B'},
-  floorShadow:{position:'absolute',left:-13,bottom:-4,width:78,height:10,backgroundColor:'#03172266',borderRadius:2,borderTopWidth:2,borderTopColor:'#7FD4D52B',zIndex:0},
-  floorHighlight:{position:'absolute',left:12,right:12,top:2,height:2,backgroundColor:'#C6F7E833'},
-  floorPixelA:{position:'absolute',left:8,bottom:1,width:5,height:2,backgroundColor:'#4B9BA444'},floorPixelB:{position:'absolute',right:10,bottom:2,width:8,height:2,backgroundColor:'#8ED7CF30'},
-  floorActivity:{position:'absolute',left:29,top:-3,width:20,height:16,zIndex:1},
-  activityBubbleA:{position:'absolute',left:2,bottom:0,width:4,height:4,borderWidth:1,borderColor:'#BDF9EF',backgroundColor:'#8ADFD344'},
-  activityBubbleB:{position:'absolute',left:10,bottom:5,width:3,height:3,borderWidth:1,borderColor:'#A9E9E0',backgroundColor:'#8ADFD333'},
-  activityBubbleC:{position:'absolute',left:15,bottom:1,width:2,height:2,backgroundColor:'#D8FFF5AA'},
-  wallPlate:{position:'absolute',left:-10,top:-8,width:82,height:52,backgroundColor:'#092D3B70',borderWidth:2,borderColor:'#5FAAB34A',zIndex:0,overflow:'hidden'},
-  wallPlateInner:{position:'absolute',left:4,right:4,top:4,bottom:4,borderWidth:1,borderColor:'#B4E8D92B'},
-  wallScan:{position:'absolute',left:5,top:10,width:8,height:28,backgroundColor:'#A9F5D31F',borderLeftWidth:1,borderLeftColor:'#D9FFF277'},
-  statusLamp:{position:'absolute',right:5,top:5,width:5,height:5,backgroundColor:'#8DE67D',borderWidth:1,borderColor:'#E6FFD9'},
-  statusLampDim:{position:'absolute',right:13,top:6,width:3,height:3,backgroundColor:'#E5B64D',opacity:.55},
-  plateVent:{position:'absolute',right:5,bottom:5,width:15,height:2,backgroundColor:'#03172288',borderLeftWidth:5,borderRightWidth:5,borderColor:'#4E899144'},
-  ceilingGlow:{position:'absolute',left:-24,top:-8,width:108,height:18,backgroundColor:'#B8F3DF16',borderBottomWidth:2,borderBottomColor:'#D7FFF43B',zIndex:0},
-  ceilingCore:{position:'absolute',left:28,right:28,bottom:1,height:3,backgroundColor:'#D9FFF277'},
+  tickerRail:{position:'absolute',left:18,right:18,top:38,height:24,zIndex:7,overflow:'hidden',backgroundColor:'#03141DEB',borderWidth:2,borderColor:'#80672E',justifyContent:'center'},tickerCrawl:{position:'absolute',left:0,width:520,justifyContent:'center'},tickerText:{fontFamily:'PressStart2P',fontSize:9,color:'#A7F5C0'},tickerLamp:{position:'absolute',left:5,top:5,width:4,height:4,backgroundColor:'#76E99A',zIndex:3},tickerLampAmber:{position:'absolute',left:5,bottom:5,width:4,height:4,backgroundColor:'#E5B64D',zIndex:3},tickerScanline:{position:'absolute',left:0,right:0,bottom:3,height:1,backgroundColor:'#A7F5C02B'},
+  skylineWindow:{position:'absolute',left:24,right:24,top:67,height:66,zIndex:1,overflow:'hidden',backgroundColor:'#061C32A8',borderWidth:2,borderColor:'#7DB6C74A'},skylineMoon:{position:'absolute',right:18,top:8,width:7,height:7,backgroundColor:'#D8E9C9AA'},skylineHorizon:{position:'absolute',left:0,right:0,bottom:5,height:2,backgroundColor:'#6EA5A54A'},skylineTower:{position:'absolute',bottom:5,width:13,backgroundColor:'#071621B8',borderTopWidth:2,borderTopColor:'#234C5C'},skylineLight:{position:'absolute',left:4,top:7,width:3,height:3,backgroundColor:'#F1D47B'},windowFrameV:{position:'absolute',left:'50%',top:0,bottom:0,width:2,backgroundColor:'#2B5361AA'},windowFrameH:{position:'absolute',left:0,right:0,top:31,height:2,backgroundColor:'#2B536188'},hqLabel:{position:'absolute',right:5,bottom:6,fontFamily:'PressStart2P',fontSize:7,color:'#8FC9B6AA'},
+  executiveRail:{position:'absolute',left:34,right:34,bottom:82,height:17,zIndex:6,overflow:'hidden',backgroundColor:'#07191DCC',borderTopWidth:2,borderTopColor:'#C7A84B88'},executiveGlow:{position:'absolute',left:0,right:0,top:0,height:4,backgroundColor:'#E5C35A'},execLampA:{position:'absolute',left:7,bottom:4,width:4,height:4,backgroundColor:'#72E494'},execLampB:{position:'absolute',left:15,bottom:4,width:4,height:4,backgroundColor:'#E5B64D'},execLampC:{position:'absolute',left:23,bottom:4,width:4,height:4,backgroundColor:'#62BDE8'},execText:{position:'absolute',right:7,bottom:2,fontFamily:'PressStart2P',fontSize:7,color:'#D7E7D8'},
+  floorShadow:{position:'absolute',left:-13,bottom:-4,width:78,height:10,backgroundColor:'#03172266',borderRadius:2,borderTopWidth:2,borderTopColor:'#7FD4D52B',zIndex:0},floorHighlight:{position:'absolute',left:12,right:12,top:2,height:2,backgroundColor:'#C6F7E833'},floorPixelA:{position:'absolute',left:8,bottom:1,width:5,height:2,backgroundColor:'#4B9BA444'},floorPixelB:{position:'absolute',right:10,bottom:2,width:8,height:2,backgroundColor:'#8ED7CF30'},floorActivity:{position:'absolute',left:29,top:-3,width:20,height:16,zIndex:1},activityBubbleA:{position:'absolute',left:2,bottom:0,width:4,height:4,borderWidth:1,borderColor:'#BDF9EF',backgroundColor:'#8ADFD344'},activityBubbleB:{position:'absolute',left:10,bottom:5,width:3,height:3,borderWidth:1,borderColor:'#A9E9E0',backgroundColor:'#8ADFD333'},activityBubbleC:{position:'absolute',left:15,bottom:1,width:2,height:2,backgroundColor:'#D8FFF5AA'},
+  wallPlate:{position:'absolute',left:-10,top:-8,width:82,height:52,backgroundColor:'#092D3B70',borderWidth:2,borderColor:'#5FAAB34A',zIndex:0,overflow:'hidden'},wallPlateInner:{position:'absolute',left:4,right:4,top:4,bottom:4,borderWidth:1,borderColor:'#B4E8D92B'},wallScan:{position:'absolute',left:5,top:10,width:8,height:28,backgroundColor:'#A9F5D31F',borderLeftWidth:1,borderLeftColor:'#D9FFF277'},statusLamp:{position:'absolute',right:5,top:5,width:5,height:5,backgroundColor:'#8DE67D',borderWidth:1,borderColor:'#E6FFD9'},statusLampDim:{position:'absolute',right:13,top:6,width:3,height:3,backgroundColor:'#E5B64D',opacity:.55},plateVent:{position:'absolute',right:5,bottom:5,width:15,height:2,backgroundColor:'#03172288',borderLeftWidth:5,borderRightWidth:5,borderColor:'#4E899144'},ceilingGlow:{position:'absolute',left:-24,top:-8,width:108,height:18,backgroundColor:'#B8F3DF16',borderBottomWidth:2,borderBottomColor:'#D7FFF43B',zIndex:0},ceilingCore:{position:'absolute',left:28,right:28,bottom:1,height:3,backgroundColor:'#D9FFF277'},
 });

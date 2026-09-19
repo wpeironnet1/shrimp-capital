@@ -21,15 +21,18 @@ const profiles: ShrimpPersonalityProfile[] = [
   { name: 'Diligent', tagline: 'HAS NEVER MISSED A QUARTERLY FILING', reactionBias: 'accessory', driftMultiplier: 0.82, bobMultiplier: 0.84 },
 ];
 
+// Deliberately lopsided pools make temperament readable through play. Every
+// shrimp can still perform the full core reaction vocabulary, but its signature
+// action appears often enough that two neighboring personalities feel different.
 const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
-  Curious: ['wiggle', 'wiggle', 'wiggle', 'bubbles', 'reverse', 'dart', 'spin', 'bubbles', 'wiggle', 'reverse'],
-  Hyper: ['dart', 'dart', 'dart', 'spin', 'spin', 'wiggle', 'reverse', 'bubbles', 'dart', 'wiggle'],
-  Lazy: ['bubbles', 'bubbles', 'bubbles', 'wiggle', 'wiggle', 'reverse', 'spin', 'dart', 'bubbles', 'reverse'],
-  Shy: ['reverse', 'reverse', 'reverse', 'bubbles', 'bubbles', 'wiggle', 'dart', 'spin', 'reverse', 'wiggle'],
-  Greedy: ['dart', 'dart', 'dart', 'wiggle', 'bubbles', 'spin', 'reverse', 'dart', 'wiggle', 'bubbles'],
-  Lucky: ['spin', 'spin', 'spin', 'bubbles', 'wiggle', 'dart', 'reverse', 'spin', 'bubbles', 'wiggle'],
-  Bold: ['spin', 'spin', 'spin', 'dart', 'dart', 'reverse', 'wiggle', 'bubbles', 'dart', 'spin'],
-  Diligent: ['wiggle', 'wiggle', 'bubbles', 'bubbles', 'reverse', 'reverse', 'dart', 'spin', 'wiggle', 'bubbles'],
+  Curious: ['wiggle','wiggle','wiggle','wiggle','wiggle','bubbles','bubbles','reverse','dart','spin'],
+  Hyper: ['dart','dart','dart','dart','dart','spin','spin','wiggle','reverse','bubbles'],
+  Lazy: ['bubbles','bubbles','bubbles','bubbles','bubbles','wiggle','wiggle','reverse','spin','dart'],
+  Shy: ['reverse','reverse','reverse','reverse','reverse','bubbles','bubbles','wiggle','dart','spin'],
+  Greedy: ['dart','dart','dart','dart','wiggle','wiggle','bubbles','spin','reverse','dart'],
+  Lucky: ['spin','spin','spin','spin','spin','bubbles','wiggle','dart','reverse','bubbles'],
+  Bold: ['spin','spin','spin','spin','dart','dart','dart','reverse','wiggle','bubbles'],
+  Diligent: ['wiggle','wiggle','wiggle','bubbles','bubbles','reverse','reverse','dart','spin','bubbles'],
 };
 
 const accessoryShowoffWeight: Record<ShrimpPersonality, number> = {
@@ -63,7 +66,9 @@ export function personalityReactionPool(seed: string, hasAccessory: boolean): Sh
   const profile = personalityFor(seed);
   const pool = [...reactionPools[profile.name]];
   const quirk = signatureReactionFor(seed);
-  pool.push(quirk, quirk);
+  // A stable individual quirk sits on top of the broader temperament. This
+  // gives same-personality shrimp a small recognizable tell of their own.
+  pool.push(quirk, quirk, quirk);
   if (hasAccessory) {
     const showoffWeight = accessoryShowoffWeight[profile.name];
     for (let i = 0; i < showoffWeight; i += 1) pool.push('accessory');

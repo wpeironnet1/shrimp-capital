@@ -32,8 +32,6 @@ const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
   Diligent: ['wiggle','wiggle','wiggle','bubbles','bubbles','reverse','reverse','dart','spin','bubbles'],
 };
 
-// Rare accessories are collection payoffs, so their show-off reaction is weighted
-// strongly enough to be noticed while still leaving room for personality.
 const accessoryShowoffWeight: Record<ShrimpPersonality, number> = {
   Curious: 12, Hyper: 10, Lazy: 8, Shy: 6, Greedy: 13, Lucky: 16, Bold: 18, Diligent: 20,
 };
@@ -73,16 +71,18 @@ export function personalityReactionPool(seed: string, hasAccessory: boolean): Sh
   return pool;
 }
 
-/**
- * Stable individual cruising rhythm. Personality supplies the broad temperament,
- * while independent seed channels stop a full tank from moving in lockstep.
- * Distance and breathing vary separately so even siblings read as tiny animals.
- */
+/** Stable individual cruising rhythm used directly by the aquarium actors. */
 export function personalityMotion(seed: string, baseDrift: number, baseBobDuration: number) {
   const profile = personalityFor(seed);
   const distanceVariation = 0.48 + (hashSeed(`${seed}-distance`) % 143) / 100;
   const cadenceVariation = 0.46 + (hashSeed(`${seed}-cadence`) % 151) / 100;
   const breathingVariation = 0.72 + (hashSeed(`${seed}-breathing`) % 65) / 100;
+  // Some animals naturally make a long patrol while others hover close to their
+  // preferred patch. This extra independent channel breaks up uniform tank rows.
+  const patrolVariation = 0.72 + (hashSeed(`${seed}-patrol`) % 73) / 100;
+  // A slower breathing beat creates visible hover/rest moments without another
+  // timer or persistent state. Lazy/Shy/Diligent animals receive longer beats.
+  const restBeat = 0.88 + (hashSeed(`${seed}-rest`) % 43) / 100;
   const personalityCadence: Record<ShrimpPersonality, number> = {
     Curious: 0.88,
     Hyper: 0.56,
@@ -93,33 +93,21 @@ export function personalityMotion(seed: string, baseDrift: number, baseBobDurati
     Bold: 0.62,
     Diligent: 1.18,
   };
-  const rawDrift = Math.round(baseDrift * profile.driftMultiplier * distanceVariation);
-  const driftDistance = Math.max(6, Math.min(58, rawDrift));
-  const rawBobDuration = Math.round(((baseBobDuration / profile.bobMultiplier) / cadenceVariation) * breathingVariation * personalityCadence[profile.name]);
+  const personalityPatrol: Record<ShrimpPersonality, number> = {
+    Curious: 1.18,
+    Hyper: 1.34,
+    Lazy: 0.7,
+    Shy: 0.62,
+    Greedy: 1.28,
+    Lucky: 1.0,
+    Bold: 1.4,
+    Diligent: 0.82,
+  };
+  const rawDrift = Math.round(baseDrift * profile.driftMultiplier * distanceVariation * patrolVariation * personalityPatrol[profile.name]);
+  const driftDistance = Math.max(5, Math.min(64, rawDrift));
+  const rawBobDuration = Math.round(((baseBobDuration / profile.bobMultiplier) / cadenceVariation) * breathingVariation * personalityCadence[profile.name] * restBeat);
   return {
     driftDistance,
-    bobDuration: Math.max(290, Math.min(4900, rawBobDuration)),
+    bobDuration: Math.max(270, Math.min(5400, rawBobDuration)),
   };
-}
-
-/**
- * A deterministic cruise-duration multiplier consumed by aquarium animation code.
- * This creates stop-and-go traffic instead of metronomic laps: Hyper/Bold shrimp
- * make short aggressive runs, Lazy/Shy shrimp linger, and every individual gets
- * a stable micro-variation. Keeping it pure makes the behavior testable and save-safe.
- */
-export function cruiseDurationMultiplier(seed: string) {
-  const profile = personalityFor(seed);
-  const temperament: Record<ShrimpPersonality, number> = {
-    Curious: 0.9,
-    Hyper: 0.48,
-    Lazy: 1.72,
-    Shy: 1.48,
-    Greedy: 0.68,
-    Lucky: 1.0,
-    Bold: 0.58,
-    Diligent: 1.2,
-  };
-  const individual = 0.76 + (hashSeed(`${seed}-cruise`) % 55) / 100;
-  return Math.max(0.38, Math.min(2.05, temperament[profile.name] * individual));
 }

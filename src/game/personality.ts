@@ -35,8 +35,13 @@ const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
   Diligent: ['wiggle','wiggle','wiggle','bubbles','bubbles','reverse','reverse','dart','spin','bubbles'],
 };
 
+// Accessories are intentionally much more theatrical than ordinary taps. A
+// crown/chain/visor/suit is a rare collection payoff, so players should actually
+// see the special sparkle/show-off animation instead of it being buried behind
+// the normal reaction pool. Personality still matters: shy shrimp show off less,
+// while Bold/Diligent/Lucky desk stars make their status impossible to miss.
 const accessoryShowoffWeight: Record<ShrimpPersonality, number> = {
-  Curious: 7, Hyper: 5, Lazy: 4, Shy: 2, Greedy: 7, Lucky: 8, Bold: 9, Diligent: 11,
+  Curious: 12, Hyper: 10, Lazy: 8, Shy: 6, Greedy: 13, Lucky: 16, Bold: 18, Diligent: 20,
 };
 
 const individualQuirks: ShrimpReaction[] = ['wiggle', 'dart', 'bubbles', 'reverse', 'spin'];

@@ -21,19 +21,18 @@ const profiles: ShrimpPersonalityProfile[] = [
   { name: 'Diligent', tagline: 'HAS NEVER MISSED A QUARTERLY FILING', reactionBias: 'accessory', driftMultiplier: 0.5, bobMultiplier: 0.62 },
 ];
 
-// Every temperament has a dominant, readable silhouette in motion. The
-// aquarium should communicate personality before the player ever opens an
-// inspector: curious shrimp fidget, hyper/greedy shrimp bolt, shy shrimp back
-// away, lazy shrimp exhale bubbles, and lucky/bold shrimp show off with spins.
+// Temperament remains readable, but no shrimp is a one-animation prop. Each
+// personality has a signature response plus a meaningful secondary repertoire,
+// so repeated taps reveal character instead of replaying the same beat.
 const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
-  Curious: ['wiggle', 'wiggle', 'wiggle', 'wiggle', 'wiggle', 'wiggle', 'bubbles', 'reverse'],
-  Hyper: ['dart', 'dart', 'dart', 'dart', 'dart', 'dart', 'spin', 'wiggle'],
-  Lazy: ['bubbles', 'bubbles', 'bubbles', 'bubbles', 'bubbles', 'bubbles', 'bubbles', 'wiggle'],
-  Shy: ['reverse', 'reverse', 'reverse', 'reverse', 'reverse', 'reverse', 'bubbles', 'wiggle'],
-  Greedy: ['dart', 'dart', 'dart', 'dart', 'dart', 'dart', 'wiggle', 'bubbles'],
-  Lucky: ['spin', 'spin', 'spin', 'spin', 'spin', 'bubbles', 'wiggle', 'dart'],
-  Bold: ['spin', 'spin', 'spin', 'spin', 'dart', 'dart', 'dart', 'wiggle'],
-  Diligent: ['wiggle', 'wiggle', 'bubbles', 'bubbles', 'reverse', 'wiggle', 'bubbles', 'reverse'],
+  Curious: ['wiggle', 'wiggle', 'wiggle', 'wiggle', 'bubbles', 'reverse', 'dart', 'spin'],
+  Hyper: ['dart', 'dart', 'dart', 'dart', 'spin', 'wiggle', 'reverse', 'bubbles'],
+  Lazy: ['bubbles', 'bubbles', 'bubbles', 'bubbles', 'wiggle', 'reverse', 'spin', 'dart'],
+  Shy: ['reverse', 'reverse', 'reverse', 'reverse', 'bubbles', 'wiggle', 'dart', 'spin'],
+  Greedy: ['dart', 'dart', 'dart', 'dart', 'wiggle', 'bubbles', 'spin', 'reverse'],
+  Lucky: ['spin', 'spin', 'spin', 'spin', 'bubbles', 'wiggle', 'dart', 'reverse'],
+  Bold: ['spin', 'spin', 'spin', 'dart', 'dart', 'reverse', 'wiggle', 'bubbles'],
+  Diligent: ['wiggle', 'wiggle', 'bubbles', 'bubbles', 'reverse', 'dart', 'spin', 'wiggle'],
 };
 
 function hashSeed(seed: string) {

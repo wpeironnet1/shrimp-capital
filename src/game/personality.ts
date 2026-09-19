@@ -21,7 +21,7 @@ const profiles: ShrimpPersonalityProfile[] = [
   { name: 'Diligent', tagline: 'HAS NEVER MISSED A QUARTERLY FILING', reactionBias: 'accessory', driftMultiplier: 0.5, bobMultiplier: 0.62 },
 ];
 
-// Every temperament now has a dominant, readable silhouette in motion. The
+// Every temperament has a dominant, readable silhouette in motion. The
 // aquarium should communicate personality before the player ever opens an
 // inspector: curious shrimp fidget, hyper/greedy shrimp bolt, shy shrimp back
 // away, lazy shrimp exhale bubbles, and lucky/bold shrimp show off with spins.
@@ -88,13 +88,18 @@ export function personalityMotion(seed: string, baseDrift: number, baseBobDurati
     Bold: 0.78,
     Diligent: 1.14,
   };
+  // Actors are anchored at percentage-based lanes. An uncapped Hyper/Bold
+  // multiplier could previously produce ~100 px of extra travel on the widest
+  // base lane, enough to clip a shrimp through the glass on phones. Preserve
+  // the dramatic temperament contrast while keeping every patrol readable and
+  // inside the aquarium.
+  const rawDrift = Math.round(baseDrift * profile.driftMultiplier * distanceVariation);
+  const driftDistance = Math.max(2, Math.min(46, rawDrift));
   return {
-    // Hyper/Bold patrol aggressively, Greedy shrimp chase activity, Curious
-    // shrimp investigate a wider patch, while Lazy/Shy barely leave a perch.
-    driftDistance: Math.max(2, Math.round(baseDrift * profile.driftMultiplier * distanceVariation)),
+    driftDistance,
     // Cadence carries a temperament-specific beat as well as per-shrimp
     // variance. Quiet shrimp visibly hover while active traders move through
     // quicker vertical beats, even before the player taps them.
-    bobDuration: Math.max(360, Math.round(((baseBobDuration / profile.bobMultiplier) / cadenceVariation) * breathingVariation * personalityCadence[profile.name])),
+    bobDuration: Math.max(360, Math.min(4200, Math.round(((baseBobDuration / profile.bobMultiplier) / cadenceVariation) * breathingVariation * personalityCadence[profile.name]))),
   };
 }

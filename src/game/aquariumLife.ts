@@ -1,6 +1,6 @@
 import { ShrimpPersonality, personalityFor } from './personality';
 
-export type AquariumLifeBeat = 'cruise' | 'forage' | 'rest' | 'inspect' | 'hide' | 'chase' | 'surface' | 'school';
+export type AquariumLifeBeat = 'cruise' | 'forage' | 'rest' | 'inspect' | 'hide' | 'chase' | 'surface' | 'school' | 'bubble-trail';
 
 export type AquariumLifePlan = {
   primary: AquariumLifeBeat;
@@ -8,17 +8,18 @@ export type AquariumLifePlan = {
   pauseMs: number;
   verticalBias: number;
   speedMultiplier: number;
+  travelScale: number;
 };
 
 const lifePools: Record<ShrimpPersonality, AquariumLifeBeat[]> = {
-  Curious: ['inspect', 'inspect', 'forage', 'surface', 'cruise', 'school'],
-  Hyper: ['chase', 'chase', 'surface', 'cruise', 'school', 'forage'],
-  Lazy: ['rest', 'rest', 'rest', 'forage', 'hide', 'cruise'],
-  Shy: ['hide', 'hide', 'rest', 'school', 'forage', 'cruise'],
-  Greedy: ['forage', 'forage', 'forage', 'chase', 'surface', 'cruise'],
-  Lucky: ['school', 'surface', 'inspect', 'cruise', 'forage', 'rest'],
-  Bold: ['chase', 'surface', 'inspect', 'school', 'cruise', 'forage'],
-  Diligent: ['forage', 'inspect', 'school', 'cruise', 'rest', 'forage'],
+  Curious: ['inspect', 'inspect', 'forage', 'surface', 'cruise', 'school', 'bubble-trail'],
+  Hyper: ['chase', 'chase', 'surface', 'cruise', 'school', 'forage', 'bubble-trail'],
+  Lazy: ['rest', 'rest', 'rest', 'forage', 'hide', 'cruise', 'bubble-trail'],
+  Shy: ['hide', 'hide', 'rest', 'school', 'forage', 'cruise', 'bubble-trail'],
+  Greedy: ['forage', 'forage', 'forage', 'chase', 'surface', 'cruise', 'school'],
+  Lucky: ['school', 'surface', 'inspect', 'cruise', 'forage', 'rest', 'bubble-trail'],
+  Bold: ['chase', 'surface', 'inspect', 'school', 'cruise', 'forage', 'bubble-trail'],
+  Diligent: ['forage', 'inspect', 'school', 'cruise', 'rest', 'forage', 'bubble-trail'],
 };
 
 function hash(seed: string) {
@@ -39,6 +40,7 @@ const speedByBeat: Record<AquariumLifeBeat, number> = {
   chase: 1.55,
   surface: 1.2,
   school: .92,
+  'bubble-trail': .78,
 };
 
 const verticalByBeat: Record<AquariumLifeBeat, number> = {
@@ -50,6 +52,7 @@ const verticalByBeat: Record<AquariumLifeBeat, number> = {
   chase: -.08,
   surface: -.9,
   school: -.2,
+  'bubble-trail': -.38,
 };
 
 /**
@@ -60,21 +63,38 @@ const verticalByBeat: Record<AquariumLifeBeat, number> = {
 export function aquariumLifePlan(seed: string, cycle = 0): AquariumLifePlan {
   const personality = personalityFor(seed).name;
   const pool = lifePools[personality];
-  const a = hash(`${seed}:life:${cycle}`);
-  const b = hash(`${seed}:life:${cycle}:next`);
+  const safeCycle = Math.max(0, Math.floor(cycle));
+  const a = hash(`${seed}:life:${safeCycle}`);
+  const b = hash(`${seed}:life:${safeCycle}:next`);
   const primary = pool[a % pool.length];
   let secondary = pool[b % pool.length];
-  if (secondary === primary) secondary = pool[(b + 1) % pool.length];
-  const pauseBase = primary === 'rest' ? 2600 : primary === 'hide' ? 1800 : 650;
+  if (secondary === primary) secondary = pool[(pool.indexOf(primary) + 1) % pool.length];
+  const pauseBase = primary === 'rest' ? 2600 : primary === 'hide' ? 1800 : primary === 'inspect' ? 1100 : 650;
   return {
     primary,
     secondary,
-    pauseMs: pauseBase + (hash(`${seed}:pause:${cycle}`) % 1500),
+    pauseMs: pauseBase + (hash(`${seed}:pause:${safeCycle}`) % 1500),
     verticalBias: verticalByBeat[primary],
     speedMultiplier: speedByBeat[primary],
+    travelScale: .72 + ((a >>> 8) % 74) / 100,
   };
 }
 
 export function aquariumLifePoolFor(seed: string): readonly AquariumLifeBeat[] {
   return lifePools[personalityFor(seed).name];
+}
+
+export function aquariumLifeLabel(beat: AquariumLifeBeat) {
+  const labels: Record<AquariumLifeBeat, string> = {
+    cruise: 'CRUISING THE DESK',
+    forage: 'HUNTING FOR ALPHA',
+    rest: 'MARKET CLOSED',
+    inspect: 'AUDITING THE TANK',
+    hide: 'IN A DARK POOL',
+    chase: 'CHASING MOMENTUM',
+    surface: 'CHECKING THE TICKER',
+    school: 'TEAM MEETING',
+    'bubble-trail': 'BLOWING LIQUIDITY',
+  };
+  return labels[beat];
 }

@@ -46,6 +46,8 @@ const accessoryShowoffWeight: Record<ShrimpPersonality, number> = {
   Diligent: 11,
 };
 
+const individualQuirks: ShrimpReaction[] = ['wiggle', 'dart', 'bubbles', 'reverse', 'spin'];
+
 function hashSeed(seed: string) {
   let hash = 2166136261;
   for (let i = 0; i < seed.length; i += 1) {
@@ -64,15 +66,28 @@ export function personalityForSpecies(speciesId: string, populationIndex = 0): S
 }
 
 /**
+ * Each animal also gets a deterministic signature quirk. Two Curious shrimp
+ * therefore share a recognizable temperament without feeling like clones:
+ * one might favor bubble bursts while another occasionally spins. Keeping the
+ * quirk seed-based means the same visible shrimp retains its character across
+ * renders and sessions without adding save-state complexity.
+ */
+export function signatureReactionFor(seed: string): ShrimpReaction {
+  return individualQuirks[hashSeed(`${seed}-quirk`) % individualQuirks.length];
+}
+
+/**
  * Tap reactions are weighted by temperament instead of drawing from one
- * generic pool. Rare accessories now inherit temperament too: a shy shrimp
- * only occasionally flashes its crown/visor, while Bold and Diligent shrimp
- * deliberately show theirs off. This keeps rare animals collectible without
- * turning every dressed shrimp into the same canned animation.
+ * generic pool. Rare accessories inherit temperament too: a shy shrimp only
+ * occasionally flashes its crown/visor, while Bold and Diligent shrimp
+ * deliberately show theirs off. Individual quirks add another small layer of
+ * collectibility without turning reactions into unpredictable noise.
  */
 export function personalityReactionPool(seed: string, hasAccessory: boolean): ShrimpReaction[] {
   const profile = personalityFor(seed);
   const pool = [...reactionPools[profile.name]];
+  const quirk = signatureReactionFor(seed);
+  pool.push(quirk, quirk);
   if (hasAccessory) {
     const showoffWeight = accessoryShowoffWeight[profile.name];
     for (let i = 0; i < showoffWeight; i += 1) pool.push('accessory');

@@ -21,9 +21,6 @@ const profiles: ShrimpPersonalityProfile[] = [
   { name: 'Diligent', tagline: 'HAS NEVER MISSED A QUARTERLY FILING', reactionBias: 'accessory', driftMultiplier: 0.82, bobMultiplier: 0.84 },
 ];
 
-// Reactions are weighted enough to make temperament readable, but deliberately
-// retain a broad repertoire so repeated taps feel like interacting with a tiny
-// animal rather than replaying one canned animation.
 const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
   Curious: ['wiggle', 'wiggle', 'wiggle', 'bubbles', 'reverse', 'dart', 'spin', 'bubbles', 'wiggle', 'reverse'],
   Hyper: ['dart', 'dart', 'dart', 'spin', 'spin', 'wiggle', 'reverse', 'bubbles', 'dart', 'wiggle'],
@@ -36,14 +33,7 @@ const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
 };
 
 const accessoryShowoffWeight: Record<ShrimpPersonality, number> = {
-  Curious: 7,
-  Hyper: 5,
-  Lazy: 4,
-  Shy: 2,
-  Greedy: 7,
-  Lucky: 8,
-  Bold: 9,
-  Diligent: 11,
+  Curious: 7, Hyper: 5, Lazy: 4, Shy: 2, Greedy: 7, Lucky: 8, Bold: 9, Diligent: 11,
 };
 
 const individualQuirks: ShrimpReaction[] = ['wiggle', 'dart', 'bubbles', 'reverse', 'spin'];
@@ -65,24 +55,10 @@ export function personalityForSpecies(speciesId: string, populationIndex = 0): S
   return personalityFor(`${speciesId}-${Math.max(0, populationIndex)}`);
 }
 
-/**
- * Each animal also gets a deterministic signature quirk. Two Curious shrimp
- * therefore share a recognizable temperament without feeling like clones:
- * one might favor bubble bursts while another occasionally spins. Keeping the
- * quirk seed-based means the same visible shrimp retains its character across
- * renders and sessions without adding save-state complexity.
- */
 export function signatureReactionFor(seed: string): ShrimpReaction {
   return individualQuirks[hashSeed(`${seed}-quirk`) % individualQuirks.length];
 }
 
-/**
- * Tap reactions are weighted by temperament instead of drawing from one
- * generic pool. Rare accessories inherit temperament too: a shy shrimp only
- * occasionally flashes its crown/visor, while Bold and Diligent shrimp
- * deliberately show theirs off. Individual quirks add another small layer of
- * collectibility without turning reactions into unpredictable noise.
- */
 export function personalityReactionPool(seed: string, hasAccessory: boolean): ShrimpReaction[] {
   const profile = personalityFor(seed);
   const pool = [...reactionPools[profile.name]];
@@ -95,29 +71,33 @@ export function personalityReactionPool(seed: string, hasAccessory: boolean): Sh
   return pool;
 }
 
+/**
+ * Produces a stable but visibly individual cruising rhythm. Personality sets the
+ * broad temperament; three independent seed channels keep animals of the same
+ * temperament from forming synchronized rows. The asymmetric slow/fast cadence
+ * bands are intentional: a tank should read as a group of tiny animals rather
+ * than twelve copies of one looping sprite.
+ */
 export function personalityMotion(seed: string, baseDrift: number, baseBobDuration: number) {
   const profile = personalityFor(seed);
-  // Per-animal variation prevents rows of same-species shrimp from moving in lockstep.
-  // The wider range is intentional: even two Hyper shrimp should not look cloned.
-  const distanceVariation = 0.55 + (hashSeed(`${seed}-distance`) % 126) / 100;
-  const cadenceVariation = 0.52 + (hashSeed(`${seed}-cadence`) % 126) / 100;
-  const breathingVariation = 0.78 + (hashSeed(`${seed}-breathing`) % 49) / 100;
+  const distanceVariation = 0.48 + (hashSeed(`${seed}-distance`) % 143) / 100;
+  const cadenceVariation = 0.46 + (hashSeed(`${seed}-cadence`) % 151) / 100;
+  const breathingVariation = 0.72 + (hashSeed(`${seed}-breathing`) % 65) / 100;
   const personalityCadence: Record<ShrimpPersonality, number> = {
-    Curious: 0.9,
-    Hyper: 0.62,
-    Lazy: 1.42,
-    Shy: 1.3,
-    Greedy: 0.74,
-    Lucky: 0.96,
-    Bold: 0.68,
-    Diligent: 1.14,
+    Curious: 0.88,
+    Hyper: 0.56,
+    Lazy: 1.55,
+    Shy: 1.38,
+    Greedy: 0.7,
+    Lucky: 0.94,
+    Bold: 0.62,
+    Diligent: 1.18,
   };
   const rawDrift = Math.round(baseDrift * profile.driftMultiplier * distanceVariation);
-  // Quiet shrimp still visibly cruise on a narrow phone, while energetic shrimp
-  // can cross a meaningful portion of the tank without escaping the glass.
-  const driftDistance = Math.max(7, Math.min(52, rawDrift));
+  const driftDistance = Math.max(6, Math.min(58, rawDrift));
+  const rawBobDuration = Math.round(((baseBobDuration / profile.bobMultiplier) / cadenceVariation) * breathingVariation * personalityCadence[profile.name]);
   return {
     driftDistance,
-    bobDuration: Math.max(320, Math.min(4600, Math.round(((baseBobDuration / profile.bobMultiplier) / cadenceVariation) * breathingVariation * personalityCadence[profile.name]))),
+    bobDuration: Math.max(290, Math.min(4900, rawBobDuration)),
   };
 }

@@ -21,9 +21,6 @@ const profiles: ShrimpPersonalityProfile[] = [
   { name: 'Diligent', tagline: 'HAS NEVER MISSED A QUARTERLY FILING', reactionBias: 'accessory', driftMultiplier: 0.82, bobMultiplier: 0.84 },
 ];
 
-// Deliberately lopsided pools make temperament readable through play. Every
-// shrimp can still perform the full core reaction vocabulary, but its signature
-// action appears often enough that two neighboring personalities feel different.
 const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
   Curious: ['wiggle','wiggle','wiggle','wiggle','wiggle','bubbles','bubbles','reverse','dart','spin'],
   Hyper: ['dart','dart','dart','dart','dart','spin','spin','wiggle','reverse','bubbles'],
@@ -35,11 +32,8 @@ const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
   Diligent: ['wiggle','wiggle','wiggle','bubbles','bubbles','reverse','reverse','dart','spin','bubbles'],
 };
 
-// Accessories are intentionally much more theatrical than ordinary taps. A
-// crown/chain/visor/suit is a rare collection payoff, so players should actually
-// see the special sparkle/show-off animation instead of it being buried behind
-// the normal reaction pool. Personality still matters: shy shrimp show off less,
-// while Bold/Diligent/Lucky desk stars make their status impossible to miss.
+// Rare accessories are collection payoffs, so their show-off reaction is weighted
+// strongly enough to be noticed while still leaving room for personality.
 const accessoryShowoffWeight: Record<ShrimpPersonality, number> = {
   Curious: 12, Hyper: 10, Lazy: 8, Shy: 6, Greedy: 13, Lucky: 16, Bold: 18, Diligent: 20,
 };
@@ -71,8 +65,6 @@ export function personalityReactionPool(seed: string, hasAccessory: boolean): Sh
   const profile = personalityFor(seed);
   const pool = [...reactionPools[profile.name]];
   const quirk = signatureReactionFor(seed);
-  // A stable individual quirk sits on top of the broader temperament. This
-  // gives same-personality shrimp a small recognizable tell of their own.
   pool.push(quirk, quirk, quirk);
   if (hasAccessory) {
     const showoffWeight = accessoryShowoffWeight[profile.name];
@@ -82,11 +74,9 @@ export function personalityReactionPool(seed: string, hasAccessory: boolean): Sh
 }
 
 /**
- * Produces a stable but visibly individual cruising rhythm. Personality sets the
- * broad temperament; three independent seed channels keep animals of the same
- * temperament from forming synchronized rows. The asymmetric slow/fast cadence
- * bands are intentional: a tank should read as a group of tiny animals rather
- * than twelve copies of one looping sprite.
+ * Stable individual cruising rhythm. Personality supplies the broad temperament,
+ * while independent seed channels stop a full tank from moving in lockstep.
+ * Distance and breathing vary separately so even siblings read as tiny animals.
  */
 export function personalityMotion(seed: string, baseDrift: number, baseBobDuration: number) {
   const profile = personalityFor(seed);
@@ -110,4 +100,26 @@ export function personalityMotion(seed: string, baseDrift: number, baseBobDurati
     driftDistance,
     bobDuration: Math.max(290, Math.min(4900, rawBobDuration)),
   };
+}
+
+/**
+ * A deterministic cruise-duration multiplier consumed by aquarium animation code.
+ * This creates stop-and-go traffic instead of metronomic laps: Hyper/Bold shrimp
+ * make short aggressive runs, Lazy/Shy shrimp linger, and every individual gets
+ * a stable micro-variation. Keeping it pure makes the behavior testable and save-safe.
+ */
+export function cruiseDurationMultiplier(seed: string) {
+  const profile = personalityFor(seed);
+  const temperament: Record<ShrimpPersonality, number> = {
+    Curious: 0.9,
+    Hyper: 0.48,
+    Lazy: 1.72,
+    Shy: 1.48,
+    Greedy: 0.68,
+    Lucky: 1.0,
+    Bold: 0.58,
+    Diligent: 1.2,
+  };
+  const individual = 0.76 + (hashSeed(`${seed}-cruise`) % 55) / 100;
+  return Math.max(0.38, Math.min(2.05, temperament[profile.name] * individual));
 }

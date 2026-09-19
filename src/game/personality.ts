@@ -35,6 +35,17 @@ const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
   Diligent: ['wiggle', 'wiggle', 'bubbles', 'bubbles', 'reverse', 'reverse', 'dart', 'spin', 'wiggle', 'bubbles'],
 };
 
+const accessoryShowoffWeight: Record<ShrimpPersonality, number> = {
+  Curious: 7,
+  Hyper: 5,
+  Lazy: 4,
+  Shy: 2,
+  Greedy: 7,
+  Lucky: 8,
+  Bold: 9,
+  Diligent: 11,
+};
+
 function hashSeed(seed: string) {
   let hash = 2166136261;
   for (let i = 0; i < seed.length; i += 1) {
@@ -54,17 +65,17 @@ export function personalityForSpecies(speciesId: string, populationIndex = 0): S
 
 /**
  * Tap reactions are weighted by temperament instead of drawing from one
- * generic pool. Dressed shrimp show off their rare accessory frequently, but
- * never at the expense of the animal's underlying personality repertoire.
+ * generic pool. Rare accessories now inherit temperament too: a shy shrimp
+ * only occasionally flashes its crown/visor, while Bold and Diligent shrimp
+ * deliberately show theirs off. This keeps rare animals collectible without
+ * turning every dressed shrimp into the same canned animation.
  */
 export function personalityReactionPool(seed: string, hasAccessory: boolean): ShrimpReaction[] {
   const profile = personalityFor(seed);
   const pool = [...reactionPools[profile.name]];
   if (hasAccessory) {
-    // Roughly half of rare-shrimp taps now trigger the special show-off motion.
-    // Previously this dominated ~80% of taps, making crowns/visors feel less
-    // alive because their normal dart/spin/wiggle/bubble reactions disappeared.
-    for (let i = 0; i < 10; i += 1) pool.push('accessory');
+    const showoffWeight = accessoryShowoffWeight[profile.name];
+    for (let i = 0; i < showoffWeight; i += 1) pool.push('accessory');
   }
   return pool;
 }

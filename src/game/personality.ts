@@ -21,9 +21,9 @@ const profiles: ShrimpPersonalityProfile[] = [
   { name: 'Diligent', tagline: 'HAS NEVER MISSED A QUARTERLY FILING', reactionBias: 'accessory', driftMultiplier: 0.5, bobMultiplier: 0.62 },
 ];
 
-// Each temperament has a signature move and secondary tells. Repetition is
-// deliberate: it makes personality readable from the aquarium rather than
-// turning every tap into an indistinguishable random animation.
+// Signature reactions are intentionally strongly weighted. A player should be
+// able to learn a shrimp's temperament by watching/tapping it, not by opening a
+// stats menu. Secondary tells keep repeated taps from feeling canned.
 const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
   Curious: ['wiggle', 'wiggle', 'wiggle', 'wiggle', 'wiggle', 'bubbles', 'reverse', 'dart'],
   Hyper: ['dart', 'dart', 'dart', 'dart', 'dart', 'spin', 'dart', 'wiggle'],
@@ -54,16 +54,23 @@ export function personalityForSpecies(speciesId: string, populationIndex = 0): S
 
 /**
  * Tap reactions are weighted by temperament instead of drawing from one
- * generic pool. Accessories add a conspicuous show-off beat without replacing
- * temperament, so finding a rare dressed shrimp changes how it feels to tap.
+ * generic pool. Dressed shrimp get a dominant sparkle/show-off reaction so a
+ * rare accessory feels special in the aquarium immediately, while a smaller
+ * share of taps still exposes the underlying temperament.
  */
 export function personalityReactionPool(seed: string, hasAccessory: boolean): ShrimpReaction[] {
   const profile = personalityFor(seed);
   const pool = [...reactionPools[profile.name]];
   if (hasAccessory) {
-    // Dressed shrimp should read as rare immediately when touched: half of taps
-    // become a sparkle/show-off beat while the rest retain temperament.
-    pool.push('accessory', 'accessory', 'accessory', 'accessory', 'accessory', 'accessory', 'accessory', 'accessory');
+    // 16 accessory beats against 8 temperament beats = a 2/3 show-off chance.
+    // The previous 50/50 split let rare crown/chain/visor/suit shrimp react too
+    // much like ordinary stock, weakening the collection payoff.
+    pool.push(
+      'accessory', 'accessory', 'accessory', 'accessory',
+      'accessory', 'accessory', 'accessory', 'accessory',
+      'accessory', 'accessory', 'accessory', 'accessory',
+      'accessory', 'accessory', 'accessory', 'accessory',
+    );
   }
   return pool;
 }
@@ -90,9 +97,9 @@ export function personalityMotion(seed: string, baseDrift: number, baseBobDurati
     // Hyper/Bold patrol aggressively, Greedy shrimp chase activity, Curious
     // shrimp investigate a wider patch, while Lazy/Shy barely leave a perch.
     driftDistance: Math.max(2, Math.round(baseDrift * profile.driftMultiplier * distanceVariation)),
-    // Cadence now carries a temperament-specific beat as well as per-shrimp
-    // variance. This makes quiet shrimp visibly hover while active traders dart
-    // through quicker vertical beats, even before the player taps them.
+    // Cadence carries a temperament-specific beat as well as per-shrimp
+    // variance. Quiet shrimp visibly hover while active traders move through
+    // quicker vertical beats, even before the player taps them.
     bobDuration: Math.max(360, Math.round(((baseBobDuration / profile.bobMultiplier) / cadenceVariation) * breathingVariation * personalityCadence[profile.name])),
   };
 }

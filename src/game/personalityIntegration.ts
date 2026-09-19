@@ -1,3 +1,4 @@
+import { aquariumLifePlan, AquariumLifePlan } from './aquariumLife';
 import { personalityFor, personalityMotion, personalityReactionPool, ShrimpReaction } from './personality';
 
 export type TankPersonalityBehavior = {
@@ -6,6 +7,7 @@ export type TankPersonalityBehavior = {
   driftDistance: number;
   bobDuration: number;
   reactions: ShrimpReaction[];
+  life: AquariumLifePlan;
 };
 
 export type ReactionPresentation = {
@@ -24,14 +26,17 @@ const reactionPresentation: Record<ShrimpReaction, ReactionPresentation> = {
 };
 
 /**
- * Single adapter used by the aquarium UI so personality affects both ambient
- * motion and tap reactions without duplicating balancing rules in components.
+ * Single adapter used by the aquarium UI so personality affects ambient motion,
+ * idle-life behavior and tap reactions without duplicating balancing rules in
+ * components. `lifeCycle` is intentionally ephemeral: animation variety never
+ * needs to migrate or dirty the player's persistent save.
  */
 export function tankPersonalityBehavior(
   shrimpKey: string,
   hasAccessory: boolean,
   baseDrift: number,
   baseBobDuration: number,
+  lifeCycle = 0,
 ): TankPersonalityBehavior {
   const profile = personalityFor(shrimpKey);
   const motion = personalityMotion(shrimpKey, baseDrift, baseBobDuration);
@@ -41,6 +46,7 @@ export function tankPersonalityBehavior(
     driftDistance: motion.driftDistance,
     bobDuration: motion.bobDuration,
     reactions: personalityReactionPool(shrimpKey, hasAccessory),
+    life: aquariumLifePlan(shrimpKey, lifeCycle),
   };
 }
 

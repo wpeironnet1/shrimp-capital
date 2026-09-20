@@ -79,8 +79,6 @@ export function personalityMotion(seed: string, baseDrift: number, baseBobDurati
   const breathingVariation = 0.72 + (hashSeed(`${seed}-breathing`) % 65) / 100;
   const patrolVariation = 0.72 + (hashSeed(`${seed}-patrol`) % 73) / 100;
   const restBeat = 0.88 + (hashSeed(`${seed}-rest`) % 43) / 100;
-  // Stable temperament makes neighboring animals visibly different without
-  // introducing save-state churn or random animation changes after reloads.
   const temperamentPulse = 0.74 + (hashSeed(`${seed}-temperament`) % 63) / 100;
   const personalityCadence: Record<ShrimpPersonality, number> = {
     Curious: 0.82,
@@ -102,14 +100,21 @@ export function personalityMotion(seed: string, baseDrift: number, baseBobDurati
     Bold: 1.58,
     Diligent: 0.7,
   };
-  const rawDrift = baseDrift * profile.driftMultiplier * distanceVariation * patrolVariation * personalityPatrol[profile.name] * temperamentPulse;
-  // Soft compression keeps energetic personalities distinct without letting a
-  // patrol escape the visual tank bounds on narrow phones.
-  const softenedDrift = 86 * (rawDrift / (rawDrift + 40));
-  const driftDistance = Math.max(4, Math.round(softenedDrift));
-  const rawBobDuration = Math.round(((baseBobDuration / profile.bobMultiplier) / cadenceVariation) * breathingVariation * personalityCadence[profile.name] * restBeat / temperamentPulse);
-  return {
-    driftDistance,
-    bobDuration: Math.max(240, Math.min(6200, rawBobDuration)),
+  const motionBand: Record<ShrimpPersonality, { minDrift: number; maxDrift: number; minBob: number; maxBob: number }> = {
+    Curious: { minDrift: 18, maxDrift: 48, minBob: 560, maxBob: 1800 },
+    Hyper: { minDrift: 46, maxDrift: 76, minBob: 240, maxBob: 720 },
+    Lazy: { minDrift: 4, maxDrift: 13, minBob: 2800, maxBob: 6200 },
+    Shy: { minDrift: 6, maxDrift: 19, minBob: 2100, maxBob: 5200 },
+    Greedy: { minDrift: 34, maxDrift: 67, minBob: 380, maxBob: 1050 },
+    Lucky: { minDrift: 20, maxDrift: 48, minBob: 700, maxBob: 1900 },
+    Bold: { minDrift: 42, maxDrift: 72, minBob: 300, maxBob: 880 },
+    Diligent: { minDrift: 9, maxDrift: 27, minBob: 1500, maxBob: 3900 },
   };
+  const rawDrift = baseDrift * profile.driftMultiplier * distanceVariation * patrolVariation * personalityPatrol[profile.name] * temperamentPulse;
+  const softenedDrift = 86 * (rawDrift / (rawDrift + 40));
+  const band = motionBand[profile.name];
+  const driftDistance = Math.max(band.minDrift, Math.min(band.maxDrift, Math.round(softenedDrift)));
+  const rawBobDuration = Math.round(((baseBobDuration / profile.bobMultiplier) / cadenceVariation) * breathingVariation * personalityCadence[profile.name] * restBeat / temperamentPulse);
+  const bobDuration = Math.max(band.minBob, Math.min(band.maxBob, rawBobDuration));
+  return { driftDistance, bobDuration };
 }

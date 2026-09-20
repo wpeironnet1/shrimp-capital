@@ -11,14 +11,14 @@ export type ShrimpPersonalityProfile = {
 };
 
 const profiles: ShrimpPersonalityProfile[] = [
-  { name: 'Curious', tagline: 'INSPECTS EVERYTHING TWICE', reactionBias: 'wiggle', driftMultiplier: 1.7, bobMultiplier: 1.28 },
-  { name: 'Hyper', tagline: 'NEVER OFF THE TRADING FLOOR', reactionBias: 'dart', driftMultiplier: 3.8, bobMultiplier: 2.8 },
-  { name: 'Lazy', tagline: 'DELEGATES MOST SWIMMING', reactionBias: 'bubbles', driftMultiplier: 0.42, bobMultiplier: 0.44 },
-  { name: 'Shy', tagline: 'PREFERS DARK POOLS OF LIQUIDITY', reactionBias: 'reverse', driftMultiplier: 0.58, bobMultiplier: 0.62 },
-  { name: 'Greedy', tagline: 'ALWAYS CHASING THE NEXT PELLET', reactionBias: 'dart', driftMultiplier: 2.65, bobMultiplier: 1.72 },
-  { name: 'Lucky', tagline: 'SOMEHOW ALWAYS BUYS THE DIP', reactionBias: 'spin', driftMultiplier: 1.58, bobMultiplier: 1.38 },
-  { name: 'Bold', tagline: 'TREATS EVERY RIPPLE LIKE A TAKEOVER', reactionBias: 'spin', driftMultiplier: 3.05, bobMultiplier: 2.05 },
-  { name: 'Diligent', tagline: 'HAS NEVER MISSED A QUARTERLY FILING', reactionBias: 'accessory', driftMultiplier: 0.82, bobMultiplier: 0.84 },
+  { name: 'Curious', tagline: 'INSPECTS EVERYTHING TWICE', reactionBias: 'wiggle', driftMultiplier: 1.9, bobMultiplier: 1.35 },
+  { name: 'Hyper', tagline: 'NEVER OFF THE TRADING FLOOR', reactionBias: 'dart', driftMultiplier: 4.4, bobMultiplier: 3.15 },
+  { name: 'Lazy', tagline: 'DELEGATES MOST SWIMMING', reactionBias: 'bubbles', driftMultiplier: 0.3, bobMultiplier: 0.34 },
+  { name: 'Shy', tagline: 'PREFERS DARK POOLS OF LIQUIDITY', reactionBias: 'reverse', driftMultiplier: 0.46, bobMultiplier: 0.52 },
+  { name: 'Greedy', tagline: 'ALWAYS CHASING THE NEXT PELLET', reactionBias: 'dart', driftMultiplier: 3.0, bobMultiplier: 1.9 },
+  { name: 'Lucky', tagline: 'SOMEHOW ALWAYS BUYS THE DIP', reactionBias: 'spin', driftMultiplier: 1.7, bobMultiplier: 1.48 },
+  { name: 'Bold', tagline: 'TREATS EVERY RIPPLE LIKE A TAKEOVER', reactionBias: 'spin', driftMultiplier: 3.55, bobMultiplier: 2.35 },
+  { name: 'Diligent', tagline: 'HAS NEVER MISSED A QUARTERLY FILING', reactionBias: 'accessory', driftMultiplier: 0.72, bobMultiplier: 0.74 },
 ];
 
 const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
@@ -79,38 +79,37 @@ export function personalityMotion(seed: string, baseDrift: number, baseBobDurati
   const breathingVariation = 0.72 + (hashSeed(`${seed}-breathing`) % 65) / 100;
   const patrolVariation = 0.72 + (hashSeed(`${seed}-patrol`) % 73) / 100;
   const restBeat = 0.88 + (hashSeed(`${seed}-rest`) % 43) / 100;
-  // A second stable rhythm prevents a tank full of shrimp from looking like the
-  // same animation at different offsets. It deliberately changes both patrol
-  // reach and breathing cadence, while remaining deterministic across saves.
-  const temperamentPulse = 0.78 + (hashSeed(`${seed}-temperament`) % 55) / 100;
+  // Stable temperament makes neighboring animals visibly different without
+  // introducing save-state churn or random animation changes after reloads.
+  const temperamentPulse = 0.74 + (hashSeed(`${seed}-temperament`) % 63) / 100;
   const personalityCadence: Record<ShrimpPersonality, number> = {
-    Curious: 0.88,
-    Hyper: 0.56,
-    Lazy: 1.55,
-    Shy: 1.38,
-    Greedy: 0.7,
-    Lucky: 0.94,
-    Bold: 0.62,
-    Diligent: 1.18,
+    Curious: 0.82,
+    Hyper: 0.48,
+    Lazy: 1.82,
+    Shy: 1.55,
+    Greedy: 0.64,
+    Lucky: 0.9,
+    Bold: 0.54,
+    Diligent: 1.32,
   };
   const personalityPatrol: Record<ShrimpPersonality, number> = {
-    Curious: 1.18,
-    Hyper: 1.34,
-    Lazy: 0.7,
-    Shy: 0.62,
-    Greedy: 1.28,
-    Lucky: 1.0,
-    Bold: 1.4,
-    Diligent: 0.82,
+    Curious: 1.26,
+    Hyper: 1.52,
+    Lazy: 0.48,
+    Shy: 0.52,
+    Greedy: 1.42,
+    Lucky: 1.02,
+    Bold: 1.58,
+    Diligent: 0.7,
   };
   const rawDrift = baseDrift * profile.driftMultiplier * distanceVariation * patrolVariation * personalityPatrol[profile.name] * temperamentPulse;
-  // Soft compression instead of a hard clamp keeps Hyper/Bold/Greedy visibly
-  // different at the top end rather than flattening all three to the same cap.
-  const softenedDrift = 78 * (rawDrift / (rawDrift + 38));
-  const driftDistance = Math.max(5, Math.round(softenedDrift));
+  // Soft compression keeps energetic personalities distinct without letting a
+  // patrol escape the visual tank bounds on narrow phones.
+  const softenedDrift = 86 * (rawDrift / (rawDrift + 40));
+  const driftDistance = Math.max(4, Math.round(softenedDrift));
   const rawBobDuration = Math.round(((baseBobDuration / profile.bobMultiplier) / cadenceVariation) * breathingVariation * personalityCadence[profile.name] * restBeat / temperamentPulse);
   return {
     driftDistance,
-    bobDuration: Math.max(270, Math.min(5400, rawBobDuration)),
+    bobDuration: Math.max(240, Math.min(6200, rawBobDuration)),
   };
 }

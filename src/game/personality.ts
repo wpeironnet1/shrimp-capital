@@ -67,9 +67,15 @@ export function personalityReactionPool(seed: string, hasAccessory: boolean): Sh
   const secondary = secondaryReactionFor(seed);
   const pool = [...reactionPools[profile.name]];
 
-  // Rare accessories should feel special without erasing the animal underneath.
+  // Rare accessories are a 1-in-hundreds discovery, so taps should reliably
+  // showcase their bespoke sparkle/pose instead of making the item feel cosmetic.
+  // Personality gestures remain in the pool so accessorized shrimp still feel alive.
   if (hasAccessory) {
-    pool.push('accessory', 'accessory', 'accessory', 'accessory', 'accessory', 'accessory', 'accessory', 'accessory');
+    pool.push(
+      'accessory', 'accessory', 'accessory', 'accessory', 'accessory', 'accessory',
+      'accessory', 'accessory', 'accessory', 'accessory', 'accessory', 'accessory',
+      'accessory', 'accessory', 'accessory', 'accessory'
+    );
   }
 
   // Stable signature gestures let players learn individual shrimp by tapping them.
@@ -78,7 +84,7 @@ export function personalityReactionPool(seed: string, hasAccessory: boolean): Sh
   if (profile.reactionBias !== 'accessory') {
     pool.push(profile.reactionBias, profile.reactionBias, profile.reactionBias, profile.reactionBias);
   } else if (hasAccessory) {
-    pool.push('accessory', 'accessory', 'accessory');
+    pool.push('accessory', 'accessory', 'accessory', 'accessory', 'accessory', 'accessory');
   }
   return pool;
 }

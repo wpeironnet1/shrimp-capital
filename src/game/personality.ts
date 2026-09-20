@@ -22,14 +22,14 @@ const profiles: ShrimpPersonalityProfile[] = [
 ];
 
 const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
-  Curious: ['wiggle','wiggle','wiggle','wiggle','wiggle','wiggle','bubbles','bubbles','reverse','dart','spin'],
-  Hyper: ['dart','dart','dart','dart','dart','dart','spin','spin','wiggle','reverse','bubbles'],
-  Lazy: ['bubbles','bubbles','bubbles','bubbles','bubbles','bubbles','wiggle','wiggle','reverse','spin','dart'],
-  Shy: ['reverse','reverse','reverse','reverse','reverse','reverse','bubbles','bubbles','wiggle','dart','spin'],
-  Greedy: ['dart','dart','dart','dart','dart','dart','wiggle','wiggle','bubbles','spin','reverse'],
-  Lucky: ['spin','spin','spin','spin','spin','spin','bubbles','wiggle','dart','reverse','bubbles'],
-  Bold: ['spin','spin','spin','spin','spin','dart','dart','dart','dart','reverse','wiggle'],
-  Diligent: ['wiggle','wiggle','wiggle','bubbles','bubbles','bubbles','reverse','reverse','dart','spin','wiggle'],
+  Curious: ['wiggle','wiggle','wiggle','wiggle','wiggle','wiggle','wiggle','bubbles','bubbles','reverse','dart','spin'],
+  Hyper: ['dart','dart','dart','dart','dart','dart','dart','spin','spin','wiggle','reverse','bubbles'],
+  Lazy: ['bubbles','bubbles','bubbles','bubbles','bubbles','bubbles','bubbles','wiggle','wiggle','reverse','spin','dart'],
+  Shy: ['reverse','reverse','reverse','reverse','reverse','reverse','reverse','bubbles','bubbles','wiggle','dart','spin'],
+  Greedy: ['dart','dart','dart','dart','dart','dart','dart','wiggle','wiggle','bubbles','spin','reverse'],
+  Lucky: ['spin','spin','spin','spin','spin','spin','spin','bubbles','wiggle','dart','reverse','bubbles'],
+  Bold: ['spin','spin','spin','spin','spin','spin','dart','dart','dart','dart','reverse','wiggle'],
+  Diligent: ['wiggle','wiggle','wiggle','wiggle','bubbles','bubbles','bubbles','reverse','reverse','dart','spin','wiggle'],
 };
 
 const individualQuirks: ShrimpReaction[] = ['wiggle', 'dart', 'bubbles', 'reverse', 'spin'];
@@ -73,7 +73,15 @@ export function personalityReactionPool(seed: string, hasAccessory: boolean): Sh
   const signature = signatureReactionFor(seed);
   const secondary = secondaryReactionFor(seed);
 
-  pool.push(signature, signature, signature, secondary, secondary);
+  // Taps should reveal character, not feel like a slot machine. The broad
+  // personality pool keeps all five ordinary animations discoverable, while
+  // stable individual quirks make repeated taps on the same shrimp recognizable.
+  // This gives a Curious shrimp a visibly different "vocabulary" from a Hyper
+  // one without reducing the aquarium to a single canned reaction per animal.
+  pool.push(signature, signature, signature, signature, secondary, secondary);
+  if (profile.reactionBias !== 'accessory') {
+    pool.push(profile.reactionBias, profile.reactionBias, profile.reactionBias);
+  }
   return pool;
 }
 

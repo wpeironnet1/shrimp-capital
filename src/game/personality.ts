@@ -62,12 +62,17 @@ export function secondaryReactionFor(seed: string): ShrimpReaction {
 }
 
 export function personalityReactionPool(seed: string, hasAccessory: boolean): ShrimpReaction[] {
-  if (hasAccessory) return ['accessory'];
-
   const profile = personalityFor(seed);
   const signature = signatureReactionFor(seed);
   const secondary = secondaryReactionFor(seed);
   const pool = [...reactionPools[profile.name]];
+
+  // Rare accessories should feel special without erasing the animal underneath.
+  // Accessorized shrimp now frequently show their sparkle flourish, but still dart,
+  // spin, wiggle, reverse and bubble according to their stable personality.
+  if (hasAccessory) {
+    pool.push('accessory', 'accessory', 'accessory', 'accessory', 'accessory', 'accessory', 'accessory', 'accessory');
+  }
 
   // Each visible shrimp gets a stable signature gesture. Weight it strongly
   // enough that a player can learn an individual animal by tapping it several
@@ -76,6 +81,8 @@ export function personalityReactionPool(seed: string, hasAccessory: boolean): Sh
   pool.push(secondary, secondary, secondary);
   if (profile.reactionBias !== 'accessory') {
     pool.push(profile.reactionBias, profile.reactionBias, profile.reactionBias, profile.reactionBias);
+  } else if (hasAccessory) {
+    pool.push('accessory', 'accessory', 'accessory');
   }
   return pool;
 }

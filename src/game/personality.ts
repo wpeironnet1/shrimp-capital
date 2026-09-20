@@ -21,9 +21,6 @@ const profiles: ShrimpPersonalityProfile[] = [
   { name: 'Diligent', tagline: 'HAS NEVER MISSED A QUARTERLY FILING', reactionBias: 'accessory', driftMultiplier: 0.72, bobMultiplier: 0.74 },
 ];
 
-// The first several slots intentionally repeat each personality's signature move.
-// Players should be able to recognize a shrimp's temperament from a few taps,
-// while the tail of each pool keeps every actor playful and surprising.
 const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
   Curious: ['wiggle','wiggle','wiggle','wiggle','wiggle','wiggle','bubbles','bubbles','reverse','dart','spin'],
   Hyper: ['dart','dart','dart','dart','dart','dart','spin','spin','wiggle','reverse','bubbles'],
@@ -35,18 +32,18 @@ const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
   Diligent: ['wiggle','wiggle','wiggle','bubbles','bubbles','bubbles','reverse','reverse','dart','spin','wiggle'],
 };
 
-// Accessories are intentionally extremely rare, so a player who finds one should
-// see its bespoke show-off animation often enough to understand that it is special.
-// Personality still matters: shy shrimp show off less; bold/accountant shrimp more.
+// Rare accessories are collectible jackpot moments. Once a shrimp owns one,
+// tapping it should reliably reveal the bespoke show-off animation instead of
+// making the player hunt through many ordinary reactions to notice the reward.
 const accessoryShowoffWeight: Record<ShrimpPersonality, number> = {
-  Curious: 30,
-  Hyper: 28,
-  Lazy: 24,
-  Shy: 20,
-  Greedy: 34,
-  Lucky: 40,
-  Bold: 46,
-  Diligent: 50,
+  Curious: 58,
+  Hyper: 52,
+  Lazy: 46,
+  Shy: 38,
+  Greedy: 62,
+  Lucky: 72,
+  Bold: 78,
+  Diligent: 84,
 };
 
 const individualQuirks: ShrimpReaction[] = ['wiggle', 'dart', 'bubbles', 'reverse', 'spin'];
@@ -72,11 +69,6 @@ export function signatureReactionFor(seed: string): ShrimpReaction {
   return individualQuirks[hashSeed(`${seed}-quirk`) % individualQuirks.length];
 }
 
-/**
- * A second stable quirk makes two shrimp with the same broad personality still
- * feel like different little actors. It is deliberately forced to differ from
- * the primary signature so taps do not collapse into a one-animation gimmick.
- */
 export function secondaryReactionFor(seed: string): ShrimpReaction {
   const primary = signatureReactionFor(seed);
   const candidates = individualQuirks.filter(reaction => reaction !== primary);
@@ -89,8 +81,6 @@ export function personalityReactionPool(seed: string, hasAccessory: boolean): Sh
   const signature = signatureReactionFor(seed);
   const secondary = secondaryReactionFor(seed);
 
-  // Individual quirks stay memorable, but no longer drown out the broad
-  // personality. A Hyper shrimp should read as Hyper immediately in play.
   pool.push(signature, signature, signature, secondary, secondary);
 
   if (hasAccessory) {
@@ -110,24 +100,12 @@ export function personalityMotion(seed: string, baseDrift: number, baseBobDurati
   const restBeat = 0.88 + (hashSeed(`${seed}-rest`) % 43) / 100;
   const temperamentPulse = 0.74 + (hashSeed(`${seed}-temperament`) % 63) / 100;
   const personalityCadence: Record<ShrimpPersonality, number> = {
-    Curious: 0.82,
-    Hyper: 0.48,
-    Lazy: 1.82,
-    Shy: 1.55,
-    Greedy: 0.64,
-    Lucky: 0.9,
-    Bold: 0.54,
-    Diligent: 1.32,
+    Curious: 0.82, Hyper: 0.48, Lazy: 1.82, Shy: 1.55,
+    Greedy: 0.64, Lucky: 0.9, Bold: 0.54, Diligent: 1.32,
   };
   const personalityPatrol: Record<ShrimpPersonality, number> = {
-    Curious: 1.26,
-    Hyper: 1.52,
-    Lazy: 0.48,
-    Shy: 0.52,
-    Greedy: 1.42,
-    Lucky: 1.02,
-    Bold: 1.58,
-    Diligent: 0.7,
+    Curious: 1.26, Hyper: 1.52, Lazy: 0.48, Shy: 0.52,
+    Greedy: 1.42, Lucky: 1.02, Bold: 1.58, Diligent: 0.7,
   };
   const motionBand: Record<ShrimpPersonality, { minDrift: number; maxDrift: number; minBob: number; maxBob: number }> = {
     Curious: { minDrift: 18, maxDrift: 48, minBob: 560, maxBob: 1800 },

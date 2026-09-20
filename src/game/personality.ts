@@ -62,25 +62,20 @@ export function secondaryReactionFor(seed: string): ShrimpReaction {
 }
 
 export function personalityReactionPool(seed: string, hasAccessory: boolean): ShrimpReaction[] {
-  // Accessories are extremely rare collectible jackpot moments. Never let a
-  // crown/chain/visor/suit shrimp answer a tap with an ordinary animation: the
-  // bespoke sparkle/show-off reaction makes the reward instantly legible in
-  // the tank and keeps these shrimp feeling materially different to own.
   if (hasAccessory) return ['accessory'];
 
   const profile = personalityFor(seed);
-  const pool = [...reactionPools[profile.name]];
   const signature = signatureReactionFor(seed);
   const secondary = secondaryReactionFor(seed);
+  const pool = [...reactionPools[profile.name]];
 
-  // Taps should reveal character, not feel like a slot machine. The broad
-  // personality pool keeps all five ordinary animations discoverable, while
-  // stable individual quirks make repeated taps on the same shrimp recognizable.
-  // This gives a Curious shrimp a visibly different "vocabulary" from a Hyper
-  // one without reducing the aquarium to a single canned reaction per animal.
-  pool.push(signature, signature, signature, signature, secondary, secondary);
+  // Each visible shrimp gets a stable signature gesture. Weight it strongly
+  // enough that a player can learn an individual animal by tapping it several
+  // times, while the personality pool still exposes the full animation set.
+  pool.push(signature, signature, signature, signature, signature, signature);
+  pool.push(secondary, secondary, secondary);
   if (profile.reactionBias !== 'accessory') {
-    pool.push(profile.reactionBias, profile.reactionBias, profile.reactionBias);
+    pool.push(profile.reactionBias, profile.reactionBias, profile.reactionBias, profile.reactionBias);
   }
   return pool;
 }
@@ -102,10 +97,6 @@ export function personalityMotion(seed: string, baseDrift: number, baseBobDurati
     Curious: 1.36, Hyper: 1.72, Lazy: 0.38, Shy: 0.44,
     Greedy: 1.55, Lucky: 1.04, Bold: 1.76, Diligent: 0.62,
   };
-  // The bands intentionally do not overlap much at the extremes. A player
-  // should be able to recognize a Hyper or Lazy shrimp from the tank alone,
-  // without opening a personnel card. Individual hash variation still keeps
-  // two shrimp with the same personality from moving in lockstep.
   const motionBand: Record<ShrimpPersonality, { minDrift: number; maxDrift: number; minBob: number; maxBob: number }> = {
     Curious: { minDrift: 22, maxDrift: 54, minBob: 500, maxBob: 1650 },
     Hyper: { minDrift: 54, maxDrift: 82, minBob: 210, maxBob: 610 },

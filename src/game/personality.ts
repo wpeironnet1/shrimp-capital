@@ -32,8 +32,18 @@ const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
   Diligent: ['wiggle','wiggle','wiggle','bubbles','bubbles','reverse','reverse','dart','spin','bubbles'],
 };
 
+// Accessories are intentionally extremely rare, so a player who finds one should
+// see its bespoke show-off animation often enough to understand that it is special.
+// Personality still matters: shy shrimp show off less; bold/accountant shrimp more.
 const accessoryShowoffWeight: Record<ShrimpPersonality, number> = {
-  Curious: 12, Hyper: 10, Lazy: 8, Shy: 6, Greedy: 13, Lucky: 16, Bold: 18, Diligent: 20,
+  Curious: 30,
+  Hyper: 28,
+  Lazy: 24,
+  Shy: 20,
+  Greedy: 34,
+  Lucky: 40,
+  Bold: 46,
+  Diligent: 50,
 };
 
 const individualQuirks: ShrimpReaction[] = ['wiggle', 'dart', 'bubbles', 'reverse', 'spin'];

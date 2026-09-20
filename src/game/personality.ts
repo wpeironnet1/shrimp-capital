@@ -1,4 +1,4 @@
-export type ShrimpPersonality = 'Curious' | 'Hyper' | 'Lazy' | 'Shy' | 'Greedy' | 'Lucky' | 'Bold' | 'Diligent' | 'Contrarian' | 'Quant' | 'Closer' | 'Social';
+export type ShrimpPersonality = 'Curious' | 'Hyper' | 'Lazy' | 'Shy' | 'Greedy' | 'Lucky' | 'Bold' | 'Diligent' | 'Contrarian' | 'Quant' | 'Closer' | 'Social' | 'Rainmaker' | 'Auditor' | 'Intern' | 'Whale';
 
 export type ShrimpReaction = 'wiggle' | 'dart' | 'bubbles' | 'reverse' | 'spin' | 'accessory';
 
@@ -23,6 +23,10 @@ const profiles: ShrimpPersonalityProfile[] = [
   { name: 'Quant', tagline: 'MODELS EVERY BUBBLE', reactionBias: 'wiggle', driftMultiplier: 1.35, bobMultiplier: 1.15 },
   { name: 'Closer', tagline: 'ALWAYS HITS THE CLOSING BELL', reactionBias: 'dart', driftMultiplier: 3.7, bobMultiplier: 2.35 },
   { name: 'Social', tagline: 'WORKS THE WHOLE ROOM', reactionBias: 'bubbles', driftMultiplier: 2.35, bobMultiplier: 1.85 },
+  { name: 'Rainmaker', tagline: 'TURNS EVERY SPLASH INTO A DEAL', reactionBias: 'spin', driftMultiplier: 3.35, bobMultiplier: 2.15 },
+  { name: 'Auditor', tagline: 'COUNTS EVERY PELLET TWICE', reactionBias: 'reverse', driftMultiplier: 0.52, bobMultiplier: 0.58 },
+  { name: 'Intern', tagline: 'VOLUNTEERS FOR EVERY BUBBLE', reactionBias: 'wiggle', driftMultiplier: 3.05, bobMultiplier: 2.7 },
+  { name: 'Whale', tagline: 'MOVES THE WHOLE TANK', reactionBias: 'bubbles', driftMultiplier: 1.05, bobMultiplier: 0.82 },
 ];
 
 const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
@@ -38,6 +42,10 @@ const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
   Quant: ['wiggle','wiggle','wiggle','wiggle','bubbles','bubbles','reverse','reverse','spin','dart','wiggle','bubbles'],
   Closer: ['dart','dart','dart','dart','dart','spin','spin','spin','wiggle','reverse','dart','bubbles'],
   Social: ['bubbles','bubbles','bubbles','bubbles','wiggle','wiggle','spin','spin','dart','reverse','bubbles','wiggle'],
+  Rainmaker: ['spin','spin','spin','dart','dart','dart','bubbles','bubbles','wiggle','reverse','spin','dart'],
+  Auditor: ['reverse','reverse','wiggle','wiggle','wiggle','bubbles','bubbles','reverse','wiggle','spin','dart','reverse'],
+  Intern: ['wiggle','wiggle','wiggle','dart','dart','dart','bubbles','bubbles','spin','reverse','wiggle','dart'],
+  Whale: ['bubbles','bubbles','bubbles','bubbles','spin','spin','wiggle','reverse','bubbles','spin','dart','bubbles'],
 };
 
 const individualQuirks: ShrimpReaction[] = ['wiggle', 'dart', 'bubbles', 'reverse', 'spin'];
@@ -103,11 +111,13 @@ export function personalityMotion(seed: string, baseDrift: number, baseBobDurati
     Curious: 0.82, Hyper: 0.34, Lazy: 2.65, Shy: 2.05,
     Greedy: 0.54, Lucky: 0.96, Bold: 0.43, Diligent: 1.58,
     Contrarian: 0.72, Quant: 1.12, Closer: 0.48, Social: 0.67,
+    Rainmaker: 0.5, Auditor: 1.9, Intern: 0.42, Whale: 1.35,
   };
   const personalityPatrol: Record<ShrimpPersonality, number> = {
     Curious: 1.28, Hyper: 1.9, Lazy: 0.24, Shy: 0.32,
     Greedy: 1.58, Lucky: 1.0, Bold: 1.72, Diligent: 0.54,
     Contrarian: 1.42, Quant: 0.82, Closer: 1.65, Social: 1.3,
+    Rainmaker: 1.55, Auditor: 0.42, Intern: 1.68, Whale: 0.72,
   };
   const motionBand: Record<ShrimpPersonality, { minDrift: number; maxDrift: number; minBob: number; maxBob: number }> = {
     Curious: { minDrift: 24, maxDrift: 48, minBob: 650, maxBob: 1500 },
@@ -122,6 +132,10 @@ export function personalityMotion(seed: string, baseDrift: number, baseBobDurati
     Quant: { minDrift: 14, maxDrift: 30, minBob: 1150, maxBob: 2400 },
     Closer: { minDrift: 48, maxDrift: 72, minBob: 320, maxBob: 720 },
     Social: { minDrift: 30, maxDrift: 54, minBob: 500, maxBob: 1050 },
+    Rainmaker: { minDrift: 44, maxDrift: 70, minBob: 330, maxBob: 780 },
+    Auditor: { minDrift: 7, maxDrift: 17, minBob: 2600, maxBob: 5200 },
+    Intern: { minDrift: 46, maxDrift: 74, minBob: 250, maxBob: 610 },
+    Whale: { minDrift: 13, maxDrift: 29, minBob: 1500, maxBob: 3100 },
   };
 
   const rawDrift = baseDrift * profile.driftMultiplier * distanceVariation * personalityPatrol[profile.name] * temperamentPulse;

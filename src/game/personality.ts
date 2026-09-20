@@ -32,20 +32,6 @@ const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
   Diligent: ['wiggle','wiggle','wiggle','bubbles','bubbles','bubbles','reverse','reverse','dart','spin','wiggle'],
 };
 
-// Rare accessories are collectible jackpot moments. Once a shrimp owns one,
-// tapping it should reliably reveal the bespoke show-off animation instead of
-// making the player hunt through many ordinary reactions to notice the reward.
-const accessoryShowoffWeight: Record<ShrimpPersonality, number> = {
-  Curious: 58,
-  Hyper: 52,
-  Lazy: 46,
-  Shy: 38,
-  Greedy: 62,
-  Lucky: 72,
-  Bold: 78,
-  Diligent: 84,
-};
-
 const individualQuirks: ShrimpReaction[] = ['wiggle', 'dart', 'bubbles', 'reverse', 'spin'];
 
 function hashSeed(seed: string) {
@@ -76,17 +62,18 @@ export function secondaryReactionFor(seed: string): ShrimpReaction {
 }
 
 export function personalityReactionPool(seed: string, hasAccessory: boolean): ShrimpReaction[] {
+  // Accessories are extremely rare collectible jackpot moments. Never let a
+  // crown/chain/visor/suit shrimp answer a tap with an ordinary animation: the
+  // bespoke sparkle/show-off reaction makes the reward instantly legible in
+  // the tank and keeps these shrimp feeling materially different to own.
+  if (hasAccessory) return ['accessory'];
+
   const profile = personalityFor(seed);
   const pool = [...reactionPools[profile.name]];
   const signature = signatureReactionFor(seed);
   const secondary = secondaryReactionFor(seed);
 
   pool.push(signature, signature, signature, secondary, secondary);
-
-  if (hasAccessory) {
-    const showoffWeight = accessoryShowoffWeight[profile.name];
-    for (let i = 0; i < showoffWeight; i += 1) pool.push('accessory');
-  }
   return pool;
 }
 

@@ -68,15 +68,11 @@ export function personalityReactionPool(seed: string, hasAccessory: boolean): Sh
   const pool = [...reactionPools[profile.name]];
 
   // Rare accessories should feel special without erasing the animal underneath.
-  // Accessorized shrimp now frequently show their sparkle flourish, but still dart,
-  // spin, wiggle, reverse and bubble according to their stable personality.
   if (hasAccessory) {
     pool.push('accessory', 'accessory', 'accessory', 'accessory', 'accessory', 'accessory', 'accessory', 'accessory');
   }
 
-  // Each visible shrimp gets a stable signature gesture. Weight it strongly
-  // enough that a player can learn an individual animal by tapping it several
-  // times, while the personality pool still exposes the full animation set.
+  // Stable signature gestures let players learn individual shrimp by tapping them.
   pool.push(signature, signature, signature, signature, signature, signature);
   pool.push(secondary, secondary, secondary);
   if (profile.reactionBias !== 'accessory') {
@@ -87,38 +83,42 @@ export function personalityReactionPool(seed: string, hasAccessory: boolean): Sh
   return pool;
 }
 
-/** Stable individual cruising rhythm used directly by the aquarium actors. */
+/**
+ * Stable individual cruising rhythm used directly by aquarium actors.
+ * Bands intentionally do not overlap much: even without tapping, a player should
+ * be able to spot the hyper trader, the shy wall-hugger and the lazy drifter.
+ */
 export function personalityMotion(seed: string, baseDrift: number, baseBobDuration: number) {
   const profile = personalityFor(seed);
-  const distanceVariation = 0.48 + (hashSeed(`${seed}-distance`) % 143) / 100;
-  const cadenceVariation = 0.46 + (hashSeed(`${seed}-cadence`) % 151) / 100;
-  const breathingVariation = 0.72 + (hashSeed(`${seed}-breathing`) % 65) / 100;
-  const patrolVariation = 0.72 + (hashSeed(`${seed}-patrol`) % 73) / 100;
-  const restBeat = 0.88 + (hashSeed(`${seed}-rest`) % 43) / 100;
-  const temperamentPulse = 0.74 + (hashSeed(`${seed}-temperament`) % 63) / 100;
+  const distanceVariation = 0.72 + (hashSeed(`${seed}-distance`) % 57) / 100;
+  const cadenceVariation = 0.76 + (hashSeed(`${seed}-cadence`) % 51) / 100;
+  const breathingVariation = 0.82 + (hashSeed(`${seed}-breathing`) % 37) / 100;
+  const temperamentPulse = 0.86 + (hashSeed(`${seed}-temperament`) % 29) / 100;
+
   const personalityCadence: Record<ShrimpPersonality, number> = {
-    Curious: 0.78, Hyper: 0.4, Lazy: 2.08, Shy: 1.72,
-    Greedy: 0.57, Lucky: 0.88, Bold: 0.47, Diligent: 1.45,
+    Curious: 0.82, Hyper: 0.34, Lazy: 2.65, Shy: 2.05,
+    Greedy: 0.54, Lucky: 0.96, Bold: 0.43, Diligent: 1.58,
   };
   const personalityPatrol: Record<ShrimpPersonality, number> = {
-    Curious: 1.36, Hyper: 1.72, Lazy: 0.38, Shy: 0.44,
-    Greedy: 1.55, Lucky: 1.04, Bold: 1.76, Diligent: 0.62,
+    Curious: 1.28, Hyper: 1.9, Lazy: 0.24, Shy: 0.32,
+    Greedy: 1.58, Lucky: 1.0, Bold: 1.72, Diligent: 0.54,
   };
   const motionBand: Record<ShrimpPersonality, { minDrift: number; maxDrift: number; minBob: number; maxBob: number }> = {
-    Curious: { minDrift: 22, maxDrift: 54, minBob: 500, maxBob: 1650 },
-    Hyper: { minDrift: 54, maxDrift: 82, minBob: 210, maxBob: 610 },
-    Lazy: { minDrift: 3, maxDrift: 10, minBob: 3400, maxBob: 6800 },
-    Shy: { minDrift: 5, maxDrift: 16, minBob: 2500, maxBob: 5600 },
-    Greedy: { minDrift: 39, maxDrift: 71, minBob: 330, maxBob: 920 },
-    Lucky: { minDrift: 21, maxDrift: 50, minBob: 680, maxBob: 1850 },
-    Bold: { minDrift: 48, maxDrift: 78, minBob: 250, maxBob: 760 },
-    Diligent: { minDrift: 8, maxDrift: 23, minBob: 1750, maxBob: 4300 },
+    Curious: { minDrift: 24, maxDrift: 48, minBob: 650, maxBob: 1500 },
+    Hyper: { minDrift: 62, maxDrift: 88, minBob: 190, maxBob: 480 },
+    Lazy: { minDrift: 2, maxDrift: 7, minBob: 4400, maxBob: 7600 },
+    Shy: { minDrift: 5, maxDrift: 13, minBob: 3200, maxBob: 6200 },
+    Greedy: { minDrift: 42, maxDrift: 66, minBob: 360, maxBob: 760 },
+    Lucky: { minDrift: 18, maxDrift: 38, minBob: 900, maxBob: 1900 },
+    Bold: { minDrift: 52, maxDrift: 76, minBob: 280, maxBob: 650 },
+    Diligent: { minDrift: 9, maxDrift: 20, minBob: 2100, maxBob: 4400 },
   };
-  const rawDrift = baseDrift * profile.driftMultiplier * distanceVariation * patrolVariation * personalityPatrol[profile.name] * temperamentPulse;
-  const softenedDrift = 90 * (rawDrift / (rawDrift + 40));
+
+  const rawDrift = baseDrift * profile.driftMultiplier * distanceVariation * personalityPatrol[profile.name] * temperamentPulse;
+  const softenedDrift = 94 * (rawDrift / (rawDrift + 38));
   const band = motionBand[profile.name];
   const driftDistance = Math.max(band.minDrift, Math.min(band.maxDrift, Math.round(softenedDrift)));
-  const rawBobDuration = Math.round(((baseBobDuration / profile.bobMultiplier) / cadenceVariation) * breathingVariation * personalityCadence[profile.name] * restBeat / temperamentPulse);
+  const rawBobDuration = Math.round(((baseBobDuration / profile.bobMultiplier) / cadenceVariation) * breathingVariation * personalityCadence[profile.name] / temperamentPulse);
   const bobDuration = Math.max(band.minBob, Math.min(band.maxBob, rawBobDuration));
   return { driftDistance, bobDuration };
 }

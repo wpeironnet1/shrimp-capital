@@ -69,11 +69,27 @@ export function signatureReactionFor(seed: string): ShrimpReaction {
   return individualQuirks[hashSeed(`${seed}-quirk`) % individualQuirks.length];
 }
 
+/**
+ * A second stable quirk makes two shrimp with the same broad personality still
+ * feel like different little actors. It is deliberately forced to differ from
+ * the primary signature so taps do not collapse into a one-animation gimmick.
+ */
+export function secondaryReactionFor(seed: string): ShrimpReaction {
+  const primary = signatureReactionFor(seed);
+  const candidates = individualQuirks.filter(reaction => reaction !== primary);
+  return candidates[hashSeed(`${seed}-secondary-quirk`) % candidates.length];
+}
+
 export function personalityReactionPool(seed: string, hasAccessory: boolean): ShrimpReaction[] {
   const profile = personalityFor(seed);
   const pool = [...reactionPools[profile.name]];
-  const quirk = signatureReactionFor(seed);
-  pool.push(quirk, quirk, quirk);
+  const signature = signatureReactionFor(seed);
+  const secondary = secondaryReactionFor(seed);
+
+  // Weight both individual quirks heavily enough that players can learn a
+  // particular shrimp's habits, while its broader personality remains obvious.
+  pool.push(signature, signature, signature, signature, secondary, secondary, secondary);
+
   if (hasAccessory) {
     const showoffWeight = accessoryShowoffWeight[profile.name];
     for (let i = 0; i < showoffWeight; i += 1) pool.push('accessory');

@@ -21,15 +21,18 @@ const profiles: ShrimpPersonalityProfile[] = [
   { name: 'Diligent', tagline: 'HAS NEVER MISSED A QUARTERLY FILING', reactionBias: 'accessory', driftMultiplier: 0.72, bobMultiplier: 0.74 },
 ];
 
+// The first several slots intentionally repeat each personality's signature move.
+// Players should be able to recognize a shrimp's temperament from a few taps,
+// while the tail of each pool keeps every actor playful and surprising.
 const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
-  Curious: ['wiggle','wiggle','wiggle','wiggle','wiggle','bubbles','bubbles','reverse','dart','spin'],
-  Hyper: ['dart','dart','dart','dart','dart','spin','spin','wiggle','reverse','bubbles'],
-  Lazy: ['bubbles','bubbles','bubbles','bubbles','bubbles','wiggle','wiggle','reverse','spin','dart'],
-  Shy: ['reverse','reverse','reverse','reverse','reverse','bubbles','bubbles','wiggle','dart','spin'],
-  Greedy: ['dart','dart','dart','dart','wiggle','wiggle','bubbles','spin','reverse','dart'],
-  Lucky: ['spin','spin','spin','spin','spin','bubbles','wiggle','dart','reverse','bubbles'],
-  Bold: ['spin','spin','spin','spin','dart','dart','dart','reverse','wiggle','bubbles'],
-  Diligent: ['wiggle','wiggle','wiggle','bubbles','bubbles','reverse','reverse','dart','spin','bubbles'],
+  Curious: ['wiggle','wiggle','wiggle','wiggle','wiggle','wiggle','bubbles','bubbles','reverse','dart','spin'],
+  Hyper: ['dart','dart','dart','dart','dart','dart','spin','spin','wiggle','reverse','bubbles'],
+  Lazy: ['bubbles','bubbles','bubbles','bubbles','bubbles','bubbles','wiggle','wiggle','reverse','spin','dart'],
+  Shy: ['reverse','reverse','reverse','reverse','reverse','reverse','bubbles','bubbles','wiggle','dart','spin'],
+  Greedy: ['dart','dart','dart','dart','dart','dart','wiggle','wiggle','bubbles','spin','reverse'],
+  Lucky: ['spin','spin','spin','spin','spin','spin','bubbles','wiggle','dart','reverse','bubbles'],
+  Bold: ['spin','spin','spin','spin','spin','dart','dart','dart','dart','reverse','wiggle'],
+  Diligent: ['wiggle','wiggle','wiggle','bubbles','bubbles','bubbles','reverse','reverse','dart','spin','wiggle'],
 };
 
 // Accessories are intentionally extremely rare, so a player who finds one should
@@ -86,9 +89,9 @@ export function personalityReactionPool(seed: string, hasAccessory: boolean): Sh
   const signature = signatureReactionFor(seed);
   const secondary = secondaryReactionFor(seed);
 
-  // Weight both individual quirks heavily enough that players can learn a
-  // particular shrimp's habits, while its broader personality remains obvious.
-  pool.push(signature, signature, signature, signature, secondary, secondary, secondary);
+  // Individual quirks stay memorable, but no longer drown out the broad
+  // personality. A Hyper shrimp should read as Hyper immediately in play.
+  pool.push(signature, signature, signature, secondary, secondary);
 
   if (hasAccessory) {
     const showoffWeight = accessoryShowoffWeight[profile.name];

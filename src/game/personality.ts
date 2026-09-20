@@ -77,12 +77,12 @@ export function personalityMotion(seed: string, baseDrift: number, baseBobDurati
   const distanceVariation = 0.48 + (hashSeed(`${seed}-distance`) % 143) / 100;
   const cadenceVariation = 0.46 + (hashSeed(`${seed}-cadence`) % 151) / 100;
   const breathingVariation = 0.72 + (hashSeed(`${seed}-breathing`) % 65) / 100;
-  // Some animals naturally make a long patrol while others hover close to their
-  // preferred patch. This extra independent channel breaks up uniform tank rows.
   const patrolVariation = 0.72 + (hashSeed(`${seed}-patrol`) % 73) / 100;
-  // A slower breathing beat creates visible hover/rest moments without another
-  // timer or persistent state. Lazy/Shy/Diligent animals receive longer beats.
   const restBeat = 0.88 + (hashSeed(`${seed}-rest`) % 43) / 100;
+  // A second stable rhythm prevents a tank full of shrimp from looking like the
+  // same animation at different offsets. It deliberately changes both patrol
+  // reach and breathing cadence, while remaining deterministic across saves.
+  const temperamentPulse = 0.78 + (hashSeed(`${seed}-temperament`) % 55) / 100;
   const personalityCadence: Record<ShrimpPersonality, number> = {
     Curious: 0.88,
     Hyper: 0.56,
@@ -103,9 +103,12 @@ export function personalityMotion(seed: string, baseDrift: number, baseBobDurati
     Bold: 1.4,
     Diligent: 0.82,
   };
-  const rawDrift = Math.round(baseDrift * profile.driftMultiplier * distanceVariation * patrolVariation * personalityPatrol[profile.name]);
-  const driftDistance = Math.max(5, Math.min(64, rawDrift));
-  const rawBobDuration = Math.round(((baseBobDuration / profile.bobMultiplier) / cadenceVariation) * breathingVariation * personalityCadence[profile.name] * restBeat);
+  const rawDrift = baseDrift * profile.driftMultiplier * distanceVariation * patrolVariation * personalityPatrol[profile.name] * temperamentPulse;
+  // Soft compression instead of a hard clamp keeps Hyper/Bold/Greedy visibly
+  // different at the top end rather than flattening all three to the same cap.
+  const softenedDrift = 78 * (rawDrift / (rawDrift + 38));
+  const driftDistance = Math.max(5, Math.round(softenedDrift));
+  const rawBobDuration = Math.round(((baseBobDuration / profile.bobMultiplier) / cadenceVariation) * breathingVariation * personalityCadence[profile.name] * restBeat / temperamentPulse);
   return {
     driftDistance,
     bobDuration: Math.max(270, Math.min(5400, rawBobDuration)),

@@ -1,4 +1,4 @@
-export type ShrimpPersonality = 'Curious' | 'Hyper' | 'Lazy' | 'Shy' | 'Greedy' | 'Lucky' | 'Bold' | 'Diligent';
+export type ShrimpPersonality = 'Curious' | 'Hyper' | 'Lazy' | 'Shy' | 'Greedy' | 'Lucky' | 'Bold' | 'Diligent' | 'Contrarian' | 'Quant' | 'Closer' | 'Social';
 
 export type ShrimpReaction = 'wiggle' | 'dart' | 'bubbles' | 'reverse' | 'spin' | 'accessory';
 
@@ -19,6 +19,10 @@ const profiles: ShrimpPersonalityProfile[] = [
   { name: 'Lucky', tagline: 'SOMEHOW ALWAYS BUYS THE DIP', reactionBias: 'spin', driftMultiplier: 1.85, bobMultiplier: 1.55 },
   { name: 'Bold', tagline: 'TREATS EVERY RIPPLE LIKE A TAKEOVER', reactionBias: 'spin', driftMultiplier: 4.05, bobMultiplier: 2.55 },
   { name: 'Diligent', tagline: 'HAS NEVER MISSED A QUARTERLY FILING', reactionBias: 'accessory', driftMultiplier: 0.64, bobMultiplier: 0.68 },
+  { name: 'Contrarian', tagline: 'SWIMS AGAINST CONSENSUS', reactionBias: 'reverse', driftMultiplier: 2.7, bobMultiplier: 1.7 },
+  { name: 'Quant', tagline: 'MODELS EVERY BUBBLE', reactionBias: 'wiggle', driftMultiplier: 1.35, bobMultiplier: 1.15 },
+  { name: 'Closer', tagline: 'ALWAYS HITS THE CLOSING BELL', reactionBias: 'dart', driftMultiplier: 3.7, bobMultiplier: 2.35 },
+  { name: 'Social', tagline: 'WORKS THE WHOLE ROOM', reactionBias: 'bubbles', driftMultiplier: 2.35, bobMultiplier: 1.85 },
 ];
 
 const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
@@ -30,6 +34,10 @@ const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
   Lucky: ['spin','spin','spin','spin','spin','spin','spin','bubbles','wiggle','dart','reverse','bubbles'],
   Bold: ['spin','spin','spin','spin','spin','spin','dart','dart','dart','dart','reverse','wiggle'],
   Diligent: ['wiggle','wiggle','wiggle','wiggle','bubbles','bubbles','bubbles','reverse','reverse','dart','spin','wiggle'],
+  Contrarian: ['reverse','reverse','reverse','reverse','reverse','spin','spin','wiggle','dart','bubbles','reverse','spin'],
+  Quant: ['wiggle','wiggle','wiggle','wiggle','bubbles','bubbles','reverse','reverse','spin','dart','wiggle','bubbles'],
+  Closer: ['dart','dart','dart','dart','dart','spin','spin','spin','wiggle','reverse','dart','bubbles'],
+  Social: ['bubbles','bubbles','bubbles','bubbles','wiggle','wiggle','spin','spin','dart','reverse','bubbles','wiggle'],
 };
 
 const individualQuirks: ShrimpReaction[] = ['wiggle', 'dart', 'bubbles', 'reverse', 'spin'];
@@ -66,10 +74,6 @@ export function personalityReactionPool(seed: string, hasAccessory: boolean): Sh
   const signature = signatureReactionFor(seed);
   const secondary = secondaryReactionFor(seed);
   const pool = [...reactionPools[profile.name]];
-
-  // Rare accessories are a 1-in-hundreds discovery, so taps should reliably
-  // showcase their bespoke sparkle/pose instead of making the item feel cosmetic.
-  // Personality gestures remain in the pool so accessorized shrimp still feel alive.
   if (hasAccessory) {
     pool.push(
       'accessory', 'accessory', 'accessory', 'accessory', 'accessory', 'accessory',
@@ -77,8 +81,6 @@ export function personalityReactionPool(seed: string, hasAccessory: boolean): Sh
       'accessory', 'accessory', 'accessory', 'accessory'
     );
   }
-
-  // Stable signature gestures let players learn individual shrimp by tapping them.
   pool.push(signature, signature, signature, signature, signature, signature);
   pool.push(secondary, secondary, secondary);
   if (profile.reactionBias !== 'accessory') {
@@ -89,11 +91,7 @@ export function personalityReactionPool(seed: string, hasAccessory: boolean): Sh
   return pool;
 }
 
-/**
- * Stable individual cruising rhythm used directly by aquarium actors.
- * Bands intentionally do not overlap much: even without tapping, a player should
- * be able to spot the hyper trader, the shy wall-hugger and the lazy drifter.
- */
+/** Stable individual cruising rhythm used directly by aquarium actors. */
 export function personalityMotion(seed: string, baseDrift: number, baseBobDuration: number) {
   const profile = personalityFor(seed);
   const distanceVariation = 0.72 + (hashSeed(`${seed}-distance`) % 57) / 100;
@@ -104,10 +102,12 @@ export function personalityMotion(seed: string, baseDrift: number, baseBobDurati
   const personalityCadence: Record<ShrimpPersonality, number> = {
     Curious: 0.82, Hyper: 0.34, Lazy: 2.65, Shy: 2.05,
     Greedy: 0.54, Lucky: 0.96, Bold: 0.43, Diligent: 1.58,
+    Contrarian: 0.72, Quant: 1.12, Closer: 0.48, Social: 0.67,
   };
   const personalityPatrol: Record<ShrimpPersonality, number> = {
     Curious: 1.28, Hyper: 1.9, Lazy: 0.24, Shy: 0.32,
     Greedy: 1.58, Lucky: 1.0, Bold: 1.72, Diligent: 0.54,
+    Contrarian: 1.42, Quant: 0.82, Closer: 1.65, Social: 1.3,
   };
   const motionBand: Record<ShrimpPersonality, { minDrift: number; maxDrift: number; minBob: number; maxBob: number }> = {
     Curious: { minDrift: 24, maxDrift: 48, minBob: 650, maxBob: 1500 },
@@ -118,6 +118,10 @@ export function personalityMotion(seed: string, baseDrift: number, baseBobDurati
     Lucky: { minDrift: 18, maxDrift: 38, minBob: 900, maxBob: 1900 },
     Bold: { minDrift: 52, maxDrift: 76, minBob: 280, maxBob: 650 },
     Diligent: { minDrift: 9, maxDrift: 20, minBob: 2100, maxBob: 4400 },
+    Contrarian: { minDrift: 34, maxDrift: 58, minBob: 520, maxBob: 1200 },
+    Quant: { minDrift: 14, maxDrift: 30, minBob: 1150, maxBob: 2400 },
+    Closer: { minDrift: 48, maxDrift: 72, minBob: 320, maxBob: 720 },
+    Social: { minDrift: 30, maxDrift: 54, minBob: 500, maxBob: 1050 },
   };
 
   const rawDrift = baseDrift * profile.driftMultiplier * distanceVariation * personalityPatrol[profile.name] * temperamentPulse;

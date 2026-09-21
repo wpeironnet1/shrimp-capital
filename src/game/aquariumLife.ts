@@ -20,6 +20,18 @@ const lifePools: Record<ShrimpPersonality, AquariumLifeBeat[]> = {
   Lucky: ['school', 'surface', 'inspect', 'cruise', 'forage', 'rest', 'bubble-trail'],
   Bold: ['chase', 'surface', 'inspect', 'school', 'cruise', 'forage', 'bubble-trail'],
   Diligent: ['forage', 'inspect', 'school', 'cruise', 'rest', 'forage', 'bubble-trail'],
+  Contrarian: ['cruise', 'hide', 'surface', 'inspect', 'cruise', 'rest', 'bubble-trail'],
+  Quant: ['inspect', 'inspect', 'rest', 'forage', 'cruise', 'bubble-trail', 'school'],
+  Closer: ['chase', 'surface', 'chase', 'school', 'cruise', 'forage', 'bubble-trail'],
+  Social: ['school', 'school', 'cruise', 'inspect', 'surface', 'forage', 'bubble-trail'],
+  Rainmaker: ['chase', 'school', 'surface', 'inspect', 'cruise', 'forage', 'bubble-trail'],
+  Auditor: ['inspect', 'inspect', 'rest', 'forage', 'hide', 'cruise', 'bubble-trail'],
+  Intern: ['chase', 'forage', 'school', 'surface', 'inspect', 'cruise', 'bubble-trail'],
+  Whale: ['cruise', 'cruise', 'rest', 'surface', 'school', 'forage', 'bubble-trail'],
+  'Market Maker': ['cruise', 'school', 'inspect', 'forage', 'surface', 'cruise', 'bubble-trail'],
+  'Diamond Hands': ['rest', 'rest', 'cruise', 'hide', 'inspect', 'school', 'bubble-trail'],
+  'Paper Hands': ['chase', 'hide', 'chase', 'surface', 'cruise', 'school', 'bubble-trail'],
+  Shark: ['chase', 'chase', 'cruise', 'surface', 'inspect', 'forage', 'school'],
 };
 
 function hash(seed: string) {

@@ -1,6 +1,8 @@
 import { aquariumLifeLabel, aquariumLifePlan, aquariumLifePoolFor, aquariumSocialPlan } from '../aquariumLife';
 
 const beats = ['cruise','forage','rest','inspect','hide','chase','surface','school','bubble-trail'] as const;
+const socialFx = ['bell','crumbs','bubbles','ticker','glimmer'] as const;
+const socialHaptics = ['light','success','none'] as const;
 
 describe('aquarium life planning', () => {
   it('is deterministic for a shrimp and cycle while evolving over time', () => {
@@ -59,7 +61,19 @@ describe('aquarium life planning', () => {
       expect(plan.durationMs).toBeLessThanOrEqual(3000);
       expect(plan.intensity).toBeGreaterThanOrEqual(.55);
       expect(plan.intensity).toBeLessThanOrEqual(1);
+      expect(plan.label.length).toBeGreaterThan(5);
+      expect(plan.label).toBe(plan.label.toUpperCase());
+      expect(socialFx).toContain(plan.fx);
+      expect(socialHaptics).toContain(plan.haptic);
     }
+  });
+
+  it('keeps each social moment visually recognizable instead of collapsing into one generic effect', () => {
+    const plans = Array.from({ length: 80 }, (_, cycle) => aquariumSocialPlan('presentation-audit', cycle, 12));
+    const byMoment = new Map(plans.map(plan => [plan.moment, plan]));
+    expect(byMoment.size).toBe(5);
+    expect(new Set([...byMoment.values()].map(plan => plan.fx)).size).toBe(5);
+    expect(new Set([...byMoment.values()].map(plan => plan.label)).size).toBe(5);
   });
 
   it('scales social-moment intensity with a fuller aquarium', () => {

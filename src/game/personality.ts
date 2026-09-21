@@ -116,44 +116,44 @@ export function personalityMotion(seed: string, baseDrift: number, baseBobDurati
   const temperamentPulse = 0.86 + (hashSeed(`${seed}-temperament`) % 29) / 100;
 
   const personalityCadence: Record<ShrimpPersonality, number> = {
-    Curious: 0.82, Hyper: 0.34, Lazy: 2.65, Shy: 2.05,
-    Greedy: 0.54, Lucky: 0.96, Bold: 0.43, Diligent: 1.58,
-    Contrarian: 0.72, Quant: 1.12, Closer: 0.48, Social: 0.67,
-    Rainmaker: 0.5, Auditor: 1.9, Intern: 0.42, Whale: 1.35,
-    'Market Maker': 0.72, 'Diamond Hands': 2.35, 'Paper Hands': 0.39, Shark: 0.45,
+    Curious: 0.82, Hyper: 0.3, Lazy: 2.9, Shy: 2.2,
+    Greedy: 0.5, Lucky: 0.96, Bold: 0.39, Diligent: 1.68,
+    Contrarian: 0.68, Quant: 1.12, Closer: 0.44, Social: 0.62,
+    Rainmaker: 0.46, Auditor: 2.0, Intern: 0.38, Whale: 1.42,
+    'Market Maker': 0.67, 'Diamond Hands': 2.6, 'Paper Hands': 0.34, Shark: 0.39,
   };
   const personalityPatrol: Record<ShrimpPersonality, number> = {
-    Curious: 1.28, Hyper: 1.9, Lazy: 0.24, Shy: 0.32,
-    Greedy: 1.58, Lucky: 1.0, Bold: 1.72, Diligent: 0.54,
-    Contrarian: 1.42, Quant: 0.82, Closer: 1.65, Social: 1.3,
-    Rainmaker: 1.55, Auditor: 0.42, Intern: 1.68, Whale: 0.72,
-    'Market Maker': 1.38, 'Diamond Hands': 0.28, 'Paper Hands': 1.82, Shark: 1.86,
+    Curious: 1.34, Hyper: 2.15, Lazy: 0.18, Shy: 0.25,
+    Greedy: 1.68, Lucky: 1.0, Bold: 1.86, Diligent: 0.48,
+    Contrarian: 1.5, Quant: 0.82, Closer: 1.78, Social: 1.4,
+    Rainmaker: 1.68, Auditor: 0.36, Intern: 1.84, Whale: 0.68,
+    'Market Maker': 1.48, 'Diamond Hands': 0.2, 'Paper Hands': 2.08, Shark: 2.12,
   };
   const motionBand: Record<ShrimpPersonality, { minDrift: number; maxDrift: number; minBob: number; maxBob: number }> = {
-    Curious: { minDrift: 24, maxDrift: 48, minBob: 650, maxBob: 1500 },
-    Hyper: { minDrift: 62, maxDrift: 88, minBob: 190, maxBob: 480 },
-    Lazy: { minDrift: 2, maxDrift: 7, minBob: 4400, maxBob: 7600 },
-    Shy: { minDrift: 5, maxDrift: 13, minBob: 3200, maxBob: 6200 },
-    Greedy: { minDrift: 42, maxDrift: 66, minBob: 360, maxBob: 760 },
+    Curious: { minDrift: 28, maxDrift: 52, minBob: 600, maxBob: 1400 },
+    Hyper: { minDrift: 72, maxDrift: 92, minBob: 160, maxBob: 400 },
+    Lazy: { minDrift: 1, maxDrift: 5, minBob: 5000, maxBob: 8200 },
+    Shy: { minDrift: 4, maxDrift: 10, minBob: 3600, maxBob: 6800 },
+    Greedy: { minDrift: 48, maxDrift: 70, minBob: 320, maxBob: 700 },
     Lucky: { minDrift: 18, maxDrift: 38, minBob: 900, maxBob: 1900 },
-    Bold: { minDrift: 52, maxDrift: 76, minBob: 280, maxBob: 650 },
-    Diligent: { minDrift: 9, maxDrift: 20, minBob: 2100, maxBob: 4400 },
-    Contrarian: { minDrift: 34, maxDrift: 58, minBob: 520, maxBob: 1200 },
+    Bold: { minDrift: 58, maxDrift: 82, minBob: 240, maxBob: 580 },
+    Diligent: { minDrift: 7, maxDrift: 17, minBob: 2300, maxBob: 4700 },
+    Contrarian: { minDrift: 38, maxDrift: 62, minBob: 470, maxBob: 1100 },
     Quant: { minDrift: 14, maxDrift: 30, minBob: 1150, maxBob: 2400 },
-    Closer: { minDrift: 48, maxDrift: 72, minBob: 320, maxBob: 720 },
-    Social: { minDrift: 30, maxDrift: 54, minBob: 500, maxBob: 1050 },
-    Rainmaker: { minDrift: 44, maxDrift: 70, minBob: 330, maxBob: 780 },
-    Auditor: { minDrift: 7, maxDrift: 17, minBob: 2600, maxBob: 5200 },
-    Intern: { minDrift: 46, maxDrift: 74, minBob: 250, maxBob: 610 },
-    Whale: { minDrift: 13, maxDrift: 29, minBob: 1500, maxBob: 3100 },
-    'Market Maker': { minDrift: 32, maxDrift: 58, minBob: 560, maxBob: 1200 },
-    'Diamond Hands': { minDrift: 3, maxDrift: 9, minBob: 3800, maxBob: 7000 },
-    'Paper Hands': { minDrift: 56, maxDrift: 82, minBob: 220, maxBob: 560 },
-    Shark: { minDrift: 58, maxDrift: 86, minBob: 260, maxBob: 620 },
+    Closer: { minDrift: 54, maxDrift: 78, minBob: 270, maxBob: 650 },
+    Social: { minDrift: 34, maxDrift: 58, minBob: 440, maxBob: 960 },
+    Rainmaker: { minDrift: 50, maxDrift: 76, minBob: 280, maxBob: 700 },
+    Auditor: { minDrift: 5, maxDrift: 14, minBob: 2900, maxBob: 5600 },
+    Intern: { minDrift: 52, maxDrift: 80, minBob: 210, maxBob: 540 },
+    Whale: { minDrift: 11, maxDrift: 25, minBob: 1650, maxBob: 3300 },
+    'Market Maker': { minDrift: 36, maxDrift: 62, minBob: 500, maxBob: 1100 },
+    'Diamond Hands': { minDrift: 1, maxDrift: 6, minBob: 4400, maxBob: 7600 },
+    'Paper Hands': { minDrift: 65, maxDrift: 90, minBob: 180, maxBob: 470 },
+    Shark: { minDrift: 68, maxDrift: 92, minBob: 210, maxBob: 540 },
   };
 
   const rawDrift = baseDrift * profile.driftMultiplier * distanceVariation * personalityPatrol[profile.name] * temperamentPulse;
-  const softenedDrift = 94 * (rawDrift / (rawDrift + 38));
+  const softenedDrift = 98 * (rawDrift / (rawDrift + 36));
   const band = motionBand[profile.name];
   const driftDistance = Math.max(band.minDrift, Math.min(band.maxDrift, Math.round(softenedDrift)));
   const rawBobDuration = Math.round(((baseBobDuration / profile.bobMultiplier) / cadenceVariation) * breathingVariation * personalityCadence[profile.name] / temperamentPulse);

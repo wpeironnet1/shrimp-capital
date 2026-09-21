@@ -12,6 +12,7 @@ export type AquariumLifePlan = {
 };
 
 export type AquariumSocialMoment = 'opening-bell' | 'feeding-rush' | 'bubble-rally' | 'closing-bell' | 'quiet-market';
+export type AquariumSocialFx = 'bell' | 'crumbs' | 'bubbles' | 'ticker' | 'glimmer';
 
 export type AquariumSocialPlan = {
   moment: AquariumSocialMoment;
@@ -20,6 +21,9 @@ export type AquariumSocialPlan = {
   staggerMs: number;
   durationMs: number;
   intensity: number;
+  label: string;
+  fx: AquariumSocialFx;
+  haptic: 'light' | 'success' | 'none';
 };
 
 const lifePools: Record<ShrimpPersonality, AquariumLifeBeat[]> = {
@@ -105,11 +109,18 @@ const socialBeats: Record<AquariumSocialMoment, readonly [AquariumLifeBeat, Aqua
   'closing-bell': ['school', 'rest'],
   'quiet-market': ['cruise', 'inspect'],
 };
+const socialPresentation: Record<AquariumSocialMoment, Pick<AquariumSocialPlan, 'label' | 'fx' | 'haptic'>> = {
+  'opening-bell': { label: 'OPENING BELL!', fx: 'bell', haptic: 'success' },
+  'feeding-rush': { label: 'FEEDING FRENZY', fx: 'crumbs', haptic: 'success' },
+  'bubble-rally': { label: 'BUBBLE RALLY', fx: 'bubbles', haptic: 'light' },
+  'closing-bell': { label: 'CLOSING BELL', fx: 'ticker', haptic: 'light' },
+  'quiet-market': { label: 'QUIET MARKET', fx: 'glimmer', haptic: 'none' },
+};
 
 /**
- * A deterministic tank-wide choreography plan. Tank rendering can use this to
- * make several shrimp react to the same rare moment without persisting any
- * animation state into the save file.
+ * A deterministic tank-wide choreography plan. Rendering can turn the returned
+ * presentation metadata into one short, recognizable aquarium spectacle while
+ * keeping all ephemeral animation state out of persisted saves.
  */
 export function aquariumSocialPlan(seed: string, cycle = 0, population = 1): AquariumSocialPlan {
   const safeCycle = Math.max(0, Math.floor(cycle));
@@ -125,5 +136,6 @@ export function aquariumSocialPlan(seed: string, cycle = 0, population = 1): Aqu
     staggerMs: 45 + ((roll >>> 5) % 86),
     durationMs: 1450 + ((roll >>> 12) % 1551),
     intensity: Math.round((.55 + populationEnergy * .45) * 100) / 100,
+    ...socialPresentation[moment],
   };
 }

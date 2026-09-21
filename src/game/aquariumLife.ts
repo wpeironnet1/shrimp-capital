@@ -11,6 +11,17 @@ export type AquariumLifePlan = {
   travelScale: number;
 };
 
+export type AquariumSocialMoment = 'opening-bell' | 'feeding-rush' | 'bubble-rally' | 'closing-bell' | 'quiet-market';
+
+export type AquariumSocialPlan = {
+  moment: AquariumSocialMoment;
+  leadBeat: AquariumLifeBeat;
+  echoBeat: AquariumLifeBeat;
+  staggerMs: number;
+  durationMs: number;
+  intensity: number;
+};
+
 const lifePools: Record<ShrimpPersonality, AquariumLifeBeat[]> = {
   Curious: ['inspect', 'inspect', 'forage', 'surface', 'cruise', 'school', 'bubble-trail'],
   Hyper: ['chase', 'chase', 'surface', 'cruise', 'school', 'forage', 'bubble-trail'],
@@ -44,34 +55,15 @@ function hash(seed: string) {
 }
 
 const speedByBeat: Record<AquariumLifeBeat, number> = {
-  cruise: 1,
-  forage: .72,
-  rest: .22,
-  inspect: .58,
-  hide: .48,
-  chase: 1.55,
-  surface: 1.2,
-  school: .92,
-  'bubble-trail': .78,
+  cruise: 1, forage: .72, rest: .22, inspect: .58, hide: .48,
+  chase: 1.55, surface: 1.2, school: .92, 'bubble-trail': .78,
 };
 
 const verticalByBeat: Record<AquariumLifeBeat, number> = {
-  cruise: 0,
-  forage: .72,
-  rest: .88,
-  inspect: .18,
-  hide: .55,
-  chase: -.08,
-  surface: -.9,
-  school: -.2,
-  'bubble-trail': -.38,
+  cruise: 0, forage: .72, rest: .88, inspect: .18, hide: .55,
+  chase: -.08, surface: -.9, school: -.2, 'bubble-trail': -.38,
 };
 
-/**
- * Deterministic idle-life planning keeps the tank lively without saving
- * ephemeral animation state. Each shrimp gets recognizable habits from its
- * personality while the cycle seed changes the beat over time.
- */
 export function aquariumLifePlan(seed: string, cycle = 0): AquariumLifePlan {
   const personality = personalityFor(seed).name;
   const pool = lifePools[personality];
@@ -98,15 +90,40 @@ export function aquariumLifePoolFor(seed: string): readonly AquariumLifeBeat[] {
 
 export function aquariumLifeLabel(beat: AquariumLifeBeat) {
   const labels: Record<AquariumLifeBeat, string> = {
-    cruise: 'CRUISING THE DESK',
-    forage: 'HUNTING FOR ALPHA',
-    rest: 'MARKET CLOSED',
-    inspect: 'AUDITING THE TANK',
-    hide: 'IN A DARK POOL',
-    chase: 'CHASING MOMENTUM',
-    surface: 'CHECKING THE TICKER',
-    school: 'TEAM MEETING',
-    'bubble-trail': 'BLOWING LIQUIDITY',
+    cruise: 'CRUISING THE DESK', forage: 'HUNTING FOR ALPHA', rest: 'MARKET CLOSED',
+    inspect: 'AUDITING THE TANK', hide: 'IN A DARK POOL', chase: 'CHASING MOMENTUM',
+    surface: 'CHECKING THE TICKER', school: 'TEAM MEETING', 'bubble-trail': 'BLOWING LIQUIDITY',
   };
   return labels[beat];
+}
+
+const socialMoments: readonly AquariumSocialMoment[] = ['opening-bell', 'feeding-rush', 'bubble-rally', 'closing-bell', 'quiet-market'];
+const socialBeats: Record<AquariumSocialMoment, readonly [AquariumLifeBeat, AquariumLifeBeat]> = {
+  'opening-bell': ['surface', 'school'],
+  'feeding-rush': ['forage', 'chase'],
+  'bubble-rally': ['bubble-trail', 'school'],
+  'closing-bell': ['school', 'rest'],
+  'quiet-market': ['cruise', 'inspect'],
+};
+
+/**
+ * A deterministic tank-wide choreography plan. Tank rendering can use this to
+ * make several shrimp react to the same rare moment without persisting any
+ * animation state into the save file.
+ */
+export function aquariumSocialPlan(seed: string, cycle = 0, population = 1): AquariumSocialPlan {
+  const safeCycle = Math.max(0, Math.floor(cycle));
+  const safePopulation = Math.max(1, Math.floor(population));
+  const roll = hash(`${seed}:social:${safeCycle}`);
+  const moment = socialMoments[roll % socialMoments.length];
+  const [leadBeat, echoBeat] = socialBeats[moment];
+  const populationEnergy = Math.min(1, safePopulation / 12);
+  return {
+    moment,
+    leadBeat,
+    echoBeat,
+    staggerMs: 45 + ((roll >>> 5) % 86),
+    durationMs: 1450 + ((roll >>> 12) % 1551),
+    intensity: Math.round((.55 + populationEnergy * .45) * 100) / 100,
+  };
 }

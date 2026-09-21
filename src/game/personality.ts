@@ -1,4 +1,4 @@
-export type ShrimpPersonality = 'Curious' | 'Hyper' | 'Lazy' | 'Shy' | 'Greedy' | 'Lucky' | 'Bold' | 'Diligent' | 'Contrarian' | 'Quant' | 'Closer' | 'Social' | 'Rainmaker' | 'Auditor' | 'Intern' | 'Whale';
+export type ShrimpPersonality = 'Curious' | 'Hyper' | 'Lazy' | 'Shy' | 'Greedy' | 'Lucky' | 'Bold' | 'Diligent' | 'Contrarian' | 'Quant' | 'Closer' | 'Social' | 'Rainmaker' | 'Auditor' | 'Intern' | 'Whale' | 'Market Maker' | 'Diamond Hands' | 'Paper Hands' | 'Shark';
 
 export type ShrimpReaction = 'wiggle' | 'dart' | 'bubbles' | 'reverse' | 'spin' | 'accessory';
 
@@ -27,6 +27,10 @@ const profiles: ShrimpPersonalityProfile[] = [
   { name: 'Auditor', tagline: 'COUNTS EVERY PELLET TWICE', reactionBias: 'reverse', driftMultiplier: 0.52, bobMultiplier: 0.58 },
   { name: 'Intern', tagline: 'VOLUNTEERS FOR EVERY BUBBLE', reactionBias: 'wiggle', driftMultiplier: 3.05, bobMultiplier: 2.7 },
   { name: 'Whale', tagline: 'MOVES THE WHOLE TANK', reactionBias: 'bubbles', driftMultiplier: 1.05, bobMultiplier: 0.82 },
+  { name: 'Market Maker', tagline: 'ALWAYS WORKING BOTH SIDES', reactionBias: 'wiggle', driftMultiplier: 2.55, bobMultiplier: 1.7 },
+  { name: 'Diamond Hands', tagline: 'REFUSES TO LEAVE THE POSITION', reactionBias: 'bubbles', driftMultiplier: 0.3, bobMultiplier: 0.38 },
+  { name: 'Paper Hands', tagline: 'EXITS AT THE FIRST RIPPLE', reactionBias: 'reverse', driftMultiplier: 4.35, bobMultiplier: 3.0 },
+  { name: 'Shark', tagline: 'CIRCLES EVERY NEW OPPORTUNITY', reactionBias: 'dart', driftMultiplier: 4.55, bobMultiplier: 2.45 },
 ];
 
 const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
@@ -46,6 +50,10 @@ const reactionPools: Record<ShrimpPersonality, ShrimpReaction[]> = {
   Auditor: ['reverse','reverse','wiggle','wiggle','wiggle','bubbles','bubbles','reverse','wiggle','spin','dart','reverse'],
   Intern: ['wiggle','wiggle','wiggle','dart','dart','dart','bubbles','bubbles','spin','reverse','wiggle','dart'],
   Whale: ['bubbles','bubbles','bubbles','bubbles','spin','spin','wiggle','reverse','bubbles','spin','dart','bubbles'],
+  'Market Maker': ['wiggle','wiggle','wiggle','reverse','dart','reverse','dart','bubbles','spin','wiggle','reverse','dart'],
+  'Diamond Hands': ['bubbles','bubbles','bubbles','bubbles','wiggle','wiggle','reverse','bubbles','spin','wiggle','bubbles','reverse'],
+  'Paper Hands': ['reverse','reverse','reverse','reverse','dart','dart','dart','wiggle','bubbles','reverse','dart','spin'],
+  Shark: ['dart','dart','dart','dart','spin','spin','wiggle','reverse','dart','bubbles','spin','dart'],
 };
 
 const individualQuirks: ShrimpReaction[] = ['wiggle', 'dart', 'bubbles', 'reverse', 'spin'];
@@ -112,12 +120,14 @@ export function personalityMotion(seed: string, baseDrift: number, baseBobDurati
     Greedy: 0.54, Lucky: 0.96, Bold: 0.43, Diligent: 1.58,
     Contrarian: 0.72, Quant: 1.12, Closer: 0.48, Social: 0.67,
     Rainmaker: 0.5, Auditor: 1.9, Intern: 0.42, Whale: 1.35,
+    'Market Maker': 0.72, 'Diamond Hands': 2.35, 'Paper Hands': 0.39, Shark: 0.45,
   };
   const personalityPatrol: Record<ShrimpPersonality, number> = {
     Curious: 1.28, Hyper: 1.9, Lazy: 0.24, Shy: 0.32,
     Greedy: 1.58, Lucky: 1.0, Bold: 1.72, Diligent: 0.54,
     Contrarian: 1.42, Quant: 0.82, Closer: 1.65, Social: 1.3,
     Rainmaker: 1.55, Auditor: 0.42, Intern: 1.68, Whale: 0.72,
+    'Market Maker': 1.38, 'Diamond Hands': 0.28, 'Paper Hands': 1.82, Shark: 1.86,
   };
   const motionBand: Record<ShrimpPersonality, { minDrift: number; maxDrift: number; minBob: number; maxBob: number }> = {
     Curious: { minDrift: 24, maxDrift: 48, minBob: 650, maxBob: 1500 },
@@ -136,6 +146,10 @@ export function personalityMotion(seed: string, baseDrift: number, baseBobDurati
     Auditor: { minDrift: 7, maxDrift: 17, minBob: 2600, maxBob: 5200 },
     Intern: { minDrift: 46, maxDrift: 74, minBob: 250, maxBob: 610 },
     Whale: { minDrift: 13, maxDrift: 29, minBob: 1500, maxBob: 3100 },
+    'Market Maker': { minDrift: 32, maxDrift: 58, minBob: 560, maxBob: 1200 },
+    'Diamond Hands': { minDrift: 3, maxDrift: 9, minBob: 3800, maxBob: 7000 },
+    'Paper Hands': { minDrift: 56, maxDrift: 82, minBob: 220, maxBob: 560 },
+    Shark: { minDrift: 58, maxDrift: 86, minBob: 260, maxBob: 620 },
   };
 
   const rawDrift = baseDrift * profile.driftMultiplier * distanceVariation * personalityPatrol[profile.name] * temperamentPulse;

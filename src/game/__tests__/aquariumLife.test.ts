@@ -1,4 +1,4 @@
-import { aquariumLifeLabel, aquariumLifePlan, aquariumLifePoolFor } from '../aquariumLife';
+import { aquariumLifeLabel, aquariumLifePlan, aquariumLifePoolFor, aquariumSocialPlan } from '../aquariumLife';
 
 const beats = ['cruise','forage','rest','inspect','hide','chase','surface','school','bubble-trail'] as const;
 
@@ -43,5 +43,27 @@ describe('aquarium life planning', () => {
       expect(label.length).toBeGreaterThan(5);
       expect(label).toBe(label.toUpperCase());
     }
+  });
+
+  it('creates safe deterministic tank-wide social choreography', () => {
+    const first = aquariumSocialPlan('main-tank', 4, 12);
+    expect(aquariumSocialPlan('main-tank', 4, 12)).toEqual(first);
+    const timeline = Array.from({ length: 20 }, (_, cycle) => aquariumSocialPlan('main-tank', cycle, 8));
+    expect(new Set(timeline.map(plan => plan.moment)).size).toBeGreaterThan(2);
+    for (const plan of timeline) {
+      expect(beats).toContain(plan.leadBeat);
+      expect(beats).toContain(plan.echoBeat);
+      expect(plan.staggerMs).toBeGreaterThanOrEqual(45);
+      expect(plan.staggerMs).toBeLessThanOrEqual(130);
+      expect(plan.durationMs).toBeGreaterThanOrEqual(1450);
+      expect(plan.durationMs).toBeLessThanOrEqual(3000);
+      expect(plan.intensity).toBeGreaterThanOrEqual(.55);
+      expect(plan.intensity).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it('scales social-moment intensity with a fuller aquarium', () => {
+    expect(aquariumSocialPlan('main-tank', 2, 12).intensity)
+      .toBeGreaterThan(aquariumSocialPlan('main-tank', 2, 1).intensity);
   });
 });

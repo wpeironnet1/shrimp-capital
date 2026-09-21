@@ -21,6 +21,9 @@ test('living aquarium keeps visibly distinct personality motion', () => {
   for (const personalityName of ['Curious', 'Hyper', 'Lazy', 'Shy', 'Greedy', 'Lucky', 'Bold', 'Diligent']) {
     assert.ok(personality.includes(`${personalityName}:`), `missing ${personalityName} motion profile`);
   }
+  assert.match(personality, /motionBand/, 'personality motion should retain explicit visual motion bands');
+  assert.match(personality, /minDrift: 72, maxDrift: 92/, 'hyper shrimp should retain a visibly broad patrol range');
+  assert.match(personality, /minDrift: 1, maxDrift: 5/, 'lazy shrimp should retain a visibly tiny patrol range');
 });
 
 test('rare accessories remain visually special discoveries', () => {
@@ -28,7 +31,7 @@ test('rare accessories remain visually special discoveries', () => {
     assert.ok(tank.includes(accessory), `tank lost ${accessory} accessory support`);
   }
   assert.match(tank, /AccessorySparkles/, 'rare accessory reactions should keep a dedicated sparkle effect');
-  assert.match(personality, /accessoryShowoffWeight/, 'rare accessories should retain weighted show-off behavior');
+  assert.match(personality, /pool\.push\([\s\S]*?'accessory'/, 'accessories should retain weighted show-off reactions');
   assert.match(tank, /ImpactFeedbackStyle\.Medium/, 'rare show-off reactions should feel stronger than ordinary taps');
 });
 

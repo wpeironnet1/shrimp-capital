@@ -1,6 +1,7 @@
 import { ShrimpPersonality, personalityFor } from './personality';
 
 export type AquariumLifeBeat = 'cruise' | 'forage' | 'rest' | 'inspect' | 'hide' | 'chase' | 'surface' | 'school' | 'bubble-trail';
+export type AquariumHabitatTarget = 'open-water' | 'substrate' | 'plants' | 'equipment' | 'surface' | 'school';
 
 export type AquariumLifePlan = {
   primary: AquariumLifeBeat;
@@ -9,6 +10,8 @@ export type AquariumLifePlan = {
   verticalBias: number;
   speedMultiplier: number;
   travelScale: number;
+  habitatTarget: AquariumHabitatTarget;
+  settleScale: number;
 };
 
 export type AquariumSocialMoment = 'opening-bell' | 'feeding-rush' | 'bubble-rally' | 'closing-bell' | 'quiet-market';
@@ -68,6 +71,16 @@ const verticalByBeat: Record<AquariumLifeBeat, number> = {
   chase: -.08, surface: -.9, school: -.2, 'bubble-trail': -.38,
 };
 
+const habitatByBeat: Record<AquariumLifeBeat, AquariumHabitatTarget> = {
+  cruise: 'open-water', forage: 'substrate', rest: 'plants', inspect: 'equipment', hide: 'plants',
+  chase: 'open-water', surface: 'surface', school: 'school', 'bubble-trail': 'equipment',
+};
+
+const settleScaleByBeat: Record<AquariumLifeBeat, number> = {
+  cruise: 1, forage: .94, rest: .9, inspect: .98, hide: .88,
+  chase: 1.04, surface: 1.02, school: 1, 'bubble-trail': .97,
+};
+
 export function aquariumLifePlan(seed: string, cycle = 0): AquariumLifePlan {
   const personality = personalityFor(seed).name;
   const pool = lifePools[personality];
@@ -85,6 +98,8 @@ export function aquariumLifePlan(seed: string, cycle = 0): AquariumLifePlan {
     verticalBias: verticalByBeat[primary],
     speedMultiplier: speedByBeat[primary],
     travelScale: .72 + ((a >>> 8) % 74) / 100,
+    habitatTarget: habitatByBeat[primary],
+    settleScale: settleScaleByBeat[primary],
   };
 }
 

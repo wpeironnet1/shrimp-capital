@@ -46,15 +46,16 @@ export function habitatPoseFor(seed:string,cycle=0):HabitatPose{
 }
 
 /**
- * Group spectacle cadence scales with visible population: a busy fund should feel
- * visibly busier than a three-shrimp startup. The bounds stay slow enough that the
- * signature moments read as events instead of constant animation noise.
+ * Group spectacle cadence scales aggressively with visible population. A three-shrimp
+ * startup still gets breathing room, while a mature twelve-shrimp fund now produces a
+ * coordinated moment roughly every 10–16 seconds. This makes progression visible in
+ * the aquarium itself without adding UI, persistence, or save-migration risk.
  */
 export function socialMomentDelay(seed:string,cycle=0){
   const population=tankPopulation(seed);
   if(population!==undefined){
     const fullness=Math.max(0,Math.min(1,(population-3)/9));
-    const base=20500-fullness*8500;
+    const base=20500-fullness*10500;
     const span=9500-fullness*3500;
     return Math.round(base+unit(`${seed}-${Math.max(0,cycle)}-social`)*span);
   }

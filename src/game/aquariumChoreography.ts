@@ -59,13 +59,18 @@ export function socialMomentDelay(seed:string,cycle=0){
 
 /**
  * Whole-tank moments make the aquarium feel social without touching economy or save
- * state. The mix intentionally alternates calm schooling with sharper feeding,
- * bubbles and market-panic beats so the aquarium reads as alive even when idle.
+ * state. Each four-event reel contains every signature spectacle exactly once, in a
+ * deterministic tank-specific order. That prevents an unlucky random streak from
+ * making the aquarium look repetitive while preserving variation between tanks.
  */
 export function socialMomentFor(seed:string,cycle=0):SocialMoment{
   const safeCycle=Math.max(0,Math.floor(cycle));
-  const roll=unit(`${seed}-${safeCycle}-moment`);
-  const kind:SocialMomentKind=roll<.30?'school-run':roll<.57?'feeding-rush':roll<.80?'bubble-rally':'market-panic';
+  const reel:SocialMomentKind[]=['school-run','feeding-rush','bubble-rally','market-panic'];
+  const reelIndex=safeCycle%reel.length;
+  const reelNumber=Math.floor(safeCycle/reel.length);
+  const rotation=hashSeed(`${seed}-${reelNumber}-reel`)%reel.length;
+  const direction=hashSeed(`${seed}-${reelNumber}-direction`)%2===0?1:-1;
+  const kind=reel[(rotation+direction*reelIndex+reel.length*2)%reel.length];
   const jitter=.88+unit(`${seed}-${safeCycle}-moment-jitter`)*.24;
   const base:Record<SocialMomentKind,Omit<SocialMoment,'kind'>>={
     'school-run':{durationMs:4100,spread:.30,verticalBias:-.08,bubbleIntensity:.42,reactionCadenceMs:170},

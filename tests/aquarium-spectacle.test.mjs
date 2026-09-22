@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 const tank = readFileSync(new URL('../src/components/Tank.tsx', import.meta.url), 'utf8');
 const shrimp = readFileSync(new URL('../src/components/PixelShrimp.tsx', import.meta.url), 'utf8');
 const office = readFileSync(new URL('../src/components/TankOfficeDecor.tsx', import.meta.url), 'utf8');
+const choreography = readFileSync(new URL('../src/game/aquariumChoreography.ts', import.meta.url), 'utf8');
 
 test('aquarium keeps the full tactile shrimp reaction vocabulary', () => {
   for (const reaction of ['dart', 'spin', 'bubbles', 'wiggle', 'reverse', 'accessory']) {
@@ -12,7 +13,19 @@ test('aquarium keeps the full tactile shrimp reaction vocabulary', () => {
   }
   assert.match(tank, /personalityReactionPool/);
   assert.match(tank, /personalityMotion/);
-  assert.match(tank, /schoolToken/);
+  assert.match(tank, /schoolEvent/);
+});
+
+test('whole-tank spectacles are wired into the live aquarium and scale with maturity', () => {
+  assert.match(tank, /socialMomentDelay/);
+  assert.match(tank, /socialMomentFor/);
+  assert.match(tank, /setSchoolEvent/);
+  assert.match(choreography, /population>=9/);
+  assert.match(choreography, /bubbleIntensity:Math\.min\(1\.35/);
+  assert.match(choreography, /reactionCadenceMs:Math\.max\(62/);
+  for (const moment of ['school-run', 'feeding-rush', 'bubble-rally', 'market-panic']) {
+    assert.match(choreography, new RegExp(`['\"]${moment}['\"]`), `missing ${moment} spectacle`);
+  }
 });
 
 test('jump spectacle remains above ordinary aquarium actors and clears overlays', () => {

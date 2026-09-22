@@ -44,29 +44,34 @@ export function habitatPoseFor(seed:string,cycle=0):HabitatPose{
   return {...pose,behavior,dwellMs:Math.round(pose.dwellMs*dwellJitter*temperament)};
 }
 
+/**
+ * Keep the tank visibly alive without turning it into constant visual noise. Social
+ * personalities create moments more often, while every stocked tank still gets a
+ * recognizable group beat roughly every 16-28 seconds after the first event.
+ */
 export function socialMomentDelay(seed:string,cycle=0){
   const profile=personalityFor(seed);
   const social=profile.name==='Social'||profile.name==='Rainmaker'||profile.name==='Market Maker';
-  const base=social?13000:21000;
-  return Math.round(base+unit(`${seed}-${Math.max(0,cycle)}-social`)*(social?9000:17000));
+  const base=social?10500:16000;
+  const span=social?7500:12000;
+  return Math.round(base+unit(`${seed}-${Math.max(0,cycle)}-social`)*span);
 }
 
 /**
- * Rare whole-tank moments make the aquarium feel social without touching economy or
- * save state. The renderer can use these values to temporarily pull actors into a
- * school, rush them toward food, create a bubble-heavy rally, or scatter them during
- * a playful market panic. All values are deterministic for easy regression testing.
+ * Whole-tank moments make the aquarium feel social without touching economy or save
+ * state. The mix intentionally alternates calm schooling with sharper feeding,
+ * bubbles and market-panic beats so the aquarium reads as alive even when idle.
  */
 export function socialMomentFor(seed:string,cycle=0):SocialMoment{
   const safeCycle=Math.max(0,Math.floor(cycle));
   const roll=unit(`${seed}-${safeCycle}-moment`);
-  const kind:SocialMomentKind=roll<.36?'school-run':roll<.62?'feeding-rush':roll<.84?'bubble-rally':'market-panic';
+  const kind:SocialMomentKind=roll<.30?'school-run':roll<.57?'feeding-rush':roll<.80?'bubble-rally':'market-panic';
   const jitter=.88+unit(`${seed}-${safeCycle}-moment-jitter`)*.24;
   const base:Record<SocialMomentKind,Omit<SocialMoment,'kind'>>={
-    'school-run':{durationMs:3900,spread:.28,verticalBias:-.08,bubbleIntensity:.38,reactionCadenceMs:180},
-    'feeding-rush':{durationMs:3300,spread:.42,verticalBias:-.52,bubbleIntensity:.52,reactionCadenceMs:130},
-    'bubble-rally':{durationMs:4400,spread:.58,verticalBias:.02,bubbleIntensity:1,reactionCadenceMs:220},
-    'market-panic':{durationMs:2800,spread:.92,verticalBias:.12,bubbleIntensity:.72,reactionCadenceMs:95},
+    'school-run':{durationMs:4100,spread:.30,verticalBias:-.08,bubbleIntensity:.42,reactionCadenceMs:170},
+    'feeding-rush':{durationMs:3500,spread:.44,verticalBias:-.54,bubbleIntensity:.58,reactionCadenceMs:120},
+    'bubble-rally':{durationMs:4500,spread:.60,verticalBias:.02,bubbleIntensity:1,reactionCadenceMs:205},
+    'market-panic':{durationMs:3000,spread:.96,verticalBias:.14,bubbleIntensity:.78,reactionCadenceMs:85},
   };
   const moment=base[kind];
   return {...moment,kind,durationMs:Math.round(moment.durationMs*jitter)};

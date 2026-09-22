@@ -1,0 +1,54 @@
+import { habitatPoseFor, socialMomentDelay } from './aquariumChoreography';
+
+describe('living aquarium choreography', () => {
+  it('is deterministic for the same shrimp and cycle', () => {
+    expect(habitatPoseFor('cherry-3', 4)).toEqual(habitatPoseFor('cherry-3', 4));
+    expect(socialMomentDelay('cherry-3', 4)).toBe(socialMomentDelay('cherry-3', 4));
+  });
+
+  it('keeps every habitat pose inside safe animation bounds', () => {
+    const seeds = Array.from({ length: 40 }, (_, i) => `shrimp-${i}`);
+    for (const seed of seeds) {
+      for (let cycle = 0; cycle < 12; cycle += 1) {
+        const pose = habitatPoseFor(seed, cycle);
+        expect(pose.xBias).toBeGreaterThanOrEqual(-1);
+        expect(pose.xBias).toBeLessThanOrEqual(1);
+        expect(pose.yBias).toBeGreaterThanOrEqual(-1);
+        expect(pose.yBias).toBeLessThanOrEqual(1);
+        expect(pose.dwellMs).toBeGreaterThanOrEqual(2500);
+        expect(pose.dwellMs).toBeLessThanOrEqual(15000);
+        expect(pose.bubbleChance).toBeGreaterThanOrEqual(0);
+        expect(pose.bubbleChance).toBeLessThanOrEqual(1);
+        expect(pose.speedScale).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('produces a varied living habitat rather than one repeated swim state', () => {
+    const behaviors = new Set<string>();
+    const zones = new Set<string>();
+    for (let i = 0; i < 60; i += 1) {
+      for (let cycle = 0; cycle < 8; cycle += 1) {
+        const pose = habitatPoseFor(`desk-${i}`, cycle);
+        behaviors.add(pose.behavior);
+        zones.add(pose.zone);
+      }
+    }
+    expect(behaviors).toEqual(new Set(['patrol', 'graze', 'hide', 'rest', 'inspect', 'school']));
+    expect(zones).toEqual(new Set(['open-water', 'substrate', 'plants', 'equipment', 'school']));
+  });
+
+  it('gives different cycles new destinations without touching save data', () => {
+    const poses = Array.from({ length: 10 }, (_, cycle) => habitatPoseFor('market-maker-7', cycle));
+    const destinations = new Set(poses.map(pose => `${pose.zone}:${pose.xBias.toFixed(2)}:${pose.yBias.toFixed(2)}`));
+    expect(destinations.size).toBeGreaterThan(4);
+  });
+
+  it('keeps social moments paced far enough apart to remain special', () => {
+    for (let i = 0; i < 50; i += 1) {
+      const delay = socialMomentDelay(`social-${i}`, i);
+      expect(delay).toBeGreaterThanOrEqual(13000);
+      expect(delay).toBeLessThanOrEqual(38000);
+    }
+  });
+});

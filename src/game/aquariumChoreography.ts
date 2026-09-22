@@ -67,14 +67,19 @@ export function socialMomentDelay(seed:string,cycle=0){
 }
 
 /**
- * Whole-tank moments make the aquarium feel social without touching economy or save
- * state. Each four-event reel contains every signature spectacle exactly once, in a
- * deterministic tank-specific order. That prevents an unlucky random streak from
- * making the aquarium look repetitive while preserving variation between tanks.
+ * Whole-tank moments become more exuberant as the fund grows. Startup tanks cycle
+ * evenly through the four signatures. Mid-size tanks earn an extra feeding rush;
+ * mature tanks add an extra bubble rally and market panic. This makes aquarium growth
+ * visibly change the room's behavior without adding another meter, menu, or save field.
  */
 export function socialMomentFor(seed:string,cycle=0):SocialMoment{
   const safeCycle=Math.max(0,Math.floor(cycle));
-  const reel:SocialMomentKind[]=['school-run','feeding-rush','bubble-rally','market-panic'];
+  const population=tankPopulation(seed)??0;
+  const reel:SocialMomentKind[]=population>=9
+    ? ['school-run','feeding-rush','bubble-rally','market-panic','bubble-rally','market-panic']
+    : population>=6
+      ? ['school-run','feeding-rush','bubble-rally','market-panic','feeding-rush']
+      : ['school-run','feeding-rush','bubble-rally','market-panic'];
   const reelIndex=safeCycle%reel.length;
   const reelNumber=Math.floor(safeCycle/reel.length);
   const rotation=hashSeed(`${seed}-${reelNumber}-reel`)%reel.length;

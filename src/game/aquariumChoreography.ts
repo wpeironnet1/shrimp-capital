@@ -16,6 +16,7 @@ export type SocialMoment={kind:SocialMomentKind;durationMs:number;spread:number;
 function hashSeed(seed:string){let hash=2166136261;for(let i=0;i<seed.length;i+=1){hash^=seed.charCodeAt(i);hash=Math.imul(hash,16777619);}return hash>>>0;}
 function unit(seed:string){return (hashSeed(seed)%1000)/999;}
 function signed(seed:string){return unit(seed)*2-1;}
+function tankPopulation(seed:string){const match=/^tank-(\d+)$/.exec(seed);return match?Math.max(0,Math.min(12,Number(match[1]))):undefined;}
 
 /**
  * Stable, animation-only habitat choreography. Nothing here is persisted, so adding
@@ -45,11 +46,18 @@ export function habitatPoseFor(seed:string,cycle=0):HabitatPose{
 }
 
 /**
- * Keep the tank visibly alive without turning it into constant visual noise. Social
- * personalities create moments more often, while every stocked tank still gets a
- * recognizable group beat roughly every 16-28 seconds after the first event.
+ * Group spectacle cadence scales with visible population: a busy fund should feel
+ * visibly busier than a three-shrimp startup. The bounds stay slow enough that the
+ * signature moments read as events instead of constant animation noise.
  */
 export function socialMomentDelay(seed:string,cycle=0){
+  const population=tankPopulation(seed);
+  if(population!==undefined){
+    const fullness=Math.max(0,Math.min(1,(population-3)/9));
+    const base=20500-fullness*8500;
+    const span=9500-fullness*3500;
+    return Math.round(base+unit(`${seed}-${Math.max(0,cycle)}-social`)*span);
+  }
   const profile=personalityFor(seed);
   const social=profile.name==='Social'||profile.name==='Rainmaker'||profile.name==='Market Maker';
   const base=social?10500:16000;

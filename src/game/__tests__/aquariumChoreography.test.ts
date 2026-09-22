@@ -1,11 +1,18 @@
 import { socialFormationOffset, socialMomentDelay, socialMomentFor } from '../aquariumChoreography';
 
 describe('living aquarium choreography', () => {
-  it('guarantees all four signature social moments in every four-event reel', () => {
+  it('keeps all four signature social moments represented as the tank matures', () => {
     for (const seed of ['tank-3', 'tank-7', 'tank-12']) {
-      const kinds = Array.from({ length: 4 }, (_, cycle) => socialMomentFor(seed, cycle).kind);
+      const kinds = Array.from({ length: 12 }, (_, cycle) => socialMomentFor(seed, cycle).kind);
       expect(new Set(kinds)).toEqual(new Set(['school-run', 'feeding-rush', 'bubble-rally', 'market-panic']));
     }
+  });
+
+  it('gives mature tanks more high-energy spectacle without adding UI clutter', () => {
+    const startup = Array.from({ length: 24 }, (_, cycle) => socialMomentFor('tank-3', cycle).kind);
+    const mature = Array.from({ length: 24 }, (_, cycle) => socialMomentFor('tank-12', cycle).kind);
+    const highEnergy = (kinds: string[]) => kinds.filter(kind => kind === 'bubble-rally' || kind === 'market-panic').length;
+    expect(highEnergy(mature)).toBeGreaterThan(highEnergy(startup));
   });
 
   it('keeps social moments frequent enough to make the tank feel alive without becoming constant noise', () => {

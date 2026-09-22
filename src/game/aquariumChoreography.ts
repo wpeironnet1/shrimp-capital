@@ -47,7 +47,7 @@ export function habitatPoseFor(seed:string,cycle=0):HabitatPose{
 
 /**
  * Group spectacle cadence scales aggressively with visible population. A three-shrimp
- * startup still gets breathing room, while a mature twelve-shrimp fund now produces a
+ * startup still gets breathing room, while a mature twelve-shrimp fund produces a
  * coordinated moment roughly every 10–16 seconds. This makes progression visible in
  * the aquarium itself without adding UI, persistence, or save-migration risk.
  */
@@ -70,9 +70,10 @@ export function socialMomentDelay(seed:string,cycle=0){
  * Whole-tank moments become more exuberant as the fund grows. Small tanks favor
  * readable schooling and feeding behavior. Mid-size tanks start repeating feeding
  * rushes. Mature tanks deliberately skew toward bubble rallies and market panics so
- * the aquarium itself becomes visibly busier as the fund scales, rather than merely
- * increasing a number in the HUD. The choreography remains animation-only and never
- * touches persisted state.
+ * the aquarium itself becomes visibly busier as the fund scales. At high population
+ * the same choreography also expands, lasts longer, throws substantially more bubbles,
+ * and fires reactions faster: a mature rally should read as a headline event, not the
+ * startup animation with a few more shrimp. This remains animation-only persisted state.
  */
 export function socialMomentFor(seed:string,cycle=0):SocialMoment{
   const safeCycle=Math.max(0,Math.floor(cycle));
@@ -96,14 +97,14 @@ export function socialMomentFor(seed:string,cycle=0):SocialMoment{
   };
   const moment=base[kind];
   const maturity=Math.max(0,Math.min(1,(population-3)/9));
-  const intensity=1+maturity*.28;
+  const spectacle=1+maturity*.55;
   return {
     ...moment,
     kind,
-    durationMs:Math.round(moment.durationMs*jitter*(1+maturity*.12)),
-    spread:Math.min(1,moment.spread*(1+maturity*.18)),
-    bubbleIntensity:Math.min(1.35,moment.bubbleIntensity*intensity),
-    reactionCadenceMs:Math.max(62,Math.round(moment.reactionCadenceMs*(1-maturity*.24))),
+    durationMs:Math.round(moment.durationMs*jitter*(1+maturity*.18)),
+    spread:Math.min(1,moment.spread*(1+maturity*.28)),
+    bubbleIntensity:Math.min(1.55,moment.bubbleIntensity*spectacle),
+    reactionCadenceMs:Math.max(54,Math.round(moment.reactionCadenceMs*(1-maturity*.34))),
   };
 }
 

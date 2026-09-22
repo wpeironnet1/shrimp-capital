@@ -36,7 +36,9 @@ export function habitatPoseFor(seed:string,cycle=0):HabitatPose{
     school:{zone:'school',xBias:jitterX*.28,yBias:jitterY*.2,dwellMs:5000,bubbleChance:.32,speedScale:.9},
   };
   const pose=base[behavior];
-  const temperament=profile.name==='Hyper'||profile.name==='Intern'||profile.name==='Paper Hands'?.78:profile.name==='Lazy'||profile.name==='Diamond Hands'?1.28:1;
+  const fastTemperament=profile.name==='Hyper'||profile.name==='Intern'||profile.name==='Paper Hands';
+  const patientTemperament=profile.name==='Lazy'||profile.name==='Diamond Hands';
+  const temperament=fastTemperament?.78:patientTemperament?1.28:1;
   return {...pose,behavior,dwellMs:Math.round(pose.dwellMs*dwellJitter*temperament)};
 }
 

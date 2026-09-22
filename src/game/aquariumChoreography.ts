@@ -38,7 +38,7 @@ export function habitatPoseFor(seed:string,cycle=0):HabitatPose{
   const pose=base[behavior];
   const fastTemperament=profile.name==='Hyper'||profile.name==='Intern'||profile.name==='Paper Hands';
   const patientTemperament=profile.name==='Lazy'||profile.name==='Diamond Hands';
-  const temperament=fastTemperament?.78:patientTemperament?1.28:1;
+  const temperament=fastTemperament ? .78 : patientTemperament ? 1.28 : 1;
   return {...pose,behavior,dwellMs:Math.round(pose.dwellMs*dwellJitter*temperament)};
 }
 

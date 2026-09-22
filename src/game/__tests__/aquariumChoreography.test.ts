@@ -11,8 +11,8 @@ describe('living aquarium choreography', () => {
   it('keeps social moments frequent enough to make the tank feel alive without becoming constant noise', () => {
     for (let cycle = 0; cycle < 16; cycle += 1) {
       const delay = socialMomentDelay('tank-8', cycle);
-      expect(delay).toBeGreaterThanOrEqual(15_000);
-      expect(delay).toBeLessThanOrEqual(30_000);
+      expect(delay).toBeGreaterThanOrEqual(14_000);
+      expect(delay).toBeLessThanOrEqual(27_000);
     }
   });
 
@@ -23,15 +23,15 @@ describe('living aquarium choreography', () => {
       startupTotal += socialMomentDelay('tank-3', cycle);
       crowdedTotal += socialMomentDelay('tank-12', cycle);
     }
-    expect(crowdedTotal).toBeLessThan(startupTotal * .72);
+    expect(crowdedTotal).toBeLessThan(startupTotal * .62);
   });
 
   it('keeps population-aware cadence inside deliberate spectacle bounds', () => {
     for (let cycle = 0; cycle < 24; cycle += 1) {
       expect(socialMomentDelay('tank-3', cycle)).toBeGreaterThanOrEqual(20_500);
       expect(socialMomentDelay('tank-3', cycle)).toBeLessThanOrEqual(30_000);
-      expect(socialMomentDelay('tank-12', cycle)).toBeGreaterThanOrEqual(12_000);
-      expect(socialMomentDelay('tank-12', cycle)).toBeLessThanOrEqual(18_000);
+      expect(socialMomentDelay('tank-12', cycle)).toBeGreaterThanOrEqual(10_000);
+      expect(socialMomentDelay('tank-12', cycle)).toBeLessThanOrEqual(16_000);
     }
   });
 

@@ -67,20 +67,20 @@ export function socialMomentDelay(seed:string,cycle=0){
 }
 
 /**
- * Whole-tank moments become more exuberant as the fund grows. Startup tanks cycle
- * evenly through the four signatures. Mid-size tanks earn an extra feeding rush;
- * mature tanks add extra bubble rallies and market panics. Their actual choreography
- * also scales with population: fuller funds spread farther, throw more bubbles, hold
- * the spectacle a little longer, and fire reactions faster. Progress is therefore
- * visible in the aquarium itself rather than hidden behind another meter or menu.
+ * Whole-tank moments become more exuberant as the fund grows. Small tanks favor
+ * readable schooling and feeding behavior. Mid-size tanks start repeating feeding
+ * rushes. Mature tanks deliberately skew toward bubble rallies and market panics so
+ * the aquarium itself becomes visibly busier as the fund scales, rather than merely
+ * increasing a number in the HUD. The choreography remains animation-only and never
+ * touches persisted state.
  */
 export function socialMomentFor(seed:string,cycle=0):SocialMoment{
   const safeCycle=Math.max(0,Math.floor(cycle));
   const population=tankPopulation(seed)??0;
   const reel:SocialMomentKind[]=population>=9
-    ? ['school-run','feeding-rush','bubble-rally','market-panic','bubble-rally','market-panic']
+    ? ['school-run','feeding-rush','bubble-rally','market-panic','bubble-rally','market-panic','feeding-rush','market-panic']
     : population>=6
-      ? ['school-run','feeding-rush','bubble-rally','market-panic','feeding-rush']
+      ? ['school-run','feeding-rush','bubble-rally','market-panic','feeding-rush','bubble-rally']
       : ['school-run','feeding-rush','bubble-rally','market-panic'];
   const reelIndex=safeCycle%reel.length;
   const reelNumber=Math.floor(safeCycle/reel.length);

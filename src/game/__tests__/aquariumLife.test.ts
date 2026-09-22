@@ -1,6 +1,7 @@
 import { aquariumLifeLabel, aquariumLifePlan, aquariumLifePoolFor, aquariumSocialPlan } from '../aquariumLife';
 
 const beats = ['cruise','forage','rest','inspect','hide','chase','surface','school','bubble-trail'] as const;
+const habitatTargets = ['open-water','substrate','plants','equipment','surface','school'] as const;
 const socialFx = ['bell','crumbs','bubbles','ticker','glimmer'] as const;
 const socialHaptics = ['light','success','none'] as const;
 
@@ -27,8 +28,21 @@ describe('aquarium life planning', () => {
         expect(plan.travelScale).toBeLessThanOrEqual(1.45);
         expect(plan.verticalBias).toBeGreaterThanOrEqual(-0.9);
         expect(plan.verticalBias).toBeLessThanOrEqual(0.88);
+        expect(habitatTargets).toContain(plan.habitatTarget);
+        expect(plan.settleScale).toBeGreaterThanOrEqual(.88);
+        expect(plan.settleScale).toBeLessThanOrEqual(1.04);
       }
     }
+  });
+
+  it('maps recognizable behaviors to physical aquarium zones', () => {
+    const plans = Array.from({ length: 120 }, (_, cycle) => aquariumLifePlan('habitat-audit', cycle));
+    const byBeat = new Map(plans.map(plan => [plan.primary, plan]));
+    if (byBeat.has('forage')) expect(byBeat.get('forage')?.habitatTarget).toBe('substrate');
+    if (byBeat.has('rest')) expect(byBeat.get('rest')?.habitatTarget).toBe('plants');
+    if (byBeat.has('inspect')) expect(byBeat.get('inspect')?.habitatTarget).toBe('equipment');
+    if (byBeat.has('surface')) expect(byBeat.get('surface')?.habitatTarget).toBe('surface');
+    if (byBeat.has('school')) expect(byBeat.get('school')?.habitatTarget).toBe('school');
   });
 
   it('gives personalities recognizable behavior pools', () => {

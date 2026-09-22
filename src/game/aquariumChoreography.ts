@@ -10,6 +10,8 @@ export type HabitatPose = {
   bubbleChance: number;
   speedScale: number;
 };
+export type SocialMomentKind='school-run'|'feeding-rush'|'bubble-rally'|'market-panic';
+export type SocialMoment={kind:SocialMomentKind;durationMs:number;spread:number;verticalBias:number;bubbleIntensity:number;reactionCadenceMs:number};
 
 function hashSeed(seed:string){let hash=2166136261;for(let i=0;i<seed.length;i+=1){hash^=seed.charCodeAt(i);hash=Math.imul(hash,16777619);}return hash>>>0;}
 function unit(seed:string){return (hashSeed(seed)%1000)/999;}
@@ -47,4 +49,36 @@ export function socialMomentDelay(seed:string,cycle=0){
   const social=profile.name==='Social'||profile.name==='Rainmaker'||profile.name==='Market Maker';
   const base=social?13000:21000;
   return Math.round(base+unit(`${seed}-${Math.max(0,cycle)}-social`)*(social?9000:17000));
+}
+
+/**
+ * Rare whole-tank moments make the aquarium feel social without touching economy or
+ * save state. The renderer can use these values to temporarily pull actors into a
+ * school, rush them toward food, create a bubble-heavy rally, or scatter them during
+ * a playful market panic. All values are deterministic for easy regression testing.
+ */
+export function socialMomentFor(seed:string,cycle=0):SocialMoment{
+  const safeCycle=Math.max(0,Math.floor(cycle));
+  const roll=unit(`${seed}-${safeCycle}-moment`);
+  const kind:SocialMomentKind=roll<.36?'school-run':roll<.62?'feeding-rush':roll<.84?'bubble-rally':'market-panic';
+  const jitter=.88+unit(`${seed}-${safeCycle}-moment-jitter`)*.24;
+  const base:Record<SocialMomentKind,Omit<SocialMoment,'kind'>>={
+    'school-run':{durationMs:3900,spread:.28,verticalBias:-.08,bubbleIntensity:.38,reactionCadenceMs:180},
+    'feeding-rush':{durationMs:3300,spread:.42,verticalBias:-.52,bubbleIntensity:.52,reactionCadenceMs:130},
+    'bubble-rally':{durationMs:4400,spread:.58,verticalBias:.02,bubbleIntensity:1,reactionCadenceMs:220},
+    'market-panic':{durationMs:2800,spread:.92,verticalBias:.12,bubbleIntensity:.72,reactionCadenceMs:95},
+  };
+  const moment=base[kind];
+  return {...moment,kind,durationMs:Math.round(moment.durationMs*jitter)};
+}
+
+export function socialFormationOffset(index:number,total:number,moment:SocialMoment){
+  const safeTotal=Math.max(1,Math.floor(total));
+  const safeIndex=Math.max(0,Math.min(safeTotal-1,Math.floor(index)));
+  const centered=safeTotal===1?0:(safeIndex/(safeTotal-1))*2-1;
+  const alternating=safeIndex%2===0?1:-1;
+  if(moment.kind==='market-panic')return {x:centered*moment.spread,y:moment.verticalBias+alternating*.34};
+  if(moment.kind==='feeding-rush')return {x:centered*moment.spread*.55,y:moment.verticalBias+Math.abs(centered)*.16};
+  if(moment.kind==='bubble-rally')return {x:centered*moment.spread,y:moment.verticalBias+alternating*.12};
+  return {x:centered*moment.spread,y:moment.verticalBias+Math.abs(centered)*.08};
 }

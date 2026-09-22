@@ -69,8 +69,10 @@ export function socialMomentDelay(seed:string,cycle=0){
 /**
  * Whole-tank moments become more exuberant as the fund grows. Startup tanks cycle
  * evenly through the four signatures. Mid-size tanks earn an extra feeding rush;
- * mature tanks add an extra bubble rally and market panic. This makes aquarium growth
- * visibly change the room's behavior without adding another meter, menu, or save field.
+ * mature tanks add extra bubble rallies and market panics. Their actual choreography
+ * also scales with population: fuller funds spread farther, throw more bubbles, hold
+ * the spectacle a little longer, and fire reactions faster. Progress is therefore
+ * visible in the aquarium itself rather than hidden behind another meter or menu.
  */
 export function socialMomentFor(seed:string,cycle=0):SocialMoment{
   const safeCycle=Math.max(0,Math.floor(cycle));
@@ -93,7 +95,16 @@ export function socialMomentFor(seed:string,cycle=0):SocialMoment{
     'market-panic':{durationMs:3000,spread:.96,verticalBias:.14,bubbleIntensity:.78,reactionCadenceMs:85},
   };
   const moment=base[kind];
-  return {...moment,kind,durationMs:Math.round(moment.durationMs*jitter)};
+  const maturity=Math.max(0,Math.min(1,(population-3)/9));
+  const intensity=1+maturity*.28;
+  return {
+    ...moment,
+    kind,
+    durationMs:Math.round(moment.durationMs*jitter*(1+maturity*.12)),
+    spread:Math.min(1,moment.spread*(1+maturity*.18)),
+    bubbleIntensity:Math.min(1.35,moment.bubbleIntensity*intensity),
+    reactionCadenceMs:Math.max(62,Math.round(moment.reactionCadenceMs*(1-maturity*.24))),
+  };
 }
 
 export function socialFormationOffset(index:number,total:number,moment:SocialMoment){

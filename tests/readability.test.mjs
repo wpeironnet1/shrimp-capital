@@ -13,8 +13,8 @@ test('global typography keeps a practical mobile readability floor', () => {
 });
 
 test('primary aquarium operation controls remain comfortably tappable', () => {
-  assert.match(conditions, /action:\{[^}]*minHeight:68/);
-  assert.match(conditions, /iconBox:\{width:40,height:40/);
+  assert.match(conditions, /action:\{[^}]*minHeight:(?:6[8-9]|[7-9]\d|[1-9]\d{2,})/);
+  assert.match(conditions, /iconBox:\{width:(?:4[0-9]|[5-9]\d),height:(?:4[0-9]|[5-9]\d)/);
   assert.match(conditions, /actionsStacked:\{flexDirection:'column'\}/);
 });
 

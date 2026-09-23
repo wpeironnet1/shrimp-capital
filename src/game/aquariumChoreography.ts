@@ -18,11 +18,7 @@ function unit(seed:string){return (hashSeed(seed)%1000)/999;}
 function signed(seed:string){return unit(seed)*2-1;}
 function tankPopulation(seed:string){const match=/^tank-(\d+)$/.exec(seed);return match?Math.max(0,Math.min(12,Number(match[1]))):undefined;}
 
-/**
- * Stable, animation-only habitat choreography. Nothing here is persisted, so adding
- * richer aquarium life cannot invalidate saves. Actors can advance `cycle` whenever
- * a dwell period completes and receive a new personality-appropriate destination.
- */
+/** Stable animation-only habitat choreography; richer aquarium life never invalidates saves. */
 export function habitatPoseFor(seed:string,cycle=0):HabitatPose{
   const safeCycle=Math.max(0,Math.floor(cycle));
   const behavior=habitatBehaviorFor(seed,safeCycle);
@@ -41,16 +37,10 @@ export function habitatPoseFor(seed:string,cycle=0):HabitatPose{
   const pose=base[behavior];
   const fastTemperament=profile.name==='Hyper'||profile.name==='Intern'||profile.name==='Paper Hands';
   const patientTemperament=profile.name==='Lazy'||profile.name==='Diamond Hands';
-  const temperament=fastTemperament ? .78 : patientTemperament ? 1.28 : 1;
+  const temperament=fastTemperament?.78:patientTemperament?1.28:1;
   return {...pose,behavior,dwellMs:Math.round(pose.dwellMs*dwellJitter*temperament)};
 }
 
-/**
- * Group spectacle cadence scales aggressively with visible population. A three-shrimp
- * startup still gets breathing room, while a mature twelve-shrimp fund produces a
- * coordinated moment roughly every 10–16 seconds. This makes progression visible in
- * the aquarium itself without adding UI, persistence, or save-migration risk.
- */
 export function socialMomentDelay(seed:string,cycle=0){
   const population=tankPopulation(seed);
   if(population!==undefined){
@@ -67,22 +57,20 @@ export function socialMomentDelay(seed:string,cycle=0){
 }
 
 /**
- * Whole-tank moments become more exuberant as the fund grows. Small tanks favor
- * readable schooling and feeding behavior. Mid-size tanks start repeating feeding
- * rushes. Mature tanks deliberately skew toward bubble rallies and market panics so
- * the aquarium itself becomes visibly busier as the fund scales. At high population
- * the same choreography also expands, lasts longer, throws substantially more bubbles,
- * and fires reactions faster: a mature rally should read as a headline event, not the
- * startup animation with a few more shrimp. This remains animation-only persisted state.
+ * Population changes not just frequency but choreography. Startup tanks remain readable;
+ * mature funds rotate through paired rallies/panics and a rarer reset formation so the
+ * aquarium has a visible rhythm instead of repeating the same burst at higher speed.
  */
 export function socialMomentFor(seed:string,cycle=0):SocialMoment{
   const safeCycle=Math.max(0,Math.floor(cycle));
   const population=tankPopulation(seed)??0;
-  const reel:SocialMomentKind[]=population>=9
-    ? ['school-run','feeding-rush','bubble-rally','market-panic','bubble-rally','market-panic','feeding-rush','market-panic']
-    : population>=6
-      ? ['school-run','feeding-rush','bubble-rally','market-panic','feeding-rush','bubble-rally']
-      : ['school-run','feeding-rush','bubble-rally','market-panic'];
+  const reel:SocialMomentKind[]=population>=11
+    ? ['school-run','bubble-rally','market-panic','feeding-rush','bubble-rally','market-panic','bubble-rally','market-panic','feeding-rush','market-panic']
+    : population>=9
+      ? ['school-run','feeding-rush','bubble-rally','market-panic','bubble-rally','market-panic','feeding-rush','market-panic']
+      : population>=6
+        ? ['school-run','feeding-rush','bubble-rally','market-panic','feeding-rush','bubble-rally']
+        : ['school-run','feeding-rush','bubble-rally','market-panic'];
   const reelIndex=safeCycle%reel.length;
   const reelNumber=Math.floor(safeCycle/reel.length);
   const rotation=hashSeed(`${seed}-${reelNumber}-reel`)%reel.length;

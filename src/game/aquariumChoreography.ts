@@ -30,8 +30,11 @@ export function socialMomentDelay(seed:string,cycle=0){
   const population=tankPopulation(seed);
   if(population!==undefined){
     const fullness=Math.max(0,Math.min(1,(population-3)/9));
-    const base=24000-fullness*7000;
-    const span=11000-fullness*5000;
+    // A stocked aquarium should feel alive even when the player is simply watching it.
+    // Sparse tanks retain breathing room, while mature tanks produce a short coordinated
+    // desk moment roughly every 15–20 seconds instead of sitting visually idle for long gaps.
+    const base=21000-fullness*6500;
+    const span=8000-fullness*3500;
     return Math.round(base+unit(`${seed}-${Math.max(0,cycle)}-social`)*span);
   }
   const profile=personalityFor(seed),social=profile.name==='Social'||profile.name==='Rainmaker'||profile.name==='Market Maker';

@@ -20,12 +20,24 @@ test('whole-tank spectacles are wired into the live aquarium and scale with matu
   assert.match(tank, /socialMomentDelay/);
   assert.match(tank, /socialMomentFor/);
   assert.match(tank, /setSchoolEvent/);
+  assert.match(choreography, /population>=12/);
   assert.match(choreography, /population>=9/);
-  assert.match(choreography, /bubbleIntensity:Math\.min\(1\.35/);
-  assert.match(choreography, /reactionCadenceMs:Math\.max\(62/);
+  assert.match(choreography, /fullTank=population>=12\?1\.18:1/);
+  assert.match(choreography, /bubbleIntensity:Math\.min\(1\.7/);
+  assert.match(choreography, /reactionCadenceMs:Math\.max\(48/);
   for (const moment of ['school-run', 'feeding-rush', 'bubble-rally', 'market-panic']) {
     assert.match(choreography, new RegExp(`['\"]${moment}['\"]`), `missing ${moment} spectacle`);
   }
+});
+
+test('a full visual tank gets the denser trading-floor rhythm instead of calm schooling', () => {
+  const fullTankReel = choreography.match(/population>=12\?\[(.*?)\]:population>=11/s)?.[1] ?? '';
+  assert.ok(fullTankReel.length > 0, 'full-tank spectacle reel must be explicit');
+  assert.doesNotMatch(fullTankReel, /school-run/);
+  assert.match(fullTankReel, /market-panic/);
+  assert.match(fullTankReel, /bubble-rally/);
+  assert.match(fullTankReel, /feeding-rush/);
+  assert.match(choreography, /base=20500-fullness\*10500/);
 });
 
 test('jump spectacle remains above ordinary aquarium actors and clears overlays', () => {

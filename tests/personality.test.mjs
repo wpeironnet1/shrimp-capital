@@ -10,13 +10,8 @@ const biases = [...profileBlock.matchAll(/reactionBias:'([^']+)'/g)].map((match)
 test('personality roster is broad, unique, and finance-flavored', () => {
   assert.equal(names.length, 20);
   assert.equal(new Set(names).size, 20);
-  for (const expected of ['Curious', 'Hyper', 'Lazy', 'Contrarian', 'Quant', 'Market Maker', 'Diamond Hands', 'Paper Hands', 'Shark']) {
-    assert.ok(names.includes(expected), `missing ${expected}`);
-  }
-  assert.ok(source.includes('TRADING FLOOR'));
-  assert.ok(source.includes('BUYS THE DIP'));
-  assert.ok(source.includes('QUARTERLY FILING'));
-  assert.ok(source.includes('DARK POOLS OF LIQUIDITY'));
+  for (const expected of ['Curious', 'Hyper', 'Lazy', 'Contrarian', 'Quant', 'Market Maker', 'Diamond Hands', 'Paper Hands', 'Shark']) assert.ok(names.includes(expected), `missing ${expected}`);
+  for (const phrase of ['TRADING FLOOR', 'BUYS THE DIP', 'QUARTERLY FILING', 'DARK POOLS OF LIQUIDITY']) assert.ok(source.includes(phrase));
 });
 
 test('personality profiles influence multiple animation dimensions', () => {
@@ -24,11 +19,7 @@ test('personality profiles influence multiple animation dimensions', () => {
   assert.ok(new Set(biases).size >= 5);
   assert.equal((profileBlock.match(/driftMultiplier:/g) ?? []).length, 20);
   assert.equal((profileBlock.match(/bobMultiplier:/g) ?? []).length, 20);
-  assert.ok(source.includes('hashSeed(seed)%profiles.length'));
-  assert.ok(source.includes('personalityMotion'));
-  assert.ok(source.includes('distanceVariation'));
-  assert.ok(source.includes('cadenceVariation'));
-  assert.ok(source.includes('temperamentPulse'));
+  for (const token of ['hashSeed(seed)%profiles.length', 'personalityMotion', 'distanceVariation', 'cadenceVariation', 'temperamentPulse']) assert.ok(source.includes(token));
 });
 
 test('personality motion stays deterministic and bounded for tank animation safety', () => {
@@ -37,31 +28,28 @@ test('personality motion stays deterministic and bounded for tank animation safe
   assert.ok(source.includes('motionBand'));
   assert.ok(source.includes('Math.max(band.minDrift,Math.min(band.maxDrift'));
   assert.ok(source.includes('Math.max(band.minBob,Math.min(band.maxBob'));
-  for (const personality of names) {
-    assert.ok(source.includes(`${personality}:{minDrift:`) || source.includes(`'${personality}':{minDrift:`), `missing safe motion band for ${personality}`);
-  }
+  for (const personality of names) assert.ok(source.includes(`${personality}:{minDrift:`) || source.includes(`'${personality}':{minDrift:`), `missing safe motion band for ${personality}`);
 });
 
 test('tap reaction pool preserves every core reaction and strong individual quirks', () => {
-  for (const reaction of ['dart', 'spin', 'bubbles', 'wiggle', 'reverse', 'accessory']) {
-    assert.ok(source.includes(`'${reaction}'`), `missing ${reaction} reaction`);
-  }
+  for (const reaction of ['dart', 'spin', 'bubbles', 'wiggle', 'reverse', 'accessory']) assert.ok(source.includes(`'${reaction}'`), `missing ${reaction} reaction`);
   assert.ok(source.includes('const reactionPools: Record<ShrimpPersonality,ShrimpReaction[]>'));
   assert.ok(source.includes('signatureReactionFor'));
   assert.ok(source.includes('secondaryReactionFor'));
-  assert.ok(source.includes('pool.push(signature,signature,signature,signature,signature,signature,secondary,secondary,secondary)'));
+  assert.match(source, /const pool:ShrimpReaction\[\]=\[\.\.\.core,\.\.\.reactionPools\[profile\.name\],signature,signature,signature,secondary,secondary\]/);
+  assert.match(source, /profile\.reactionBias!==['"]accessory['"]\)pool\.push\(profile\.reactionBias,profile\.reactionBias,profile\.reactionBias\)/);
 });
 
 test('rare accessories remain materially expressive without erasing personality', () => {
-  assert.ok(source.includes("if(hasAccessory)pool.push(...Array(30).fill('accessory')"));
-  assert.ok(source.includes("else if(hasAccessory)pool.push(...Array(10).fill('accessory')"));
+  const accessoryWeights = source.match(/if\(hasAccessory\)\{pool\.push\(([^}]*)\);if\(profile\.reactionBias===['"]accessory['"]\)pool\.push\(([^}]*)\);\}/);
+  assert.ok(accessoryWeights, 'accessory reactions should remain explicitly weighted');
+  assert.ok((accessoryWeights[1].match(/'accessory'/g) ?? []).length >= 8, 'collectible accessory should have a strong show-off weight');
+  assert.ok((accessoryWeights[2].match(/'accessory'/g) ?? []).length >= 4, 'accessory-biased personalities should show off even more');
   assert.ok(source.includes("profile.reactionBias!=='accessory'"));
 });
 
 test('habitat behavior gives personalities distinct living-aquarium routines', () => {
-  for (const behavior of ['patrol', 'graze', 'hide', 'rest', 'inspect', 'school']) {
-    assert.ok(source.includes(`'${behavior}'`), `missing ${behavior} habitat behavior`);
-  }
+  for (const behavior of ['patrol', 'graze', 'hide', 'rest', 'inspect', 'school']) assert.ok(source.includes(`'${behavior}'`), `missing ${behavior} habitat behavior`);
   assert.ok(source.includes('habitatBehaviorFor'));
   assert.ok(source.includes("`${seed}-habitat-${Math.max(0,cycle)}`"));
   assert.ok(source.includes("Social:['school','school'"));

@@ -1,17 +1,19 @@
 import { socialFormationOffset, socialMomentDelay, socialMomentFor } from '../aquariumChoreography';
 
 describe('living aquarium choreography', () => {
-  it('keeps all four signature social moments represented as the tank matures', () => {
-    for (const seed of ['tank-3', 'tank-7', 'tank-12']) {
-      const kinds = Array.from({ length: 12 }, (_, cycle) => socialMomentFor(seed, cycle).kind);
-      expect(new Set(kinds)).toEqual(new Set(['school-run', 'feeding-rush', 'bubble-rally', 'market-panic']));
+  it('keeps the core four social moments represented and unlocks personality parades in mature tanks', () => {
+    const startup = Array.from({ length: 12 }, (_, cycle) => socialMomentFor('tank-3', cycle).kind);
+    expect(new Set(startup)).toEqual(new Set(['school-run', 'feeding-rush', 'bubble-rally', 'market-panic']));
+    for (const seed of ['tank-7', 'tank-12']) {
+      const kinds = Array.from({ length: 18 }, (_, cycle) => socialMomentFor(seed, cycle).kind);
+      expect(new Set(kinds)).toEqual(new Set(['school-run', 'feeding-rush', 'bubble-rally', 'market-panic', 'personality-parade']));
     }
   });
 
   it('gives mature tanks more high-energy spectacle without adding UI clutter', () => {
     const startup = Array.from({ length: 24 }, (_, cycle) => socialMomentFor('tank-3', cycle).kind);
     const mature = Array.from({ length: 24 }, (_, cycle) => socialMomentFor('tank-12', cycle).kind);
-    const highEnergy = (kinds: string[]) => kinds.filter(kind => kind === 'bubble-rally' || kind === 'market-panic').length;
+    const highEnergy = (kinds: string[]) => kinds.filter(kind => kind === 'bubble-rally' || kind === 'market-panic' || kind === 'personality-parade').length;
     expect(highEnergy(mature)).toBeGreaterThan(highEnergy(startup));
   });
 
@@ -42,8 +44,8 @@ describe('living aquarium choreography', () => {
     }
   });
 
-  it('gives each spectacle a visibly different formation', () => {
-    const moments = ['school-run', 'feeding-rush', 'bubble-rally', 'market-panic'] as const;
+  it('gives every spectacle a visibly different formation', () => {
+    const moments = ['school-run', 'feeding-rush', 'bubble-rally', 'market-panic', 'personality-parade'] as const;
     const signatures = moments.map((kind) => {
       const moment = { ...socialMomentFor('formation-seed', 0), kind };
       return [0, 1, 2, 3, 4]
@@ -55,8 +57,8 @@ describe('living aquarium choreography', () => {
   });
 
   it('keeps formation offsets bounded inside the aquarium choreography envelope', () => {
-    for (let cycle = 0; cycle < 12; cycle += 1) {
-      const moment = socialMomentFor('bounds-seed', cycle);
+    for (let cycle = 0; cycle < 18; cycle += 1) {
+      const moment = socialMomentFor('tank-12', cycle);
       for (let index = 0; index < 12; index += 1) {
         const { x, y } = socialFormationOffset(index, 12, moment);
         expect(Math.abs(x)).toBeLessThanOrEqual(1);

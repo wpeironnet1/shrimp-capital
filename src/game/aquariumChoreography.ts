@@ -2,7 +2,7 @@ import { ShrimpHabitatBehavior, habitatBehaviorFor, personalityFor } from './per
 
 export type HabitatZone='open-water'|'substrate'|'plants'|'equipment'|'school';
 export type HabitatPose={behavior:ShrimpHabitatBehavior;zone:HabitatZone;xBias:number;yBias:number;dwellMs:number;bubbleChance:number;speedScale:number};
-export type SocialMomentKind='school-run'|'feeding-rush'|'bubble-rally'|'market-panic';
+export type SocialMomentKind='school-run'|'feeding-rush'|'bubble-rally'|'market-panic'|'personality-parade';
 export type SocialMoment={kind:SocialMomentKind;durationMs:number;spread:number;verticalBias:number;bubbleIntensity:number;reactionCadenceMs:number};
 
 function hashSeed(seed:string){let hash=2166136261;for(let i=0;i<seed.length;i+=1){hash^=seed.charCodeAt(i);hash=Math.imul(hash,16777619);}return hash>>>0;}
@@ -29,8 +29,6 @@ export function habitatPoseFor(seed:string,cycle=0):HabitatPose{
 export function socialMomentDelay(seed:string,cycle=0){
   const population=tankPopulation(seed);
   if(population!==undefined){
-    // Social beats are gameplay feedback, not background decoration. As the fund fills,
-    // coordinated tank moments arrive often enough to be noticed during a short session.
     const fullness=Math.max(0,Math.min(1,(population-3)/9));
     const base=19000-fullness*6500;
     const span=6500-fullness*3000;
@@ -42,14 +40,14 @@ export function socialMomentDelay(seed:string,cycle=0){
 
 export function socialMomentFor(seed:string,cycle=0):SocialMoment{
   const safeCycle=Math.max(0,Math.floor(cycle)),population=tankPopulation(seed)??0;
-  // Mature tanks deliberately alternate calm schooling with high-readability spectacle.
-  // This prevents long stretches where a full aquarium feels visually identical to a starter tank.
+  // Mature desks occasionally run a personality parade: every shrimp gets a staggered beat
+  // driven by its own reaction bias, so a full collection reads as individuals rather than clones.
   const reel:SocialMomentKind[]=population>=12
-    ?['bubble-rally','market-panic','feeding-rush','school-run','bubble-rally','market-panic','school-run','feeding-rush','bubble-rally','market-panic','feeding-rush','school-run']
+    ?['bubble-rally','market-panic','personality-parade','feeding-rush','school-run','bubble-rally','personality-parade','market-panic','school-run','feeding-rush','bubble-rally','personality-parade']
     :population>=10
-      ?['school-run','bubble-rally','market-panic','feeding-rush','bubble-rally','school-run','market-panic','feeding-rush','bubble-rally','market-panic']
+      ?['school-run','bubble-rally','market-panic','personality-parade','feeding-rush','bubble-rally','school-run','market-panic','personality-parade','feeding-rush']
       :population>=7
-        ?['school-run','feeding-rush','bubble-rally','market-panic','school-run','bubble-rally','feeding-rush','market-panic']
+        ?['school-run','feeding-rush','bubble-rally','market-panic','personality-parade','school-run','bubble-rally','feeding-rush','market-panic']
         :['school-run','feeding-rush','bubble-rally','market-panic'];
   const reelIndex=safeCycle%reel.length,reelNumber=Math.floor(safeCycle/reel.length),rotation=hashSeed(`${seed}-${reelNumber}-reel`)%reel.length,direction=hashSeed(`${seed}-${reelNumber}-direction`)%2===0?1:-1,kind=reel[(rotation+direction*reelIndex+reel.length*2)%reel.length],jitter=.88+unit(`${seed}-${safeCycle}-moment-jitter`)*.24;
   const base:Record<SocialMomentKind,Omit<SocialMoment,'kind'>>={
@@ -57,15 +55,16 @@ export function socialMomentFor(seed:string,cycle=0):SocialMoment{
     'feeding-rush':{durationMs:3600,spread:.58,verticalBias:-.64,bubbleIntensity:.82,reactionCadenceMs:98},
     'bubble-rally':{durationMs:5000,spread:.76,verticalBias:.00,bubbleIntensity:1.34,reactionCadenceMs:164},
     'market-panic':{durationMs:2900,spread:1,verticalBias:.14,bubbleIntensity:1.02,reactionCadenceMs:64},
+    'personality-parade':{durationMs:5400,spread:.68,verticalBias:-.08,bubbleIntensity:.74,reactionCadenceMs:132},
   };
   const moment=base[kind],maturity=Math.max(0,Math.min(1,(population-3)/9));
   const fullTank=population>=12?1.42:population>=10?1.18:1;
-  const kindPunch=kind==='market-panic'?1.18:kind==='bubble-rally'?1.12:kind==='feeding-rush'?1.06:.9;
+  const kindPunch=kind==='market-panic'?1.18:kind==='bubble-rally'?1.12:kind==='feeding-rush'?1.06:kind==='personality-parade'?1.08:.9;
   const spectacle=(1+maturity*.68)*fullTank*kindPunch;
   return{
     ...moment,
     kind,
-    durationMs:Math.round(moment.durationMs*jitter*(kind==='school-run'?1+maturity*.12:1+maturity*.05)),
+    durationMs:Math.round(moment.durationMs*jitter*((kind==='school-run'||kind==='personality-parade')?1+maturity*.12:1+maturity*.05)),
     spread:Math.min(1,moment.spread*(1+maturity*.38)*(kind==='school-run'?1:fullTank)),
     bubbleIntensity:Math.min(2.25,moment.bubbleIntensity*spectacle),
     reactionCadenceMs:Math.max(36,Math.round(moment.reactionCadenceMs*(1-maturity*.44)/(kind==='school-run'?1:fullTank))),
@@ -88,6 +87,12 @@ export function socialFormationOffset(index:number,total:number,moment:SocialMom
     const wave=Math.sin((centered+.08)*Math.PI*1.55)*.34;
     const edgeLift=-Math.pow(Math.abs(centered),1.7)*.10;
     return{x:centered*moment.spread,y:moment.verticalBias+wave+edgeLift+alternating*.045};
+  }
+  if(moment.kind==='personality-parade'){
+    // A loose two-row runway leaves room for each shrimp's own tap-style reaction to read clearly.
+    const row=alternating*.17;
+    const arc=-Math.cos(centered*Math.PI)*.12;
+    return{x:centered*moment.spread*.82,y:moment.verticalBias+row+arc};
   }
   const chevron=Math.pow(Math.abs(centered),1.15)*.24;
   const leader=safeIndex===Math.floor((safeTotal-1)/2)?-.10:0;

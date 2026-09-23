@@ -8,9 +8,7 @@ const office = readFileSync(new URL('../src/components/TankOfficeDecor.tsx', imp
 const choreography = readFileSync(new URL('../src/game/aquariumChoreography.ts', import.meta.url), 'utf8');
 
 test('aquarium keeps the full tactile shrimp reaction vocabulary', () => {
-  for (const reaction of ['dart', 'spin', 'bubbles', 'wiggle', 'reverse', 'accessory']) {
-    assert.match(tank, new RegExp(`['\\"]${reaction}['\\"]`), `missing ${reaction} reaction`);
-  }
+  for (const reaction of ['dart', 'spin', 'bubbles', 'wiggle', 'reverse', 'accessory']) assert.match(tank, new RegExp(`['\\"]${reaction}['\\"]`), `missing ${reaction} reaction`);
   assert.match(tank, /personalityReactionPool/);
   assert.match(tank, /personalityMotion/);
   assert.match(tank, /schoolEvent/);
@@ -21,24 +19,20 @@ test('whole-tank spectacles are wired into the live aquarium and scale with matu
   assert.match(tank, /socialMomentFor/);
   assert.match(tank, /setSchoolEvent/);
   assert.match(choreography, /population>=12/);
-  assert.match(choreography, /population>=9/);
-  assert.match(choreography, /fullTank=population>=12\?1\.28:population>=10\?1\.12:1/);
-  assert.match(choreography, /bubbleIntensity:Math\.min\(1\.9/);
-  assert.match(choreography, /reactionCadenceMs:Math\.max\(44/);
-  for (const moment of ['school-run', 'feeding-rush', 'bubble-rally', 'market-panic']) {
-    assert.match(choreography, new RegExp(`['\\"]${moment}['\\"]`), `missing ${moment} spectacle`);
-  }
+  assert.match(choreography, /population>=10/);
+  assert.match(choreography, /fullTank=population>=12\?1\.42:population>=10\?1\.18:1/);
+  assert.match(choreography, /bubbleIntensity:Math\.min\(2\.25/);
+  assert.match(choreography, /reactionCadenceMs:Math\.max\(36/);
+  for (const moment of ['school-run', 'feeding-rush', 'bubble-rally', 'market-panic', 'personality-parade']) assert.match(choreography, new RegExp(`['\\"]${moment}['\\"]`), `missing ${moment} spectacle`);
 });
 
 test('mature tanks alternate readable schooling with high-energy trading-floor spectacles', () => {
-  const fullTankReel = choreography.match(/population>=12\s*\?\[(.*?)\]\s*:population>=11/s)?.[1] ?? '';
+  const fullTankReel = choreography.match(/population>=12\s*\?\[(.*?)\]\s*:population>=10/s)?.[1] ?? '';
   assert.ok(fullTankReel.length > 0, 'full-tank spectacle reel must be explicit');
-  for (const moment of ['school-run', 'market-panic', 'bubble-rally', 'feeding-rush']) {
-    assert.match(fullTankReel, new RegExp(moment), `full tank should retain ${moment}`);
-  }
-  assert.match(choreography, /base=22000-fullness\*7000/);
-  assert.match(choreography, /span=10000-fullness\*6000/);
-  assert.match(choreography, /Math\.max\(15000,socialMomentDelay/);
+  for (const moment of ['school-run', 'market-panic', 'bubble-rally', 'feeding-rush', 'personality-parade']) assert.match(fullTankReel, new RegExp(moment), `full tank should retain ${moment}`);
+  assert.match(choreography, /base=19000-fullness\*6500/);
+  assert.match(choreography, /span=6500-fullness\*3000/);
+  assert.match(tank, /Math\.max\(15000,socialMomentDelay/);
 });
 
 test('jump spectacle remains above ordinary aquarium actors and clears overlays', () => {
@@ -49,9 +43,7 @@ test('jump spectacle remains above ordinary aquarium actors and clears overlays'
 });
 
 test('rare collectible accessories retain bespoke pixel treatment', () => {
-  for (const accessory of ['chain', 'crown', 'visor', 'suit']) {
-    assert.match(shrimp, new RegExp(`accessory===['\\"]${accessory}['\\"]`), `missing ${accessory} art`);
-  }
+  for (const accessory of ['chain', 'crown', 'visor', 'suit']) assert.match(shrimp, new RegExp(`accessory===['\\"]${accessory}['\\"]`), `missing ${accessory} art`);
   assert.match(tank, /AccessorySparkles/);
 });
 

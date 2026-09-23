@@ -41,14 +41,17 @@ export function socialMomentDelay(seed:string,cycle=0){
 
 export function socialMomentFor(seed:string,cycle=0):SocialMoment{
   const safeCycle=Math.max(0,Math.floor(cycle)),population=tankPopulation(seed)??0;
+  // Mature tanks deliberately alternate coordinated schooling with frantic trading-floor
+  // moments. The brief formations make the next panic/rally read as a spectacle instead
+  // of a constant wall of motion, while also letting personality-biased reactions show.
   const reel:SocialMomentKind[]=population>=12
-    ?['market-panic','bubble-rally','feeding-rush','market-panic','bubble-rally','feeding-rush','market-panic','bubble-rally','feeding-rush','market-panic','bubble-rally','market-panic']
+    ?['market-panic','school-run','bubble-rally','feeding-rush','market-panic','school-run','bubble-rally','market-panic','feeding-rush','school-run','bubble-rally','market-panic']
     :population>=11
-      ?['school-run','bubble-rally','market-panic','feeding-rush','bubble-rally','market-panic','bubble-rally','feeding-rush','market-panic','bubble-rally']
+      ?['school-run','bubble-rally','market-panic','feeding-rush','school-run','bubble-rally','market-panic','feeding-rush','bubble-rally','market-panic']
       :population>=9
-        ?['school-run','feeding-rush','bubble-rally','market-panic','bubble-rally','feeding-rush','market-panic','bubble-rally']
+        ?['school-run','feeding-rush','bubble-rally','market-panic','school-run','bubble-rally','feeding-rush','market-panic']
         :population>=6
-          ?['school-run','feeding-rush','bubble-rally','market-panic','feeding-rush','bubble-rally']
+          ?['school-run','feeding-rush','bubble-rally','market-panic','school-run','bubble-rally']
           :['school-run','feeding-rush','bubble-rally','market-panic'];
   const reelIndex=safeCycle%reel.length,reelNumber=Math.floor(safeCycle/reel.length),rotation=hashSeed(`${seed}-${reelNumber}-reel`)%reel.length,direction=hashSeed(`${seed}-${reelNumber}-direction`)%2===0?1:-1,kind=reel[(rotation+direction*reelIndex+reel.length*2)%reel.length],jitter=.88+unit(`${seed}-${safeCycle}-moment-jitter`)*.24;
   const base:Record<SocialMomentKind,Omit<SocialMoment,'kind'>>={

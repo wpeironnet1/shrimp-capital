@@ -29,9 +29,12 @@ export function habitatPoseFor(seed:string,cycle=0):HabitatPose{
 export function socialMomentDelay(seed:string,cycle=0){
   const population=tankPopulation(seed);
   if(population!==undefined){
+    // A fuller desk should look busier without becoming visual noise. Three-shrimp tanks
+    // still breathe between moments, while a packed twelve-shrimp fund reliably produces
+    // a coordinated beat every ~15–19 seconds (the Tank component also keeps a 15s floor).
     const fullness=Math.max(0,Math.min(1,(population-3)/9));
-    const base=21000-fullness*6500;
-    const span=8000-fullness*3500;
+    const base=21500-fullness*6500;
+    const span=8500-fullness*4500;
     return Math.round(base+unit(`${seed}-${Math.max(0,cycle)}-social`)*span);
   }
   const profile=personalityFor(seed),social=profile.name==='Social'||profile.name==='Rainmaker'||profile.name==='Market Maker';
@@ -77,15 +80,10 @@ export function socialFormationOffset(index:number,total:number,moment:SocialMom
     return{x:centered*moment.spread,y:moment.verticalBias+alternating*.40-diagonal};
   }
   if(moment.kind==='feeding-rush'){
-    // A feeding bell now pulls the whole desk into a visible V-shaped funnel at the surface.
-    // Outer shrimp stay slightly lower while the center charges furthest upward, so the event
-    // reads as a coordinated rush rather than the school merely translating as one flat row.
     const funnel=Math.abs(centered)*.30;
     return{x:centered*moment.spread*.62,y:moment.verticalBias+funnel+alternating*.035};
   }
   if(moment.kind==='bubble-rally'){
-    // Arrange the rally as a broad sinusoidal ticker wave. Alternating phase keeps neighboring
-    // shrimp separated on small screens while producing an unmistakable celebratory silhouette.
     const wave=Math.sin(centered*Math.PI*1.35)*.28;
     const edgeLift=Math.abs(centered)*-.08;
     return{x:centered*moment.spread,y:moment.verticalBias+wave+edgeLift+alternating*.055};

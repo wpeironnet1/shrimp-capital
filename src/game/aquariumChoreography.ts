@@ -21,10 +21,6 @@ export function habitatPoseFor(seed:string,cycle=0):HabitatPose{
     school:{zone:'school',xBias:jitterX*.28,yBias:jitterY*.2,dwellMs:5000,bubbleChance:.32,speedScale:.9},
   };
   const pose=base[behavior],fast=profile.name==='Hyper'||profile.name==='Intern'||profile.name==='Paper Hands',patient=profile.name==='Lazy'||profile.name==='Diamond Hands',social=profile.name==='Social'||profile.name==='Rainmaker'||profile.name==='Market Maker',forager=profile.name==='Greedy'||profile.name==='Curious',temperament=fast?.78:patient?1.28:1;
-  // Habitat visits should visibly inherit temperament, not just choose a destination.
-  // Fast desk personalities burst between props, patient holders linger, and social /
-  // curious shrimp leave a noticeably livelier bubble trail. These are deterministic
-  // animation traits, so they add character without touching persisted save data.
   const speedTemperament=fast?1.38:patient?.62:social?1.16:forager?1.08:1;
   const bubbleTemperament=social?1.72:forager?1.38:fast?1.2:patient?.72:1;
   return{...pose,behavior,dwellMs:Math.round(pose.dwellMs*dwellJitter*temperament),speedScale:Math.max(.18,Math.min(1.7,pose.speedScale*speedTemperament)),bubbleChance:Math.max(.03,Math.min(.72,pose.bubbleChance*bubbleTemperament))};
@@ -33,12 +29,9 @@ export function habitatPoseFor(seed:string,cycle=0):HabitatPose{
 export function socialMomentDelay(seed:string,cycle=0){
   const population=tankPopulation(seed);
   if(population!==undefined){
-    // The Tank renderer deliberately applies a 15s readability floor between spectacles.
-    // Keep mature-tank timings above that floor so a full aquarium breathes naturally
-    // instead of collapsing into an exact 15-second metronome after clamping.
     const fullness=Math.max(0,Math.min(1,(population-3)/9));
-    const base=22000-fullness*7000;
-    const span=10000-fullness*6000;
+    const base=24000-fullness*7000;
+    const span=11000-fullness*5000;
     return Math.round(base+unit(`${seed}-${Math.max(0,cycle)}-social`)*span);
   }
   const profile=personalityFor(seed),social=profile.name==='Social'||profile.name==='Rainmaker'||profile.name==='Market Maker';
@@ -47,11 +40,10 @@ export function socialMomentDelay(seed:string,cycle=0){
 
 export function socialMomentFor(seed:string,cycle=0):SocialMoment{
   const safeCycle=Math.max(0,Math.floor(cycle)),population=tankPopulation(seed)??0;
-  // Mature tanks deliberately alternate coordinated schooling with frantic trading-floor
-  // moments. The brief formations make the next panic/rally read as a spectacle instead
-  // of a constant wall of motion, while also letting personality-biased reactions show.
+  // Full aquariums now breathe between calm formations and short, unmistakable trading-floor
+  // spectacles. The contrast is intentional: rare bursts should feel like events, not noise.
   const reel:SocialMomentKind[]=population>=12
-    ?['market-panic','school-run','bubble-rally','feeding-rush','market-panic','school-run','bubble-rally','market-panic','feeding-rush','school-run','bubble-rally','market-panic']
+    ?['school-run','market-panic','school-run','bubble-rally','feeding-rush','school-run','market-panic','bubble-rally','school-run','feeding-rush','market-panic','school-run']
     :population>=11
       ?['school-run','bubble-rally','market-panic','feeding-rush','school-run','bubble-rally','market-panic','feeding-rush','bubble-rally','market-panic']
       :population>=9
@@ -61,30 +53,37 @@ export function socialMomentFor(seed:string,cycle=0):SocialMoment{
           :['school-run','feeding-rush','bubble-rally','market-panic'];
   const reelIndex=safeCycle%reel.length,reelNumber=Math.floor(safeCycle/reel.length),rotation=hashSeed(`${seed}-${reelNumber}-reel`)%reel.length,direction=hashSeed(`${seed}-${reelNumber}-direction`)%2===0?1:-1,kind=reel[(rotation+direction*reelIndex+reel.length*2)%reel.length],jitter=.88+unit(`${seed}-${safeCycle}-moment-jitter`)*.24;
   const base:Record<SocialMomentKind,Omit<SocialMoment,'kind'>>={
-    'school-run':{durationMs:4100,spread:.30,verticalBias:-.08,bubbleIntensity:.42,reactionCadenceMs:170},
-    'feeding-rush':{durationMs:3500,spread:.44,verticalBias:-.54,bubbleIntensity:.58,reactionCadenceMs:120},
-    'bubble-rally':{durationMs:4500,spread:.60,verticalBias:.02,bubbleIntensity:1,reactionCadenceMs:205},
-    'market-panic':{durationMs:3000,spread:.96,verticalBias:.14,bubbleIntensity:.78,reactionCadenceMs:85},
+    'school-run':{durationMs:4400,spread:.27,verticalBias:-.08,bubbleIntensity:.34,reactionCadenceMs:190},
+    'feeding-rush':{durationMs:3400,spread:.50,verticalBias:-.60,bubbleIntensity:.72,reactionCadenceMs:108},
+    'bubble-rally':{durationMs:4700,spread:.66,verticalBias:.02,bubbleIntensity:1.18,reactionCadenceMs:180},
+    'market-panic':{durationMs:2750,spread:1,verticalBias:.16,bubbleIntensity:.92,reactionCadenceMs:72},
   };
   const moment=base[kind],maturity=Math.max(0,Math.min(1,(population-3)/9));
-  // Full tanks get a clear spectacle step-up: reactions arrive faster, spread farther,
-  // and bubble rallies become materially denser without adding another overlay/menu.
-  const fullTank=population>=12?1.28:population>=10?1.12:1;
-  const spectacle=(1+maturity*.62)*fullTank;
+  // Spectacle scaling is deliberately non-linear. A nearly full tank is visibly busier,
+  // while a maxed tank gets a genuine payoff: faster reaction waves, denser bubbles and
+  // edge-to-edge movement. Calm school-runs stay restrained so the contrast reads clearly.
+  const fullTank=population>=12?1.42:population>=10?1.18:1;
+  const kindPunch=kind==='market-panic'?1.18:kind==='bubble-rally'?1.12:kind==='feeding-rush'?1.06:.9;
+  const spectacle=(1+maturity*.68)*fullTank*kindPunch;
   return{
     ...moment,
     kind,
-    durationMs:Math.round(moment.durationMs*jitter*(1+maturity*.16)*Math.min(1.14,fullTank)),
-    spread:Math.min(1,moment.spread*(1+maturity*.34)*fullTank),
-    bubbleIntensity:Math.min(1.9,moment.bubbleIntensity*spectacle),
-    reactionCadenceMs:Math.max(44,Math.round(moment.reactionCadenceMs*(1-maturity*.40)/fullTank)),
+    durationMs:Math.round(moment.durationMs*jitter*(kind==='school-run'?1+maturity*.12:1+maturity*.05)),
+    spread:Math.min(1,moment.spread*(1+maturity*.38)*(kind==='school-run'?1:fullTank)),
+    bubbleIntensity:Math.min(2.25,moment.bubbleIntensity*spectacle),
+    reactionCadenceMs:Math.max(36,Math.round(moment.reactionCadenceMs*(1-maturity*.44)/(kind==='school-run'?1:fullTank))),
   };
 }
 
 export function socialFormationOffset(index:number,total:number,moment:SocialMoment){
   const safeTotal=Math.max(1,Math.floor(total)),safeIndex=Math.max(0,Math.min(safeTotal-1,Math.floor(index))),centered=safeTotal===1?0:(safeIndex/(safeTotal-1))*2-1,alternating=safeIndex%2===0?1:-1;
-  if(moment.kind==='market-panic')return{x:centered*moment.spread,y:moment.verticalBias+alternating*.34};
-  if(moment.kind==='feeding-rush')return{x:centered*moment.spread*.55,y:moment.verticalBias+Math.abs(centered)*.16};
-  if(moment.kind==='bubble-rally')return{x:centered*moment.spread,y:moment.verticalBias+alternating*.12};
+  if(moment.kind==='market-panic'){
+    // Split the desk into opposing diagonal escape lanes so panic reads as a coordinated
+    // trading-floor stampede rather than twelve shrimp simply vibrating in place.
+    const diagonal=centered*.34;
+    return{x:centered*moment.spread,y:moment.verticalBias+alternating*.40-diagonal};
+  }
+  if(moment.kind==='feeding-rush')return{x:centered*moment.spread*.58,y:moment.verticalBias+Math.abs(centered)*.20};
+  if(moment.kind==='bubble-rally')return{x:centered*moment.spread,y:moment.verticalBias+alternating*.16};
   return{x:centered*moment.spread,y:moment.verticalBias+Math.abs(centered)*.08};
 }

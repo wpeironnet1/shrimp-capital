@@ -27,12 +27,12 @@ export function habitatPoseFor(seed:string,cycle=0):HabitatPose{
 export function socialMomentDelay(seed:string,cycle=0){
   const population=tankPopulation(seed);
   if(population!==undefined){
-    // A mature tank should feel like an increasingly busy trading floor rather than
-    // twelve independent idle sprites. Keep starter tanks calm, then noticeably
-    // tighten the social-event rhythm as the aquarium fills.
+    // The Tank renderer deliberately applies a 15s readability floor between spectacles.
+    // Keep mature-tank timings above that floor so a full aquarium breathes naturally
+    // instead of collapsing into an exact 15-second metronome after clamping.
     const fullness=Math.max(0,Math.min(1,(population-3)/9));
-    const base=22000-fullness*13500;
-    const span=10000-fullness*5000;
+    const base=22000-fullness*7000;
+    const span=10000-fullness*6000;
     return Math.round(base+unit(`${seed}-${Math.max(0,cycle)}-social`)*span);
   }
   const profile=personalityFor(seed),social=profile.name==='Social'||profile.name==='Rainmaker'||profile.name==='Market Maker';

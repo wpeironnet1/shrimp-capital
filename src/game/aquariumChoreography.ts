@@ -29,9 +29,11 @@ export function habitatPoseFor(seed:string,cycle=0):HabitatPose{
 export function socialMomentDelay(seed:string,cycle=0){
   const population=tankPopulation(seed);
   if(population!==undefined){
+    // Social beats are gameplay feedback, not background decoration. As the fund fills,
+    // coordinated tank moments arrive often enough to be noticed during a short session.
     const fullness=Math.max(0,Math.min(1,(population-3)/9));
-    const base=21500-fullness*6500;
-    const span=8500-fullness*4500;
+    const base=19000-fullness*6500;
+    const span=6500-fullness*3000;
     return Math.round(base+unit(`${seed}-${Math.max(0,cycle)}-social`)*span);
   }
   const profile=personalityFor(seed),social=profile.name==='Social'||profile.name==='Rainmaker'||profile.name==='Market Maker';
@@ -40,15 +42,15 @@ export function socialMomentDelay(seed:string,cycle=0){
 
 export function socialMomentFor(seed:string,cycle=0):SocialMoment{
   const safeCycle=Math.max(0,Math.floor(cycle)),population=tankPopulation(seed)??0;
+  // Mature tanks deliberately alternate calm schooling with high-readability spectacle.
+  // This prevents long stretches where a full aquarium feels visually identical to a starter tank.
   const reel:SocialMomentKind[]=population>=12
-    ?['school-run','market-panic','school-run','bubble-rally','feeding-rush','school-run','market-panic','bubble-rally','school-run','feeding-rush','market-panic','school-run']
-    :population>=11
-      ?['school-run','bubble-rally','market-panic','feeding-rush','school-run','bubble-rally','market-panic','feeding-rush','bubble-rally','market-panic']
-      :population>=9
+    ?['bubble-rally','market-panic','feeding-rush','school-run','bubble-rally','market-panic','school-run','feeding-rush','bubble-rally','market-panic','feeding-rush','school-run']
+    :population>=10
+      ?['school-run','bubble-rally','market-panic','feeding-rush','bubble-rally','school-run','market-panic','feeding-rush','bubble-rally','market-panic']
+      :population>=7
         ?['school-run','feeding-rush','bubble-rally','market-panic','school-run','bubble-rally','feeding-rush','market-panic']
-        :population>=6
-          ?['school-run','feeding-rush','bubble-rally','market-panic','school-run','bubble-rally']
-          :['school-run','feeding-rush','bubble-rally','market-panic'];
+        :['school-run','feeding-rush','bubble-rally','market-panic'];
   const reelIndex=safeCycle%reel.length,reelNumber=Math.floor(safeCycle/reel.length),rotation=hashSeed(`${seed}-${reelNumber}-reel`)%reel.length,direction=hashSeed(`${seed}-${reelNumber}-direction`)%2===0?1:-1,kind=reel[(rotation+direction*reelIndex+reel.length*2)%reel.length],jitter=.88+unit(`${seed}-${safeCycle}-moment-jitter`)*.24;
   const base:Record<SocialMomentKind,Omit<SocialMoment,'kind'>>={
     'school-run':{durationMs:4600,spread:.34,verticalBias:-.10,bubbleIntensity:.38,reactionCadenceMs:180},
@@ -72,27 +74,21 @@ export function socialMomentFor(seed:string,cycle=0):SocialMoment{
 
 export function socialFormationOffset(index:number,total:number,moment:SocialMoment){
   const safeTotal=Math.max(1,Math.floor(total)),safeIndex=Math.max(0,Math.min(safeTotal-1,Math.floor(index))),centered=safeTotal===1?0:(safeIndex/(safeTotal-1))*2-1,alternating=safeIndex%2===0?1:-1;
-  // Each desk-wide beat gets its own readable silhouette. At a glance the player should
-  // be able to tell a feeding scrum from a bubble celebration or a market panic.
   if(moment.kind==='market-panic'){
-    // Split the desk into two opposing diagonal selloff waves instead of generic jitter.
     const side=centered<0?-1:1,withinSide=(safeIndex%(Math.ceil(safeTotal/2)))/Math.max(1,Math.ceil(safeTotal/2)-1);
     const x=side*(.28+withinSide*.72)*moment.spread;
     const y=moment.verticalBias+alternating*.46-centered*.24;
     return{x,y};
   }
   if(moment.kind==='feeding-rush'){
-    // Funnel everyone tightly toward the surface/feeding point, with outer shrimp trailing.
     const funnel=Math.pow(Math.abs(centered),1.35)*.38;
     return{x:centered*moment.spread*.46,y:moment.verticalBias+funnel+alternating*.028};
   }
   if(moment.kind==='bubble-rally'){
-    // A broad celebratory sine wave reads like a miniature ticker ribbon across the tank.
     const wave=Math.sin((centered+.08)*Math.PI*1.55)*.34;
     const edgeLift=-Math.pow(Math.abs(centered),1.7)*.10;
     return{x:centered*moment.spread,y:moment.verticalBias+wave+edgeLift+alternating*.045};
   }
-  // School runs form a clean Wall-Street-chevron: leader forward, wings tucked behind.
   const chevron=Math.pow(Math.abs(centered),1.15)*.24;
   const leader=safeIndex===Math.floor((safeTotal-1)/2)?-.10:0;
   const ripple=safeTotal>=5?alternating*.035:0;

@@ -20,8 +20,14 @@ export function habitatPoseFor(seed:string,cycle=0):HabitatPose{
     inspect:{zone:'equipment',xBias:.72+jitterX*.14,yBias:-.12+jitterY*.22,dwellMs:5600,bubbleChance:.18,speedScale:.7},
     school:{zone:'school',xBias:jitterX*.28,yBias:jitterY*.2,dwellMs:5000,bubbleChance:.32,speedScale:.9},
   };
-  const pose=base[behavior],fast=profile.name==='Hyper'||profile.name==='Intern'||profile.name==='Paper Hands',patient=profile.name==='Lazy'||profile.name==='Diamond Hands',temperament=fast?.78:patient?1.28:1;
-  return{...pose,behavior,dwellMs:Math.round(pose.dwellMs*dwellJitter*temperament)};
+  const pose=base[behavior],fast=profile.name==='Hyper'||profile.name==='Intern'||profile.name==='Paper Hands',patient=profile.name==='Lazy'||profile.name==='Diamond Hands',social=profile.name==='Social'||profile.name==='Rainmaker'||profile.name==='Market Maker',forager=profile.name==='Greedy'||profile.name==='Curious',temperament=fast?.78:patient?1.28:1;
+  // Habitat visits should visibly inherit temperament, not just choose a destination.
+  // Fast desk personalities burst between props, patient holders linger, and social /
+  // curious shrimp leave a noticeably livelier bubble trail. These are deterministic
+  // animation traits, so they add character without touching persisted save data.
+  const speedTemperament=fast?1.38:patient?.62:social?1.16:forager?1.08:1;
+  const bubbleTemperament=social?1.72:forager?1.38:fast?1.2:patient?.72:1;
+  return{...pose,behavior,dwellMs:Math.round(pose.dwellMs*dwellJitter*temperament),speedScale:Math.max(.18,Math.min(1.7,pose.speedScale*speedTemperament)),bubbleChance:Math.max(.03,Math.min(.72,pose.bubbleChance*bubbleTemperament))};
 }
 
 export function socialMomentDelay(seed:string,cycle=0){

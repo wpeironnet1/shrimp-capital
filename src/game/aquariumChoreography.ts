@@ -29,9 +29,6 @@ export function habitatPoseFor(seed:string,cycle=0):HabitatPose{
 export function socialMomentDelay(seed:string,cycle=0){
   const population=tankPopulation(seed);
   if(population!==undefined){
-    // A fuller desk should look busier without becoming visual noise. Three-shrimp tanks
-    // still breathe between moments, while a packed twelve-shrimp fund reliably produces
-    // a coordinated beat every ~15–19 seconds (the Tank component also keeps a 15s floor).
     const fullness=Math.max(0,Math.min(1,(population-3)/9));
     const base=21500-fullness*6500;
     const span=8500-fullness*4500;
@@ -54,10 +51,10 @@ export function socialMomentFor(seed:string,cycle=0):SocialMoment{
           :['school-run','feeding-rush','bubble-rally','market-panic'];
   const reelIndex=safeCycle%reel.length,reelNumber=Math.floor(safeCycle/reel.length),rotation=hashSeed(`${seed}-${reelNumber}-reel`)%reel.length,direction=hashSeed(`${seed}-${reelNumber}-direction`)%2===0?1:-1,kind=reel[(rotation+direction*reelIndex+reel.length*2)%reel.length],jitter=.88+unit(`${seed}-${safeCycle}-moment-jitter`)*.24;
   const base:Record<SocialMomentKind,Omit<SocialMoment,'kind'>>={
-    'school-run':{durationMs:4400,spread:.27,verticalBias:-.08,bubbleIntensity:.34,reactionCadenceMs:190},
-    'feeding-rush':{durationMs:3400,spread:.50,verticalBias:-.60,bubbleIntensity:.72,reactionCadenceMs:108},
-    'bubble-rally':{durationMs:4700,spread:.66,verticalBias:.02,bubbleIntensity:1.18,reactionCadenceMs:180},
-    'market-panic':{durationMs:2750,spread:1,verticalBias:.16,bubbleIntensity:.92,reactionCadenceMs:72},
+    'school-run':{durationMs:4600,spread:.34,verticalBias:-.10,bubbleIntensity:.38,reactionCadenceMs:180},
+    'feeding-rush':{durationMs:3600,spread:.58,verticalBias:-.64,bubbleIntensity:.82,reactionCadenceMs:98},
+    'bubble-rally':{durationMs:5000,spread:.76,verticalBias:.00,bubbleIntensity:1.34,reactionCadenceMs:164},
+    'market-panic':{durationMs:2900,spread:1,verticalBias:.14,bubbleIntensity:1.02,reactionCadenceMs:64},
   };
   const moment=base[kind],maturity=Math.max(0,Math.min(1,(population-3)/9));
   const fullTank=population>=12?1.42:population>=10?1.18:1;
@@ -75,20 +72,29 @@ export function socialMomentFor(seed:string,cycle=0):SocialMoment{
 
 export function socialFormationOffset(index:number,total:number,moment:SocialMoment){
   const safeTotal=Math.max(1,Math.floor(total)),safeIndex=Math.max(0,Math.min(safeTotal-1,Math.floor(index))),centered=safeTotal===1?0:(safeIndex/(safeTotal-1))*2-1,alternating=safeIndex%2===0?1:-1;
+  // Each desk-wide beat gets its own readable silhouette. At a glance the player should
+  // be able to tell a feeding scrum from a bubble celebration or a market panic.
   if(moment.kind==='market-panic'){
-    const diagonal=centered*.34;
-    return{x:centered*moment.spread,y:moment.verticalBias+alternating*.40-diagonal};
+    // Split the desk into two opposing diagonal selloff waves instead of generic jitter.
+    const side=centered<0?-1:1,withinSide=(safeIndex%(Math.ceil(safeTotal/2)))/Math.max(1,Math.ceil(safeTotal/2)-1);
+    const x=side*(.28+withinSide*.72)*moment.spread;
+    const y=moment.verticalBias+alternating*.46-centered*.24;
+    return{x,y};
   }
   if(moment.kind==='feeding-rush'){
-    const funnel=Math.abs(centered)*.30;
-    return{x:centered*moment.spread*.62,y:moment.verticalBias+funnel+alternating*.035};
+    // Funnel everyone tightly toward the surface/feeding point, with outer shrimp trailing.
+    const funnel=Math.pow(Math.abs(centered),1.35)*.38;
+    return{x:centered*moment.spread*.46,y:moment.verticalBias+funnel+alternating*.028};
   }
   if(moment.kind==='bubble-rally'){
-    const wave=Math.sin(centered*Math.PI*1.35)*.28;
-    const edgeLift=Math.abs(centered)*-.08;
-    return{x:centered*moment.spread,y:moment.verticalBias+wave+edgeLift+alternating*.055};
+    // A broad celebratory sine wave reads like a miniature ticker ribbon across the tank.
+    const wave=Math.sin((centered+.08)*Math.PI*1.55)*.34;
+    const edgeLift=-Math.pow(Math.abs(centered),1.7)*.10;
+    return{x:centered*moment.spread,y:moment.verticalBias+wave+edgeLift+alternating*.045};
   }
-  const chevron=Math.abs(centered)*.18;
-  const ripple=safeTotal>=5?alternating*.045:0;
-  return{x:centered*moment.spread,y:moment.verticalBias+chevron+ripple};
+  // School runs form a clean Wall-Street-chevron: leader forward, wings tucked behind.
+  const chevron=Math.pow(Math.abs(centered),1.15)*.24;
+  const leader=safeIndex===Math.floor((safeTotal-1)/2)?-.10:0;
+  const ripple=safeTotal>=5?alternating*.035:0;
+  return{x:centered*moment.spread,y:moment.verticalBias+chevron+leader+ripple};
 }

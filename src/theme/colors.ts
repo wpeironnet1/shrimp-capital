@@ -20,11 +20,14 @@ export const colors = {
   white: '#FFF9E8',
   success: '#74D88E',
   danger: '#DD6157',
-  glass: '#9EE8E8',
-  waterTop: '#277F91',
-  waterMid: '#145A70',
-  waterDeep: '#082F44',
-  substrateLight: '#C19A69',
-  substrateMid: '#8A6C50',
-  substrateDark: '#4E4036',
+  // Aquarium tones are intentionally more separated than the surrounding UI.
+  // The brighter glass/high water and inkier depth make shrimp silhouettes,
+  // bubbles, props, and jump effects read as layered pixel art on small phones.
+  glass: '#B9F6F1',
+  waterTop: '#2C93A5',
+  waterMid: '#12627A',
+  waterDeep: '#052B43',
+  substrateLight: '#D0AA76',
+  substrateMid: '#927052',
+  substrateDark: '#493A31',
 };

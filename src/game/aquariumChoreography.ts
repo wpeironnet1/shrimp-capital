@@ -30,9 +30,6 @@ export function socialMomentDelay(seed:string,cycle=0){
   const population=tankPopulation(seed);
   if(population!==undefined){
     const fullness=Math.max(0,Math.min(1,(population-3)/9));
-    // A stocked aquarium should feel alive even when the player is simply watching it.
-    // Sparse tanks retain breathing room, while mature tanks produce a short coordinated
-    // desk moment roughly every 15–20 seconds instead of sitting visually idle for long gaps.
     const base=21000-fullness*6500;
     const span=8000-fullness*3500;
     return Math.round(base+unit(`${seed}-${Math.max(0,cycle)}-social`)*span);
@@ -43,8 +40,6 @@ export function socialMomentDelay(seed:string,cycle=0){
 
 export function socialMomentFor(seed:string,cycle=0):SocialMoment{
   const safeCycle=Math.max(0,Math.floor(cycle)),population=tankPopulation(seed)??0;
-  // Full aquariums now breathe between calm formations and short, unmistakable trading-floor
-  // spectacles. The contrast is intentional: rare bursts should feel like events, not noise.
   const reel:SocialMomentKind[]=population>=12
     ?['school-run','market-panic','school-run','bubble-rally','feeding-rush','school-run','market-panic','bubble-rally','school-run','feeding-rush','market-panic','school-run']
     :population>=11
@@ -62,9 +57,6 @@ export function socialMomentFor(seed:string,cycle=0):SocialMoment{
     'market-panic':{durationMs:2750,spread:1,verticalBias:.16,bubbleIntensity:.92,reactionCadenceMs:72},
   };
   const moment=base[kind],maturity=Math.max(0,Math.min(1,(population-3)/9));
-  // Spectacle scaling is deliberately non-linear. A nearly full tank is visibly busier,
-  // while a maxed tank gets a genuine payoff: faster reaction waves, denser bubbles and
-  // edge-to-edge movement. Calm school-runs stay restrained so the contrast reads clearly.
   const fullTank=population>=12?1.42:population>=10?1.18:1;
   const kindPunch=kind==='market-panic'?1.18:kind==='bubble-rally'?1.12:kind==='feeding-rush'?1.06:.9;
   const spectacle=(1+maturity*.68)*fullTank*kindPunch;
@@ -81,16 +73,23 @@ export function socialMomentFor(seed:string,cycle=0):SocialMoment{
 export function socialFormationOffset(index:number,total:number,moment:SocialMoment){
   const safeTotal=Math.max(1,Math.floor(total)),safeIndex=Math.max(0,Math.min(safeTotal-1,Math.floor(index))),centered=safeTotal===1?0:(safeIndex/(safeTotal-1))*2-1,alternating=safeIndex%2===0?1:-1;
   if(moment.kind==='market-panic'){
-    // Split the desk into opposing diagonal escape lanes so panic reads as a coordinated
-    // trading-floor stampede rather than twelve shrimp simply vibrating in place.
     const diagonal=centered*.34;
     return{x:centered*moment.spread,y:moment.verticalBias+alternating*.40-diagonal};
   }
-  if(moment.kind==='feeding-rush')return{x:centered*moment.spread*.58,y:moment.verticalBias+Math.abs(centered)*.20};
-  if(moment.kind==='bubble-rally')return{x:centered*moment.spread,y:moment.verticalBias+alternating*.16};
-  // Schooling now forms a shallow chevron with alternating vertical ripples. It gives calm
-  // moments a deliberate 'desk formation' silhouette before the next chaotic spectacle,
-  // instead of collapsing the whole school into a nearly straight horizontal line.
+  if(moment.kind==='feeding-rush'){
+    // A feeding bell now pulls the whole desk into a visible V-shaped funnel at the surface.
+    // Outer shrimp stay slightly lower while the center charges furthest upward, so the event
+    // reads as a coordinated rush rather than the school merely translating as one flat row.
+    const funnel=Math.abs(centered)*.30;
+    return{x:centered*moment.spread*.62,y:moment.verticalBias+funnel+alternating*.035};
+  }
+  if(moment.kind==='bubble-rally'){
+    // Arrange the rally as a broad sinusoidal ticker wave. Alternating phase keeps neighboring
+    // shrimp separated on small screens while producing an unmistakable celebratory silhouette.
+    const wave=Math.sin(centered*Math.PI*1.35)*.28;
+    const edgeLift=Math.abs(centered)*-.08;
+    return{x:centered*moment.spread,y:moment.verticalBias+wave+edgeLift+alternating*.055};
+  }
   const chevron=Math.abs(centered)*.18;
   const ripple=safeTotal>=5?alternating*.045:0;
   return{x:centered*moment.spread,y:moment.verticalBias+chevron+ripple};

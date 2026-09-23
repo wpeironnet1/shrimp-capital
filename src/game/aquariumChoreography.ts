@@ -85,5 +85,10 @@ export function socialFormationOffset(index:number,total:number,moment:SocialMom
   }
   if(moment.kind==='feeding-rush')return{x:centered*moment.spread*.58,y:moment.verticalBias+Math.abs(centered)*.20};
   if(moment.kind==='bubble-rally')return{x:centered*moment.spread,y:moment.verticalBias+alternating*.16};
-  return{x:centered*moment.spread,y:moment.verticalBias+Math.abs(centered)*.08};
+  // Schooling now forms a shallow chevron with alternating vertical ripples. It gives calm
+  // moments a deliberate 'desk formation' silhouette before the next chaotic spectacle,
+  // instead of collapsing the whole school into a nearly straight horizontal line.
+  const chevron=Math.abs(centered)*.18;
+  const ripple=safeTotal>=5?alternating*.045:0;
+  return{x:centered*moment.spread,y:moment.verticalBias+chevron+ripple};
 }

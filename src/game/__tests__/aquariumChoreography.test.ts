@@ -1,11 +1,9 @@
 import { socialFormationOffset, socialMomentDelay, socialMomentFor } from '../aquariumChoreography';
 
 describe('living aquarium choreography', () => {
-  it('keeps the core four social moments represented and unlocks personality parades in mature tanks', () => {
-    const startup = Array.from({ length: 12 }, (_, cycle) => socialMomentFor('tank-3', cycle).kind);
-    expect(new Set(startup)).toEqual(new Set(['school-run', 'feeding-rush', 'bubble-rally', 'market-panic']));
-    for (const seed of ['tank-7', 'tank-12']) {
-      const kinds = Array.from({ length: 18 }, (_, cycle) => socialMomentFor(seed, cycle).kind);
+  it('keeps the core social moments represented and introduces personality parades once a desk is stocked', () => {
+    for (const seed of ['tank-3', 'tank-7', 'tank-12']) {
+      const kinds = Array.from({ length: 24 }, (_, cycle) => socialMomentFor(seed, cycle).kind);
       expect(new Set(kinds)).toEqual(new Set(['school-run', 'feeding-rush', 'bubble-rally', 'market-panic', 'personality-parade']));
     }
   });

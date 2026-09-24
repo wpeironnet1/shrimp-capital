@@ -36,8 +36,12 @@ test('tap reaction pool preserves every core reaction and strong individual quir
   assert.ok(source.includes('const reactionPools: Record<ShrimpPersonality,ShrimpReaction[]>'));
   assert.ok(source.includes('signatureReactionFor'));
   assert.ok(source.includes('secondaryReactionFor'));
-  assert.match(source, /const pool:ShrimpReaction\[\]=\[\.\.\.core,\.\.\.reactionPools\[profile\.name\],signature,signature,signature,secondary,secondary\]/);
-  assert.match(source, /profile\.reactionBias!==['"]accessory['"]\)pool\.push\(profile\.reactionBias,profile\.reactionBias,profile\.reactionBias\)/);
+  const pool = source.match(/const pool:ShrimpReaction\[\]=\[([^\]]+)\]/)?.[1] ?? '';
+  assert.match(pool, /\.\.\.core,\.\.\.reactionPools\[profile\.name\]/);
+  assert.ok((pool.match(/signature/g) ?? []).length >= 7, 'stable individual signature should strongly influence repeated taps');
+  assert.ok((pool.match(/secondary/g) ?? []).length >= 4, 'secondary individual quirk should remain noticeable');
+  const biasPush = source.match(/profile\.reactionBias!==['"]accessory['"]\)pool\.push\(([^)]*)\)/)?.[1] ?? '';
+  assert.ok((biasPush.match(/profile\.reactionBias/g) ?? []).length >= 5, 'personality bias should remain strongly weighted');
 });
 
 test('rare accessories remain materially expressive without erasing personality', () => {

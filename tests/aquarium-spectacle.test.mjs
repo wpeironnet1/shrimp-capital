@@ -21,8 +21,9 @@ test('whole-tank spectacles are wired into the live aquarium and scale with matu
   assert.match(choreography, /population>=12/);
   assert.match(choreography, /population>=10/);
   assert.match(choreography, /fullTank=population>=12\?1\.42:population>=10\?1\.18:1/);
-  assert.match(choreography, /bubbleIntensity:Math\.min\(2\.25/);
-  assert.match(choreography, /reactionCadenceMs:Math\.max\(36/);
+  assert.match(choreography, /bubbleIntensity:Math\.min\(2\.5/);
+  assert.match(choreography, /reactionCadenceMs:Math\.max\(32/);
+  assert.match(choreography, /headlinePunch=headline\?1\.38:1/);
   for (const moment of ['school-run', 'feeding-rush', 'bubble-rally', 'market-panic', 'personality-parade']) assert.match(choreography, new RegExp(`['\\"]${moment}['\\"]`), `missing ${moment} spectacle`);
 });
 
@@ -30,8 +31,9 @@ test('mature tanks alternate readable schooling with high-energy trading-floor s
   const fullTankReel = choreography.match(/population>=12\s*\?\[(.*?)\]\s*:population>=10/s)?.[1] ?? '';
   assert.ok(fullTankReel.length > 0, 'full-tank spectacle reel must be explicit');
   for (const moment of ['school-run', 'market-panic', 'bubble-rally', 'feeding-rush', 'personality-parade']) assert.match(fullTankReel, new RegExp(moment), `full tank should retain ${moment}`);
-  assert.match(choreography, /base=19000-fullness\*6500/);
-  assert.match(choreography, /span=6500-fullness\*3000/);
+  assert.match(choreography, /base=population>=3\?11200-fullness\*3400:17000/);
+  assert.match(choreography, /span=population>=3\?3600-fullness\*1200:5600/);
+  assert.match(choreography, /quietBeat=safeCycle>0&&safeCycle%6===5/);
   assert.match(tank, /Math\.max\(15000,socialMomentDelay/);
 });
 
@@ -48,9 +50,11 @@ test('rare collectible accessories retain bespoke pixel treatment', () => {
 });
 
 test('office progression remains visibly staged instead of menu-only', () => {
-  assert.match(office, /furnished>=3&&<MarketTicker/);
-  assert.match(office, /furnished>=5&&<SkylineWindow/);
-  assert.match(office, /furnished>=7&&<ExecutiveGlow/);
+  assert.match(office, /furnished>=2&&<MarketTicker/);
+  assert.match(office, /furnished>=4&&<SkylineWindow/);
+  assert.match(office, /furnished>=5&&<TradingFloorGlow/);
+  assert.match(office, /furnished>=6&&<ExecutiveGlow/);
+  assert.match(office, /furnished>=8&&<ClosingBell/);
   assert.match(office, /SHELL STREET/);
   assert.match(office, /EXECUTIVE FLOOR · LIVE/);
 });

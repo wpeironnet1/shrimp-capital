@@ -19,17 +19,17 @@ export function secondaryReactionFor(seed:string):ShrimpReaction{const primary=s
 /** Stable habitat preference lets aquarium actors periodically graze, hide, inspect props, rest, patrol or school without storing animation-only state in saves. */
 export function habitatBehaviorFor(seed:string,cycle=0):ShrimpHabitatBehavior{const profile=personalityFor(seed);const pool=habitatPools[profile.name];return pool[hashSeed(`${seed}-habitat-${Math.max(0,cycle)}`)%pool.length];}
 /**
- * Tap reactions are intentionally personality-forward: every shrimp retains the full
- * reaction vocabulary, but its stable signature and secondary quirk now dominate the
- * lottery enough to be learned by sight after a few taps. Collectible accessories add
- * a conspicuous flourish without replacing the shrimp's underlying character.
+ * Tap reactions are deliberately collectible. A shrimp's stable signature dominates
+ * repeated taps, its secondary quirk still appears often enough to feel individual,
+ * and every reaction remains reachable. Accessorized shrimp get a much stronger
+ * sparkle/flourish beat so a crown, chain, visor or suit feels special in the tank.
  */
 export function personalityReactionPool(seed:string,hasAccessory:boolean):ShrimpReaction[]{
   const profile=personalityFor(seed),signature=signatureReactionFor(seed),secondary=secondaryReactionFor(seed);
   const core:ShrimpReaction[]=['wiggle','dart','bubbles','reverse','spin'];
-  const pool:ShrimpReaction[]=[...core,...reactionPools[profile.name],signature,signature,signature,signature,signature,secondary,secondary,secondary];
-  if(profile.reactionBias!=='accessory')pool.push(profile.reactionBias,profile.reactionBias,profile.reactionBias,profile.reactionBias);
-  if(hasAccessory){pool.push('accessory','accessory','accessory','accessory','accessory','accessory','accessory','accessory','accessory','accessory');if(profile.reactionBias==='accessory')pool.push('accessory','accessory','accessory','accessory','accessory','accessory');}
+  const pool:ShrimpReaction[]=[...core,...reactionPools[profile.name],signature,signature,signature,signature,signature,signature,signature,secondary,secondary,secondary,secondary];
+  if(profile.reactionBias!=='accessory')pool.push(profile.reactionBias,profile.reactionBias,profile.reactionBias,profile.reactionBias,profile.reactionBias);
+  if(hasAccessory){pool.push('accessory','accessory','accessory','accessory','accessory','accessory','accessory','accessory','accessory','accessory','accessory','accessory','accessory','accessory','accessory','accessory','accessory','accessory');if(profile.reactionBias==='accessory')pool.push('accessory','accessory','accessory','accessory','accessory','accessory','accessory','accessory');}
   return pool;
 }
 /** Stable individual cruising rhythm used directly by aquarium actors. */

@@ -1,9 +1,10 @@
-import { habitatPoseFor, socialMomentDelay } from './aquariumChoreography';
+import { habitatPoseFor, socialMomentDelay, socialMomentFor, socialFormationOffset } from './aquariumChoreography';
 
 describe('living aquarium choreography', () => {
   it('is deterministic for the same shrimp and cycle', () => {
     expect(habitatPoseFor('cherry-3', 4)).toEqual(habitatPoseFor('cherry-3', 4));
     expect(socialMomentDelay('cherry-3', 4)).toBe(socialMomentDelay('cherry-3', 4));
+    expect(socialMomentFor('tank-8', 4)).toEqual(socialMomentFor('tank-8', 4));
   });
 
   it('keeps every habitat pose inside safe animation bounds', () => {
@@ -44,11 +45,38 @@ describe('living aquarium choreography', () => {
     expect(destinations.size).toBeGreaterThan(4);
   });
 
-  it('keeps social moments paced far enough apart to remain special', () => {
+  it('keeps individual social pacing calm while filled tanks burst more often', () => {
     for (let i = 0; i < 50; i += 1) {
       const delay = socialMomentDelay(`social-${i}`, i);
-      expect(delay).toBeGreaterThanOrEqual(13000);
-      expect(delay).toBeLessThanOrEqual(38000);
+      expect(delay).toBeGreaterThanOrEqual(9000);
+      expect(delay).toBeLessThanOrEqual(26000);
+    }
+    for (const population of [3, 5, 8, 12]) {
+      for (let cycle = 0; cycle < 18; cycle += 1) {
+        const delay = socialMomentDelay(`tank-${population}`, cycle);
+        expect(delay).toBeGreaterThanOrEqual(7000);
+        expect(delay).toBeLessThanOrEqual(21000);
+      }
+    }
+  });
+
+  it('cycles through every social spectacle in a mature tank', () => {
+    const kinds = new Set(Array.from({ length: 36 }, (_, cycle) => socialMomentFor('tank-12', cycle).kind));
+    expect(kinds).toEqual(new Set(['school-run', 'feeding-rush', 'bubble-rally', 'market-panic', 'personality-parade']));
+  });
+
+  it('keeps social formations inside safe normalized choreography bounds', () => {
+    for (const population of [3, 6, 9, 12]) {
+      for (let cycle = 0; cycle < 12; cycle += 1) {
+        const moment = socialMomentFor(`tank-${population}`, cycle);
+        for (let index = 0; index < population; index += 1) {
+          const offset = socialFormationOffset(index, population, moment);
+          expect(offset.x).toBeGreaterThanOrEqual(-1.1);
+          expect(offset.x).toBeLessThanOrEqual(1.1);
+          expect(offset.y).toBeGreaterThanOrEqual(-1.1);
+          expect(offset.y).toBeLessThanOrEqual(1.1);
+        }
+      }
     }
   });
 });

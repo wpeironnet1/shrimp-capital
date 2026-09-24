@@ -20,8 +20,8 @@ describe('living aquarium choreography', () => {
   it('keeps social moments frequent enough to make the tank feel alive without becoming constant noise', () => {
     for (let cycle = 0; cycle < 16; cycle += 1) {
       const delay = socialMomentDelay('tank-8', cycle);
-      expect(delay).toBeGreaterThanOrEqual(14_000);
-      expect(delay).toBeLessThanOrEqual(27_000);
+      expect(delay).toBeGreaterThanOrEqual(9_000);
+      expect(delay).toBeLessThanOrEqual(17_000);
     }
   });
 
@@ -32,16 +32,22 @@ describe('living aquarium choreography', () => {
       startupTotal += socialMomentDelay('tank-3', cycle);
       crowdedTotal += socialMomentDelay('tank-12', cycle);
     }
-    expect(crowdedTotal).toBeLessThan(startupTotal * .62);
+    expect(crowdedTotal).toBeLessThan(startupTotal * .78);
   });
 
-  it('keeps population-aware cadence inside deliberate spectacle bounds', () => {
+  it('keeps population-aware cadence inside deliberate spectacle bounds including quiet beats', () => {
     for (let cycle = 0; cycle < 24; cycle += 1) {
-      expect(socialMomentDelay('tank-3', cycle)).toBeGreaterThanOrEqual(20_500);
-      expect(socialMomentDelay('tank-3', cycle)).toBeLessThanOrEqual(30_000);
-      expect(socialMomentDelay('tank-12', cycle)).toBeGreaterThanOrEqual(10_000);
-      expect(socialMomentDelay('tank-12', cycle)).toBeLessThanOrEqual(16_000);
+      expect(socialMomentDelay('tank-3', cycle)).toBeGreaterThanOrEqual(11_000);
+      expect(socialMomentDelay('tank-3', cycle)).toBeLessThanOrEqual(19_500);
+      expect(socialMomentDelay('tank-12', cycle)).toBeGreaterThanOrEqual(7_500);
+      expect(socialMomentDelay('tank-12', cycle)).toBeLessThanOrEqual(14_500);
     }
+  });
+
+  it('opens a stocked desk with personality spectacle and a full tank with a bubble rally', () => {
+    expect(socialMomentFor('tank-3', 0).kind).toBe('personality-parade');
+    expect(socialMomentFor('tank-7', 0).kind).toBe('personality-parade');
+    expect(socialMomentFor('tank-12', 0).kind).toBe('bubble-rally');
   });
 
   it('gives every spectacle a visibly different formation', () => {

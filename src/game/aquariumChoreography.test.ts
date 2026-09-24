@@ -45,6 +45,13 @@ describe('living aquarium choreography', () => {
     expect(destinations.size).toBeGreaterThan(4);
   });
 
+  it('introduces a young desk with a personality parade and a full tank with a bubble rally', () => {
+    for (const population of [3, 4, 5, 7, 9, 10, 11]) {
+      expect(socialMomentFor(`tank-${population}`, 0).kind).toBe('personality-parade');
+    }
+    expect(socialMomentFor('tank-12', 0).kind).toBe('bubble-rally');
+  });
+
   it('keeps individual social pacing calm while filled tanks burst more often', () => {
     for (let i = 0; i < 50; i += 1) {
       const delay = socialMomentDelay(`social-${i}`, i);
